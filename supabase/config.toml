@@ -1,0 +1,27 @@
+[project]
+id = ""  # Fill in your Supabase project reference ID
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/api/auth/callback"]
+
+[auth.email]
+enable_signup = false  # Admin creates accounts, no self-registration
+enable_confirmations = false
+
+[storage]
+enabled = true
+
+[functions.summarize-concern]
+verify_jwt = false  # Webhook calls don't have JWT

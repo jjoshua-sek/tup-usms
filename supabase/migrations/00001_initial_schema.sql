@@ -368,14 +368,23 @@ CREATE TRIGGER trg_concerns_updated_at
 -- ============================================================
 
 -- Helper function: get the user's role from JWT metadata
-CREATE OR REPLACE FUNCTION auth.user_role()
-RETURNS TEXT AS $$
+-- Defined in public schema (auth schema is restricted by Supabase)
+CREATE OR REPLACE FUNCTION public.user_role()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
   SELECT COALESCE(
-    current_setting('request.jwt.claims', true)::json->>'role',
-    (current_setting('request.jwt.claims', true)::json->'user_metadata'->>'role'),
+    (auth.jwt() -> 'user_metadata' ->> 'role'),
+    (auth.jwt() ->> 'role'),
     'student'
   );
-$$ LANGUAGE sql STABLE;
+$$;
+
+-- Allow authenticated users to call this function
+GRANT EXECUTE ON FUNCTION public.user_role() TO authenticated, anon;
 
 -- ── STUDENTS ──
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
@@ -391,15 +400,15 @@ CREATE POLICY "Students can update own record"
 
 CREATE POLICY "Staff can view all students"
   ON students FOR SELECT
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Staff can update students"
   ON students FOR UPDATE
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Admin can insert students"
   ON students FOR INSERT
-  WITH CHECK (auth.user_role() = 'admin' OR user_id = auth.uid());
+  WITH CHECK (public.user_role() = 'admin' OR user_id = auth.uid());
 
 -- ── STAFF ──
 ALTER TABLE staff ENABLE ROW LEVEL SECURITY;
@@ -414,7 +423,7 @@ CREATE POLICY "All authenticated can view staff names"
 
 CREATE POLICY "Admin can manage staff"
   ON staff FOR ALL
-  USING (auth.user_role() = 'admin');
+  USING (public.user_role() = 'admin');
 
 -- ── SUBJECTS ──
 ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
@@ -425,7 +434,7 @@ CREATE POLICY "Anyone authenticated can view subjects"
 
 CREATE POLICY "Staff can manage subjects"
   ON subjects FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── SECTIONS ──
 ALTER TABLE sections ENABLE ROW LEVEL SECURITY;
@@ -436,7 +445,7 @@ CREATE POLICY "Anyone authenticated can view sections"
 
 CREATE POLICY "Staff can manage sections"
   ON sections FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── SCHEDULES ──
 ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
@@ -447,7 +456,7 @@ CREATE POLICY "Anyone authenticated can view schedules"
 
 CREATE POLICY "Staff can manage schedules"
   ON schedules FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── ENROLLMENTS ──
 ALTER TABLE enrollments ENABLE ROW LEVEL SECURITY;
@@ -460,11 +469,11 @@ CREATE POLICY "Students can view own enrollments"
 
 CREATE POLICY "Staff can view all enrollments"
   ON enrollments FOR SELECT
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Staff can manage enrollments"
   ON enrollments FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── ACADEMIC RECORDS ──
 ALTER TABLE academic_records ENABLE ROW LEVEL SECURITY;
@@ -477,7 +486,7 @@ CREATE POLICY "Students can view own academic records"
 
 CREATE POLICY "Staff can manage academic records"
   ON academic_records FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── CONCERNS ──
 ALTER TABLE concerns ENABLE ROW LEVEL SECURITY;
@@ -496,11 +505,11 @@ CREATE POLICY "Students can insert own concerns"
 
 CREATE POLICY "Staff can view all concerns"
   ON concerns FOR SELECT
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Staff can update concerns"
   ON concerns FOR UPDATE
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── CONCERN RESPONSES ──
 ALTER TABLE concern_responses ENABLE ROW LEVEL SECURITY;
@@ -513,7 +522,7 @@ CREATE POLICY "Users can view responses on their concerns"
       JOIN students s ON c.student_id = s.id
       WHERE s.user_id = auth.uid()
     )
-    OR auth.user_role() IN ('staff', 'admin')
+    OR public.user_role() IN ('staff', 'admin')
   );
 
 CREATE POLICY "Authenticated users can insert responses"
@@ -531,7 +540,7 @@ CREATE POLICY "Students can view own violations"
 
 CREATE POLICY "Staff can manage violations"
   ON violations FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── STUDENT FILES ──
 ALTER TABLE student_files ENABLE ROW LEVEL SECURITY;
@@ -551,7 +560,7 @@ CREATE POLICY "Students can upload own files"
 
 CREATE POLICY "Staff can view all files"
   ON student_files FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── MESSAGES ──
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
@@ -591,7 +600,7 @@ CREATE POLICY "Students can update own evaluations"
 
 CREATE POLICY "Staff can view all evaluations"
   ON faculty_evaluations FOR SELECT
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── GRADUATION APPLICATIONS ──
 ALTER TABLE graduation_applications ENABLE ROW LEVEL SECURITY;
@@ -610,7 +619,7 @@ CREATE POLICY "Students can apply for graduation"
 
 CREATE POLICY "Staff can manage graduation applications"
   ON graduation_applications FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- ── AUDIT LOGS (append-only) ──
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
@@ -621,7 +630,7 @@ CREATE POLICY "Users can insert audit logs"
 
 CREATE POLICY "Staff can view audit logs"
   ON audit_logs FOR SELECT
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));
 
 -- No UPDATE or DELETE policies = truly append-only
 
@@ -634,4 +643,4 @@ CREATE POLICY "Anyone authenticated can view calendar"
 
 CREATE POLICY "Staff can manage calendar"
   ON calendar_events FOR ALL
-  USING (auth.user_role() IN ('staff', 'admin'));
+  USING (public.user_role() IN ('staff', 'admin'));

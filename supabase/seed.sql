@@ -2,19 +2,20 @@
 -- TUP-Manila USMS — Development Seed Data
 -- ============================================================
 -- Run this AFTER schema migration in Supabase SQL Editor.
--- Creates test users and sample data for development.
+-- This script is idempotent — safe to re-run.
 --
--- Test Accounts:
---   Student: TUPM-21-0001 / TestPass123!
---   Staff:   admin@tup.edu.ph / AdminPass123!
+-- It seeds:
+--   1. Sample subjects (BSIT curriculum)
+--   2. Sample sections (BSIT, BSCS, BSCE)
+--   3. Sample calendar events (only if at least one auth user exists)
+--
+-- After creating your first admin user via the Supabase Dashboard
+-- (Authentication → Users → Add user), re-run this file to populate
+-- the calendar events (or run the calendar block separately).
 -- ============================================================
 
--- Note: In production, users are created through Supabase Auth.
--- For development, create users via the Supabase Dashboard or Auth API,
--- then run this seed to populate the related tables.
-
 -- ============================================================
--- SAMPLE SUBJECTS (BSIT Curriculum)
+-- 1. SAMPLE SUBJECTS (BSIT Curriculum)
 -- ============================================================
 INSERT INTO subjects (subject_code, description, lec_units, lab_units, curriculum_year, semester, year_level) VALUES
   ('CC 101', 'Introduction to Computing', 2, 1, '2021', '1st Semester', '1st Year'),
@@ -40,7 +41,7 @@ INSERT INTO subjects (subject_code, description, lec_units, lab_units, curriculu
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
--- SAMPLE SECTIONS
+-- 2. SAMPLE SECTIONS
 -- ============================================================
 INSERT INTO sections (section_code, program, year_level, semester, school_year) VALUES
   ('BSIT 1-1', 'BSIT', '1st Year', '1st Semester', '2025-2026'),
@@ -53,17 +54,42 @@ INSERT INTO sections (section_code, program, year_level, semester, school_year) 
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
--- SAMPLE CALENDAR EVENTS
+-- 3. SAMPLE CALENDAR EVENTS
 -- ============================================================
--- Note: created_by will need a valid user UUID after auth setup
--- These are placeholder dates for the 2025-2026 academic year
-INSERT INTO calendar_events (title, description, event_type, start_date, end_date, created_by) VALUES
-  ('1st Semester Start', 'Classes begin for the 1st Semester AY 2025-2026', 'academic', '2025-08-18', '2025-08-18', '00000000-0000-0000-0000-000000000000'),
-  ('Enrollment Period', 'Online enrollment for continuing students', 'enrollment', '2025-07-15', '2025-08-01', '00000000-0000-0000-0000-000000000000'),
-  ('Midterm Exams', 'Midterm examination period', 'academic', '2025-10-13', '2025-10-17', '00000000-0000-0000-0000-000000000000'),
-  ('All Saints Day', 'Holiday - No classes', 'holiday', '2025-11-01', '2025-11-01', '00000000-0000-0000-0000-000000000000'),
-  ('Final Exams', 'Final examination period', 'academic', '2025-12-08', '2025-12-12', '00000000-0000-0000-0000-000000000000'),
-  ('Christmas Break', 'Semester break', 'holiday', '2025-12-15', '2026-01-04', '00000000-0000-0000-0000-000000000000'),
-  ('2nd Semester Start', 'Classes begin for the 2nd Semester', 'academic', '2026-01-05', '2026-01-05', '00000000-0000-0000-0000-000000000000'),
-  ('Faculty Evaluation Deadline', 'Complete all faculty evaluations', 'deadline', '2025-11-28', '2025-11-28', '00000000-0000-0000-0000-000000000000')
-ON CONFLICT DO NOTHING;
+-- Wrapped in a DO block so it gracefully skips if no users exist yet.
+-- Re-run this file after creating your first admin user to populate events.
+DO $$
+DECLARE
+  admin_user_id UUID;
+BEGIN
+  -- Try to find an admin/staff user, fall back to any user
+  SELECT id INTO admin_user_id
+  FROM auth.users
+  WHERE raw_user_meta_data->>'role' IN ('admin', 'staff')
+  ORDER BY created_at ASC
+  LIMIT 1;
+
+  IF admin_user_id IS NULL THEN
+    SELECT id INTO admin_user_id
+    FROM auth.users
+    ORDER BY created_at ASC
+    LIMIT 1;
+  END IF;
+
+  IF admin_user_id IS NULL THEN
+    RAISE NOTICE 'No users found in auth.users — skipping calendar_events seed. Create a user via the Auth dashboard, then re-run this file.';
+  ELSE
+    INSERT INTO calendar_events (title, description, event_type, start_date, end_date, created_by) VALUES
+      ('1st Semester Start', 'Classes begin for the 1st Semester AY 2025-2026', 'academic', '2025-08-18', '2025-08-18', admin_user_id),
+      ('Enrollment Period', 'Online enrollment for continuing students', 'enrollment', '2025-07-15', '2025-08-01', admin_user_id),
+      ('Midterm Exams', 'Midterm examination period', 'academic', '2025-10-13', '2025-10-17', admin_user_id),
+      ('All Saints Day', 'Holiday - No classes', 'holiday', '2025-11-01', '2025-11-01', admin_user_id),
+      ('Final Exams', 'Final examination period', 'academic', '2025-12-08', '2025-12-12', admin_user_id),
+      ('Christmas Break', 'Semester break', 'holiday', '2025-12-15', '2026-01-04', admin_user_id),
+      ('2nd Semester Start', 'Classes begin for the 2nd Semester', 'academic', '2026-01-05', '2026-01-05', admin_user_id),
+      ('Faculty Evaluation Deadline', 'Complete all faculty evaluations', 'deadline', '2025-11-28', '2025-11-28', admin_user_id)
+    ON CONFLICT DO NOTHING;
+
+    RAISE NOTICE 'Calendar events seeded with creator: %', admin_user_id;
+  END IF;
+END $$;

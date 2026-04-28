@@ -20,8 +20,9 @@ export default async function StaffLayout({
     redirect("/login");
   }
 
-  // Verify this is actually a staff/admin user
-  const role = user.user_metadata?.role;
+  // Verify this is actually a staff/admin user.
+  // Read role from app_metadata only — user_metadata is user-modifiable and unsafe.
+  const role = user.app_metadata?.role;
   if (role !== "staff" && role !== "admin") {
     redirect("/dashboard");
   }

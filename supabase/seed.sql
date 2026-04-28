@@ -62,10 +62,11 @@ DO $$
 DECLARE
   admin_user_id UUID;
 BEGIN
-  -- Try to find an admin/staff user, fall back to any user
+  -- Try to find an admin/staff user, fall back to any user.
+  -- Look in raw_app_meta_data (server-set) — that's the secure place for roles.
   SELECT id INTO admin_user_id
   FROM auth.users
-  WHERE raw_user_meta_data->>'role' IN ('admin', 'staff')
+  WHERE raw_app_meta_data->>'role' IN ('admin', 'staff')
   ORDER BY created_at ASC
   LIMIT 1;
 

@@ -367,8 +367,14 @@ CREATE TRIGGER trg_concerns_updated_at
 -- ROW-LEVEL SECURITY POLICIES
 -- ============================================================
 
--- Helper function: get the user's role from JWT metadata
--- Defined in public schema (auth schema is restricted by Supabase)
+-- Helper function: get the user's role from JWT app_metadata.
+-- Defined in public schema (auth schema is restricted by Supabase).
+--
+-- SECURITY NOTE: We read from app_metadata, NOT user_metadata.
+-- - app_metadata: server-controlled. Only the service_role key can write.
+-- - user_metadata: user-controlled. Any authenticated user can write via
+--   supabase.auth.updateUser({ data: { role: 'admin' } }) — DANGEROUS.
+-- Reading roles from user_metadata would let any user grant themselves admin.
 CREATE OR REPLACE FUNCTION public.user_role()
 RETURNS TEXT
 LANGUAGE sql
@@ -377,7 +383,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
   SELECT COALESCE(
-    (auth.jwt() -> 'user_metadata' ->> 'role'),
+    (auth.jwt() -> 'app_metadata' ->> 'role'),
     (auth.jwt() ->> 'role'),
     'student'
   );

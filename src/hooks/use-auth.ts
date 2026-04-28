@@ -33,7 +33,9 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const role = user?.user_metadata?.role || "student";
+  // Role is stored in app_metadata (server-controlled, can't be self-modified by users).
+  // user_metadata is INSECURE for roles because users can update it via supabase.auth.updateUser().
+  const role = user?.app_metadata?.role || "student";
   const isStaff = role === "staff" || role === "admin";
   const isAdmin = role === "admin";
 

@@ -109,8 +109,9 @@ export function LoginForm() {
         return;
       }
 
-      // Determine the user's role from JWT user_metadata
-      const role = authData.user.user_metadata?.role || "student";
+      // Determine the user's role from app_metadata (server-controlled, secure).
+      // Never read role from user_metadata — users can self-modify that.
+      const role = authData.user.app_metadata?.role || "student";
 
       // Birthday verification: only enforced for students
       if (role === "student") {

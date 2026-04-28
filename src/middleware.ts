@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     // If already authenticated, redirect away from login
     if (user && pathname === "/login") {
-      const role = user.user_metadata?.role || "student";
+      // app_metadata is server-only (can't be self-modified by users via the SDK)
+      const role = user.app_metadata?.role || "student";
       const redirectUrl =
         role === "staff" || role === "admin"
           ? "/staff/dashboard"

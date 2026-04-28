@@ -16,11 +16,12 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Check user role to redirect appropriately
+      // Check user role to redirect appropriately.
+      // app_metadata is server-controlled — user_metadata is user-modifiable, never trust it for auth.
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const role = user?.user_metadata?.role || "student";
+      const role = user?.app_metadata?.role || "student";
       const redirectTo =
         role === "staff" || role === "admin"
           ? "/staff/dashboard"

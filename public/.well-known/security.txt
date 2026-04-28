@@ -1,0 +1,15 @@
+Contact: mailto:security@tup.edu.ph
+Expires: 2027-01-01T00:00:00.000Z
+Preferred-Languages: en, fil
+Policy: https://tup.edu.ph/privacy
+Acknowledgments: https://github.com/jjoshua-sek/tup-usms/blob/main/SECURITY.md
+
+# Responsible Disclosure
+# If you discover a security issue with the TUP-Manila Unified Student
+# Management System, please report it via the contact email above before
+# any public disclosure. We commit to acknowledging reports within 48 hours
+# and providing a timeline for resolution.
+#
+# Per RA 10173 (Data Privacy Act of 2012), TUP-Manila is committed to
+# implementing reasonable and appropriate organizational, physical, and
+# technical security measures to protect personal information.

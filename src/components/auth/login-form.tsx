@@ -23,16 +23,21 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 /**
- * Login form with:
- * - Student number (TUPM-XX-XXXX format) validation
- * - Password show/hide toggle
+ * Login form mirroring TUP-Manila ERS UX:
+ * - Student number (TUPM-XX-XXXX) — staff/admin use placeholder format like TUPM-26-0000
+ * - Password (with show/hide toggle)
+ * - Birth date — verified against students.birth_date for student logins,
+ *   skipped for staff/admin
+ *
+ * Other features:
  * - Client-side rate limiting (5 attempts / 30s cooldown)
  * - Redirect back to intended page after login
+ * - Role-aware redirect (students → /dashboard, staff/admin → /staff/dashboard)
  */
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const redirectTo = searchParams.get("redirect");
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,8 +58,34 @@ export function LoginForm() {
 
   const isInCooldown = cooldownUntil > Date.now();
 
+  /**
+   * Compare two dates as YYYY-MM-DD strings, ignoring time/timezone.
+   * Birthday match is intentionally lenient — we only care about the calendar date.
+   * The form input is already a YYYY-MM-DD string from <input type="date">.
+   * The DB value may have a time/timezone component, so we trim to just the date part.
+   */
+  const sameCalendarDate = (formInput: string, dbValue: string): boolean => {
+    const dbDateOnly = dbValue.split("T")[0]; // strip timezone/time if present
+    return formInput === dbDateOnly;
+  };
+
+  const handleFailedAttempt = (message: string) => {
+    const newAttempts = failedAttempts + 1;
+    setFailedAttempts(newAttempts);
+
+    if (newAttempts >= 5) {
+      // 30-second cooldown after 5 failed attempts
+      setCooldownUntil(Date.now() + 30000);
+      setFailedAttempts(0);
+      toast.error(
+        "Too many failed attempts. Please wait 30 seconds before trying again."
+      );
+    } else {
+      toast.error(message);
+    }
+  };
+
   const onSubmit = async (data: LoginInput) => {
-    // Client-side rate limiting
     if (isInCooldown) {
       toast.error("Too many attempts. Please wait before trying again.");
       return;
@@ -65,37 +96,62 @@ export function LoginForm() {
     try {
       const supabase = createClient();
 
-      // Convert student number to email format for Supabase Auth
+      // Convert student number to email format used by Supabase Auth
       const email = `${data.student_number.toLowerCase()}@tup.edu.ph`;
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password: data.password,
       });
 
-      if (error) {
-        const newAttempts = failedAttempts + 1;
-        setFailedAttempts(newAttempts);
-
-        if (newAttempts >= 5) {
-          // 30-second cooldown after 5 failed attempts
-          setCooldownUntil(Date.now() + 30000);
-          setFailedAttempts(0);
-          toast.error(
-            "Too many failed attempts. Please wait 30 seconds before trying again."
-          );
-        } else {
-          toast.error("Invalid student number or password.");
-        }
+      if (error || !authData.user) {
+        handleFailedAttempt("Invalid student number or password.");
         return;
       }
 
-      // Success
+      // Determine the user's role from JWT user_metadata
+      const role = authData.user.user_metadata?.role || "student";
+
+      // Birthday verification: only enforced for students
+      if (role === "student") {
+        const { data: studentRecord } = await supabase
+          .from("students")
+          .select("birth_date")
+          .eq("user_id", authData.user.id)
+          .maybeSingle();
+
+        // Only verify if a profile exists. New students without a profile yet
+        // will skip this check and proceed to fill out their profile.
+        const studentData = studentRecord as { birth_date: string } | null;
+        if (studentData?.birth_date) {
+          const matches = sameCalendarDate(
+            data.birth_date,
+            studentData.birth_date
+          );
+
+          if (!matches) {
+            // Sign out — birthday didn't match
+            await supabase.auth.signOut();
+            handleFailedAttempt("Birth date does not match our records.");
+            return;
+          }
+        }
+      }
+
+      // Successful login — redirect based on role
       setFailedAttempts(0);
       toast.success("Signed in successfully!");
-      router.push(redirectTo);
+
+      const destination =
+        redirectTo ||
+        (role === "staff" || role === "admin"
+          ? "/staff/dashboard"
+          : "/dashboard");
+
+      router.push(destination);
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error("Login error:", err);
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -107,7 +163,7 @@ export function LoginForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Sign In</CardTitle>
         <CardDescription>
-          Enter your TUP student number and password
+          Enter your TUP credentials to continue
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -148,6 +204,7 @@ export function LoginForm() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -161,6 +218,27 @@ export function LoginForm() {
                 {errors.password.message}
               </p>
             )}
+          </div>
+
+          {/* Birth Date */}
+          <div className="space-y-2">
+            <Label htmlFor="birth_date">Birth Date</Label>
+            <Input
+              id="birth_date"
+              type="date"
+              autoComplete="bday"
+              disabled={isLoading || isInCooldown}
+              {...register("birth_date")}
+              className={errors.birth_date ? "border-destructive" : ""}
+            />
+            {errors.birth_date && (
+              <p className="text-xs text-destructive">
+                {errors.birth_date.message}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              For verification, like the existing TUP ERS.
+            </p>
           </div>
         </CardContent>
 

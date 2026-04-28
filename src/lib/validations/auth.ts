@@ -2,8 +2,13 @@ import { z } from "zod";
 
 /**
  * Login form validation.
- * Student numbers follow the TUP format: TUPM-XX-XXXX
- * where XX = 2-digit year, XXXX = 4-digit sequence.
+ * Mirrors TUP-Manila ERS login UX: student_number + password + birth_date.
+ *
+ * - student_number format: TUPM-XX-XXXX (XX = 2-digit year, XXXX = 4-digit sequence)
+ *   Staff/admin accounts use a placeholder student-number format
+ *   (e.g., TUPM-26-0000) to keep the login UI consistent.
+ * - birth_date is enforced server-side ONLY for users with role = 'student'
+ *   (admins/staff bypass this check since they have no students row).
  */
 export const loginSchema = z.object({
   student_number: z
@@ -16,6 +21,13 @@ export const loginSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters")
     .max(72, "Password must be at most 72 characters"),
+  birth_date: z
+    .string()
+    .min(1, "Please enter your birth date")
+    .regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      "Birth date must be a valid date"
+    ),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

@@ -1,4 +1,11 @@
-"use client";
+// NOTE: Intentionally NOT a Client Component.
+// Server Components can pass Lucide icon components (which are functions)
+// directly to other Server Components. If we marked this "use client",
+// every page rendering it would have to serialize the icon prop —
+// which fails because functions aren't serializable across the boundary.
+//
+// This component renders <Card> (a Client Component) inside, which is
+// allowed: Server -> Client is fine, the boundary is one-way.
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";

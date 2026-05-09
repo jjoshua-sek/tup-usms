@@ -2,7 +2,6 @@
 
 import { Menu, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AvatarWithDot } from "@/components/profile/avatar-with-dot";
 
 interface TopbarProps {
   onMenuClick: () => void;
   userName?: string;
   userAvatar?: string;
+  photoIsProvisional?: boolean;
   role: "student" | "staff" | "admin";
   notificationCount?: number;
 }
@@ -27,6 +28,7 @@ export function Topbar({
   onMenuClick,
   userName = "User",
   userAvatar,
+  photoIsProvisional,
   role,
   notificationCount = 0,
 }: TopbarProps) {
@@ -86,12 +88,13 @@ export function Topbar({
           <DropdownMenuTrigger
             className="flex items-center gap-2 px-2 rounded-md hover:bg-accent transition-colors"
           >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={userAvatar} alt={userName} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarWithDot
+              src={userAvatar}
+              fallback={initials}
+              isProvisional={photoIsProvisional}
+              className="h-8 w-8"
+              fallbackClassName="bg-primary text-primary-foreground text-xs"
+            />
             <span className="text-sm font-medium hidden md:inline-block">
               {userName}
             </span>

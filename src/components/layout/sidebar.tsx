@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { AvatarWithDot } from "@/components/profile/avatar-with-dot";
 
 interface NavItem {
   label: string;
@@ -59,11 +60,13 @@ const staffNavItems: NavItem[] = [
 interface SidebarProps {
   role: "student" | "staff" | "admin";
   userName?: string;
+  userAvatar?: string;
+  photoIsProvisional?: boolean;
   open?: boolean;
   onClose?: () => void;
 }
 
-export function Sidebar({ role, userName, open, onClose }: SidebarProps) {
+export function Sidebar({ role, userName, userAvatar, photoIsProvisional, open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const navItems = role === "student" ? studentNavItems : staffNavItems;
@@ -168,8 +171,25 @@ export function Sidebar({ role, userName, open, onClose }: SidebarProps) {
             <span>Sign Out</span>
           </button>
           {userName && (
-            <div className="px-3 py-2 text-xs text-sidebar-foreground/50">
-              Signed in as {userName}
+            <div className="flex items-center gap-2 px-3 py-2">
+              <AvatarWithDot
+                src={userAvatar}
+                fallback={userName
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+                isProvisional={photoIsProvisional}
+                className="h-7 w-7"
+                fallbackClassName="bg-sidebar-accent text-sidebar-accent-foreground text-[10px]"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-sidebar-foreground/50">Signed in as</p>
+                <p className="text-xs font-medium text-sidebar-foreground/80 truncate">
+                  {userName}
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -15,9 +15,13 @@ export const profileStep1Schema = z.object({
     .max(100, "First name is too long"),
   middle_name: z.string().max(100).optional().or(z.literal("")),
   name_extension: z.string().max(10).optional().or(z.literal("")),
-  birth_date: z.coerce.date({
-    message: "Birth date is required",
-  }),
+  // HTML <input type="date"> returns YYYY-MM-DD strings; we keep it as string
+  // for cleaner react-hook-form integration (avoids the Date | string | unknown
+  // resolver type mismatch we hit on the login form).
+  birth_date: z
+    .string()
+    .min(1, "Birth date is required")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Birth date must be a valid date"),
   birth_place: z.string().max(200).optional().or(z.literal("")),
   gender: z.enum(["Male", "Female", "Other", "Prefer not to say"], {
     message: "Please select your gender",
@@ -88,7 +92,13 @@ export const profileStep3Schema = z.object({
 });
 
 /**
- * Profile Step 4: Physical & Additional Info
+ * Profile Step 4: Photo + Optional Physical Info
+ *
+ * Photo is REQUIRED. Two paths to provide it:
+ *  - Upload from device (always considered intentional, photo_is_provisional = false)
+ *  - Take photo via webcam (student picks "Set as my photo" or "Use for now")
+ *
+ * Height/weight are optional and stored as numbers when provided.
  */
 export const profileStep4Schema = z.object({
   height_cm: z
@@ -103,6 +113,13 @@ export const profileStep4Schema = z.object({
     .max(1000, "Weight must be at most 1000 lbs")
     .optional()
     .nullable(),
+  // Photo URL is set after the upload action returns. The wizard blocks
+  // proceeding to "Finish" until photo_url is non-empty.
+  photo_url: z
+    .string()
+    .min(1, "Profile photo is required")
+    .url("Photo URL is invalid"),
+  photo_is_provisional: z.boolean().default(false),
 });
 
 export type ProfileStep1Input = z.infer<typeof profileStep1Schema>;

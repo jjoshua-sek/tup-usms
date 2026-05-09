@@ -9,6 +9,8 @@ interface AppShellProps {
   role: "student" | "staff" | "admin";
   userName?: string;
   userAvatar?: string;
+  /** Show the amber dot on the avatar when photo is provisional */
+  photoIsProvisional?: boolean;
   notificationCount?: number;
 }
 
@@ -24,6 +26,7 @@ export function AppShell({
   role,
   userName,
   userAvatar,
+  photoIsProvisional,
   notificationCount,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -33,6 +36,8 @@ export function AppShell({
       <Sidebar
         role={role}
         userName={userName}
+        userAvatar={userAvatar}
+        photoIsProvisional={photoIsProvisional}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -43,6 +48,7 @@ export function AppShell({
           onMenuClick={() => setSidebarOpen(true)}
           userName={userName}
           userAvatar={userAvatar}
+          photoIsProvisional={photoIsProvisional}
           role={role}
           notificationCount={notificationCount}
         />

@@ -7,8 +7,15 @@ import { NextResponse, type NextRequest } from "next/server";
  * writes updated cookies to the response.
  */
 export async function updateSession(request: NextRequest) {
+  // Set x-pathname header so Server Components in layouts can read the
+  // current pathname (used by the student layout's profile-completion gate).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      headers: requestHeaders,
+    },
   });
 
   const supabase = createServerClient(
@@ -24,7 +31,9 @@ export async function updateSession(request: NextRequest) {
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
-            request,
+            request: {
+              headers: requestHeaders,
+            },
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)

@@ -59,7 +59,10 @@ export interface Database {
           scholastic_status: string;
           qr_hash: string | null;
           photo_url: string | null;
+          photo_is_provisional: boolean;
           dpa_consent: boolean;
+          dpa_consent_date: string | null;
+          profile_completed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -102,7 +105,10 @@ export interface Database {
           scholastic_status?: string;
           qr_hash?: string | null;
           photo_url?: string | null;
+          photo_is_provisional?: boolean;
           dpa_consent?: boolean;
+          dpa_consent_date?: string | null;
+          profile_completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

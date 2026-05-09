@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 import { UrgencyBadge } from "@/components/concerns/urgency-badge";
 import { StatusBadge } from "@/components/concerns/status-badge";
 import { ResponseForm } from "@/components/concerns/response-form";
+import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import {
   Card,
   CardContent,
@@ -185,6 +186,9 @@ export default async function ConcernDetailPage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      {/* Realtime: refreshes when new responses arrive or AI summary updates */}
+      <ConcernRealtime concernId={id} />
+
       {/* Back link */}
       <Link
         href="/concerns"

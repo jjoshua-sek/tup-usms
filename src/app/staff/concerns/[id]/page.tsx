@@ -17,6 +17,7 @@ import { UrgencyBadge } from "@/components/concerns/urgency-badge";
 import { StatusBadge } from "@/components/concerns/status-badge";
 import { ResponseForm } from "@/components/concerns/response-form";
 import { StatusUpdater } from "@/components/concerns/status-updater";
+import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import {
   Card,
   CardContent,
@@ -213,6 +214,9 @@ export default async function StaffConcernDetailPage({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
+      {/* Realtime: live updates when student replies or AI summary populates */}
+      <ConcernRealtime concernId={id} />
+
       <Link
         href="/staff/concerns"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"

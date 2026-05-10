@@ -99,25 +99,26 @@ export function ProfileWizard({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Welcome hero */}
-      <Card className="bg-tup-gradient bg-grid-pattern relative overflow-hidden border-0 text-white">
+      {/* Welcome hero (plain div, NOT Card — avoids text-card-foreground
+          fighting our text-white at runtime). */}
+      <div className="bg-tup-gradient bg-grid-pattern relative overflow-hidden rounded-xl border-0 px-6 py-6 sm:py-7 shadow-lg">
         <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-tup-gold-400/10 blur-3xl pointer-events-none" />
-        <CardContent className="py-6 relative z-10">
+        <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-4 w-4 text-tup-gold-100" />
             <span className="text-xs font-semibold uppercase tracking-wider text-tup-gold-100">
               Profile Setup
             </span>
           </div>
-          <h1 className="text-2xl font-display font-bold tracking-tight">
+          <h1 className="text-2xl font-display font-bold tracking-tight text-white">
             Welcome to TUP-Manila USMS
           </h1>
           <p className="mt-1 text-sm text-white/80">
             Let&apos;s get your profile set up. This takes about 5 minutes
             and unlocks the rest of the system.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Progress */}
       <Card>

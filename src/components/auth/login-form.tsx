@@ -113,44 +113,59 @@ export function LoginForm() {
       // Never read role from user_metadata — users can self-modify that.
       const role = authData.user.app_metadata?.role || "student";
 
-      // Birthday verification: only enforced for students
+      // For students: do birthday verification AND check profile completion in
+      // one query, so we can route them directly to /profile or /dashboard
+      // and avoid the redirect chain that causes the "white screen" issue.
+      let studentNeedsOnboarding = false;
       if (role === "student") {
         const { data: studentRecord } = await supabase
           .from("students")
-          .select("birth_date")
+          .select("birth_date, profile_completed_at")
           .eq("user_id", authData.user.id)
           .maybeSingle();
 
-        // Only verify if a profile exists. New students without a profile yet
-        // will skip this check and proceed to fill out their profile.
-        const studentData = studentRecord as { birth_date: string } | null;
+        const studentData = studentRecord as
+          | { birth_date: string | null; profile_completed_at: string | null }
+          | null;
+
+        // Birthday verification (only when a profile already has a birth_date set)
         if (studentData?.birth_date) {
           const matches = sameCalendarDate(
             data.birth_date,
             studentData.birth_date
           );
-
           if (!matches) {
-            // Sign out — birthday didn't match
             await supabase.auth.signOut();
             handleFailedAttempt("Birth date does not match our records.");
             return;
           }
         }
+
+        // No profile or incomplete? Send straight to /profile (avoids
+        // the /dashboard → /profile redirect chain).
+        studentNeedsOnboarding =
+          !studentData || !studentData.profile_completed_at;
       }
 
-      // Successful login — redirect based on role
+      // Successful login — pick destination and navigate ONCE.
       setFailedAttempts(0);
       toast.success("Signed in successfully!");
 
-      const destination =
-        redirectTo ||
-        (role === "staff" || role === "admin"
-          ? "/staff/dashboard"
-          : "/dashboard");
+      let destination: string;
+      if (redirectTo) {
+        destination = redirectTo;
+      } else if (role === "staff" || role === "admin") {
+        destination = "/staff/dashboard";
+      } else if (studentNeedsOnboarding) {
+        destination = "/profile";
+      } else {
+        destination = "/dashboard";
+      }
 
-      router.push(destination);
-      router.refresh();
+      // router.replace() (not push) so the back button doesn't return to /login.
+      // No router.refresh() — the route change triggers a fresh server render
+      // by itself, and refresh() can race with replace() causing white-screen issues.
+      router.replace(destination);
     } catch (err) {
       console.error("Login error:", err);
       toast.error("An unexpected error occurred. Please try again.");

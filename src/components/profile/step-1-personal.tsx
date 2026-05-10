@@ -91,6 +91,13 @@ export function Step1Personal({
 
   const dpaConsent = watch("dpa_consent");
 
+  // Surface validation errors as a sticky summary so users don't miss them
+  // when fields are off-screen.
+  const errorEntries = Object.entries(errors).filter(
+    ([, e]) => e?.message
+  ) as [string, { message: string }][];
+  const hasErrors = errorEntries.length > 0;
+
   const onSubmit = (data: ProfileStep1Input) => {
     setServerError(null);
     startTransition(async () => {
@@ -104,13 +111,28 @@ export function Step1Personal({
 
       const result = await saveProfileStep1(formData);
       if (result.error) {
-        setServerError(result.error);
+        // Show specific field errors if the server returned them
+        const fieldErrors = result.fieldErrors;
+        if (fieldErrors) {
+          const allFieldErrorMsgs = Object.entries(fieldErrors)
+            .map(([field, msgs]) => `${field}: ${(msgs as string[])?.[0]}`)
+            .join("; ");
+          setServerError(`${result.error} (${allFieldErrorMsgs})`);
+        } else {
+          setServerError(result.error);
+        }
         toast.error(result.error);
         return;
       }
       toast.success("Personal info saved");
       onComplete();
     });
+  };
+
+  // When react-hook-form's validation fails, show a toast so the user
+  // knows their click was acknowledged but something needs fixing.
+  const onInvalid = () => {
+    toast.error("Please fix the highlighted errors before continuing.");
   };
 
   return (
@@ -122,11 +144,34 @@ export function Step1Personal({
           and academic records.
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)}>
         <CardContent className="space-y-6">
           {serverError && (
             <Alert variant="destructive">
               <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Show a top-level summary when client validation has errors.
+              Users may not see inline errors if they're scrolled past the field. */}
+          {hasErrors && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                <p className="font-medium mb-1">Please fix these issues:</p>
+                <ul className="list-disc ml-4 space-y-0.5 text-xs">
+                  {errorEntries.slice(0, 5).map(([field, error]) => (
+                    <li key={field}>
+                      <span className="font-mono">{field.replace(/_/g, " ")}</span>:{" "}
+                      {error.message}
+                    </li>
+                  ))}
+                  {errorEntries.length > 5 && (
+                    <li className="italic">
+                      ...and {errorEntries.length - 5} more
+                    </li>
+                  )}
+                </ul>
+              </AlertDescription>
             </Alert>
           )}
 

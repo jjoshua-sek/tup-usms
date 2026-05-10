@@ -28,12 +28,22 @@ export const profileStep1Schema = z.object({
   }),
   citizenship: z.string().default("FILIPINO"),
   religion: z.string().max(100).optional().or(z.literal("")),
+  // Civil status: accept any of the enum values OR empty string (= "skipped")
   civil_status: z
-    .enum(["Single", "Married", "Widowed", "Separated", ""])
-    .optional(),
+    .string()
+    .max(20)
+    .optional()
+    .or(z.literal("")),
+  // Cellphone: accept either a Philippine mobile pattern OR empty string.
+  // Lenient pattern: accepts +63XXXXXXXXXX, 09XXXXXXXXX, or with spaces/dashes.
+  // We only enforce digits-and-plus, length 10-13, when non-empty.
   cellphone: z
     .string()
-    .regex(/^\+63\d{10}$/, "Phone number must be in format +63XXXXXXXXXX")
+    .max(20)
+    .regex(
+      /^(?:$|[+\d][\d\s\-()]{8,18})$/,
+      "Phone number contains invalid characters"
+    )
     .optional()
     .or(z.literal("")),
   email_address: z.string().email("Please enter a valid email address"),
@@ -45,7 +55,9 @@ export const profileStep1Schema = z.object({
   address_province: z.string().min(1, "Province is required").max(200),
   address_zip: z
     .string()
-    .regex(/^\d{4}$/, "ZIP code must be exactly 4 digits"),
+    .min(1, "ZIP code is required")
+    .max(10, "ZIP code is too long")
+    .regex(/^\d{3,6}$/, "ZIP code must be 3-6 digits"),
   congressional_district: z.string().max(100).optional().or(z.literal("")),
   // DPA Consent - REQUIRED
   dpa_consent: z.literal(true, {

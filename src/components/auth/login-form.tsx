@@ -11,14 +11,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -175,114 +167,130 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">Sign In</CardTitle>
-        <CardDescription>
-          Enter your TUP credentials to continue
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
-          {/* Student Number */}
-          <div className="space-y-2">
-            <Label htmlFor="student_number">Student Number</Label>
-            <Input
-              id="student_number"
-              placeholder="TUPM-XX-XXXX"
-              autoComplete="username"
-              disabled={isLoading || isInCooldown}
-              {...register("student_number")}
-              className={errors.student_number ? "border-destructive" : ""}
-            />
-            {errors.student_number && (
-              <p className="text-xs text-destructive">
-                {errors.student_number.message}
-              </p>
-            )}
-          </div>
+    <div className="w-full max-w-sm mx-auto">
+      {/* Form header */}
+      <div className="mb-8">
+        <h3 className="text-2xl font-semibold tracking-tight mb-1.5">
+          Welcome back
+        </h3>
+        <p className="text-[13px] text-muted-foreground">
+          Sign in with your TUP institutional account to continue.
+        </p>
+      </div>
 
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                disabled={isLoading || isInCooldown}
-                {...register("password")}
-                className={errors.password ? "border-destructive pr-10" : "pr-10"}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                tabIndex={-1}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-xs text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {/* Birth Date */}
-          <div className="space-y-2">
-            <Label htmlFor="birth_date">Birth Date</Label>
-            <Input
-              id="birth_date"
-              type="date"
-              autoComplete="bday"
-              disabled={isLoading || isInCooldown}
-              {...register("birth_date")}
-              className={errors.birth_date ? "border-destructive" : ""}
-            />
-            {errors.birth_date && (
-              <p className="text-xs text-destructive">
-                {errors.birth_date.message}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              For verification, like the existing TUP ERS.
-            </p>
-          </div>
-        </CardContent>
-
-        <CardFooter className="flex flex-col gap-3">
-          <Button
-            type="submit"
-            className="w-full bg-tup-maroon-900 hover:bg-tup-maroon-800 text-white"
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Student Number */}
+        <div className="space-y-1.5">
+          <Label htmlFor="student_number" className="text-[12px] font-medium">
+            Student Number
+          </Label>
+          <Input
+            id="student_number"
+            placeholder="TUPM-22-0000"
+            autoComplete="username"
             disabled={isLoading || isInCooldown}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : isInCooldown ? (
-              "Please wait..."
-            ) : (
-              "Sign In"
-            )}
-          </Button>
-          <Link
-            href="/reset-password"
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            Forgot your password?
-          </Link>
-        </CardFooter>
+            {...register("student_number")}
+            className={errors.student_number ? "border-destructive" : ""}
+          />
+          {errors.student_number && (
+            <p className="text-xs text-destructive">
+              {errors.student_number.message}
+            </p>
+          )}
+        </div>
+
+        {/* Password */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-[12px] font-medium">
+              Password
+            </Label>
+            <Link
+              href="/reset-password"
+              className="text-[11px] font-medium text-tup-maroon-600 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              disabled={isLoading || isInCooldown}
+              {...register("password")}
+              className={errors.password ? "border-destructive pr-10" : "pr-10"}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              tabIndex={-1}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-xs text-destructive">{errors.password.message}</p>
+          )}
+        </div>
+
+        {/* Birth Date */}
+        <div className="space-y-1.5">
+          <Label htmlFor="birth_date" className="text-[12px] font-medium">
+            Birth Date
+          </Label>
+          <Input
+            id="birth_date"
+            type="date"
+            autoComplete="bday"
+            disabled={isLoading || isInCooldown}
+            {...register("birth_date")}
+            className={errors.birth_date ? "border-destructive" : ""}
+          />
+          {errors.birth_date && (
+            <p className="text-xs text-destructive">
+              {errors.birth_date.message}
+            </p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full bg-tup-maroon-600 hover:bg-tup-maroon-700 text-white"
+          disabled={isLoading || isInCooldown}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : isInCooldown ? (
+            "Please wait..."
+          ) : (
+            <>Sign in →</>
+          )}
+        </Button>
       </form>
-    </Card>
+
+      {/* DPA notice card — institutional touch matching the mockup */}
+      <div className="mt-6 px-3.5 py-3 bg-muted rounded-md border-l-[3px] border-l-tup-gold-500 text-[11px] text-muted-foreground leading-relaxed">
+        <strong className="text-foreground font-semibold">
+          Data Privacy Notice
+        </strong>
+        <p className="mt-0.5">
+          By signing in, you acknowledge that your data will be processed in
+          accordance with the Data Privacy Act of 2012. Concerns submitted may
+          be processed by a third-party AI service to assist administrative
+          review.
+        </p>
+      </div>
+    </div>
   );
 }

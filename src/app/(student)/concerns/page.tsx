@@ -11,7 +11,8 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
-import { ConcernForm } from "@/components/concerns/concern-form";
+// ConcernForm dialog is no longer used here — we route to /concerns/new
+// (a dedicated page with the two-column form + info card layout).
 import { UrgencyBadge, UrgencyBar } from "@/components/concerns/urgency-badge";
 import { StatusBadge } from "@/components/concerns/status-badge";
 import {
@@ -128,14 +129,13 @@ export default async function ConcernsPage() {
         title="My Concerns"
         description="Submit issues, questions, or feedback. Our AI will help route them."
       >
-        <ConcernForm
-          trigger={
-            <Button className="bg-tup-maroon-900 hover:bg-tup-maroon-800 text-white">
-              <Plus className="mr-1 h-4 w-4" />
-              New Concern
-            </Button>
-          }
-        />
+        <Link
+          href="/concerns/new"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New Concern
+        </Link>
       </PageHeader>
 
       {/* Summary strip */}
@@ -158,14 +158,13 @@ export default async function ConcernsPage() {
               When you have an issue or question for TUP staff, submit it here.
               Our AI will help summarize and route it to the right department.
             </p>
-            <ConcernForm
-              trigger={
-                <Button className="mt-6 bg-tup-maroon-900 hover:bg-tup-maroon-800 text-white">
-                  <Sparkles className="mr-1 h-4 w-4" />
-                  Submit your first concern
-                </Button>
-              }
-            />
+            <Link
+              href="/concerns/new"
+              className="mt-6 inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
+            >
+              <Sparkles className="h-4 w-4" />
+              Submit your first concern
+            </Link>
           </CardContent>
         </Card>
       ) : (

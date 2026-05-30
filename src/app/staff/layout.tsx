@@ -27,28 +27,46 @@ export default async function StaffLayout({
     redirect("/dashboard");
   }
 
-  // Fetch staff profile
+  // Fetch staff profile (role text appears in the header as "OSA Officer" etc.)
   const { data: staffMember } = await supabase
     .from("staff")
-    .select("full_name")
+    .select("full_name, position, department")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  const staffData = staffMember as { full_name: string } | null;
+  const staffData = staffMember as
+    | { full_name: string; position: string | null; department: string | null }
+    | null;
   const userName = staffData?.full_name || user.email || "Staff";
+  const userSubtitle =
+    staffData?.position ||
+    (role === "admin" ? "Administrator" : "OSA Officer");
 
-  // Get unread message count
-  const { count: unreadCount } = await supabase
-    .from("messages")
-    .select("*", { count: "exact", head: true })
-    .eq("recipient_id", user.id)
-    .eq("status", "unread");
+  // Sidebar badges + notification count
+  const [{ count: unreadCount }, { count: pendingConcernsCount }] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("recipient_id", user.id)
+      .eq("status", "unread"),
+    supabase
+      .from("concerns")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["pending", "in_review"]),
+  ]);
+
+  const sidebarBadges: Record<string, number> = {};
+  if (pendingConcernsCount && pendingConcernsCount > 0) {
+    sidebarBadges["/staff/concerns"] = pendingConcernsCount;
+  }
 
   return (
     <StaffShell
       userName={userName}
+      userSubtitle={userSubtitle}
       role={role as "staff" | "admin"}
       notificationCount={unreadCount || 0}
+      sidebarBadges={sidebarBadges}
     >
       {children}
     </StaffShell>

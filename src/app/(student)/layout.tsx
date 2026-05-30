@@ -7,10 +7,6 @@ import { isProfileComplete } from "@/lib/utils/profile-completeness";
 /**
  * Student Layout — fetches user + student profile, enforces the
  * "profile must be complete" gate, and wraps pages in the AppShell.
- *
- * Profile gate: if a student tries to access ANY student page other than
- * /profile while their profile is incomplete, they're redirected to /profile.
- * /profile itself is allowed (that's where the wizard lives).
  */
 export default async function StudentLayout({
   children,
@@ -26,11 +22,10 @@ export default async function StudentLayout({
     redirect("/login");
   }
 
-  // Read the request pathname from header (set by middleware)
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
 
-  // Fetch student profile for the sidebar + completion check
+  // Fetch student profile for the header subtitle + completion check
   const { data: studentRaw } = await supabase
     .from("students")
     .select(
@@ -63,7 +58,7 @@ export default async function StudentLayout({
 
   const profileIsComplete = isProfileComplete(studentData);
 
-  // Gate: redirect to /profile if profile is incomplete and they're not already there
+  // Gate: redirect to /profile if incomplete and not already there
   if (!profileIsComplete && !pathname.startsWith("/profile")) {
     redirect("/profile");
   }
@@ -72,19 +67,53 @@ export default async function StudentLayout({
     ? `${studentData.first_name} ${studentData.last_name}`.trim() || user.email || "Student"
     : user.email || "Student";
 
-  // Get unread message count for notification badge
-  const { count: unreadCount } = await supabase
-    .from("messages")
-    .select("*", { count: "exact", head: true })
-    .eq("recipient_id", user.id)
-    .eq("status", "unread");
+  // Header subtitle: "BSIT · 4th Year" style
+  const userSubtitle =
+    studentData?.program && studentData?.year_level
+      ? `${studentData.program} · ${studentData.year_level}`
+      : undefined;
+
+  // Sidebar badges — counts of pending concerns + unread messages
+  const studentId = await (async () => {
+    const { data } = await supabase
+      .from("students")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return (data as { id: string } | null)?.id;
+  })();
+
+  const [{ count: unreadCount }, { count: pendingConcernsCount }] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("recipient_id", user.id)
+      .eq("status", "unread"),
+    studentId
+      ? supabase
+          .from("concerns")
+          .select("*", { count: "exact", head: true })
+          .eq("student_id", studentId)
+          .in("status", ["pending", "in_review"])
+      : Promise.resolve({ count: 0 } as { count: number | null }),
+  ]);
+
+  const sidebarBadges: Record<string, number> = {};
+  if (pendingConcernsCount && pendingConcernsCount > 0) {
+    sidebarBadges["/concerns"] = pendingConcernsCount;
+  }
+  if (unreadCount && unreadCount > 0) {
+    sidebarBadges["/messages"] = unreadCount;
+  }
 
   return (
     <StudentShell
       userName={userName}
+      userSubtitle={userSubtitle}
       userAvatar={studentData?.photo_url || undefined}
       photoIsProvisional={studentData?.photo_is_provisional ?? false}
       notificationCount={unreadCount || 0}
+      sidebarBadges={sidebarBadges}
     >
       {children}
     </StudentShell>

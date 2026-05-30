@@ -20,56 +20,92 @@ import {
   Users,
   CalendarDays,
   X,
+  IdCard,
+  FolderOpen,
+  ShieldAlert,
+  BarChart3,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { AvatarWithDot } from "@/components/profile/avatar-with-dot";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
 }
 
-const studentNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Profile", href: "/profile", icon: User },
-  { label: "Enrollment", href: "/enrollment", icon: BookOpen },
-  { label: "Schedule", href: "/schedule", icon: Calendar },
-  { label: "Grades", href: "/grades", icon: GraduationCap },
-  { label: "Concerns", href: "/concerns", icon: MessageSquare },
-  { label: "Messages", href: "/messages", icon: FileText },
-  { label: "Documents", href: "/documents", icon: FileText },
-  { label: "Violations", href: "/violations", icon: AlertTriangle },
-  { label: "Evaluation", href: "/evaluation", icon: ClipboardCheck },
-  { label: "Graduation", href: "/graduation", icon: Award },
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+/**
+ * Student navigation — grouped into "Main" and "Account" matching the mockup.
+ */
+const studentSections: NavSection[] = [
+  {
+    label: "Main",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Enrollment", href: "/enrollment", icon: BookOpen },
+      { label: "Schedule", href: "/schedule", icon: Calendar },
+      { label: "Grades", href: "/grades", icon: GraduationCap },
+      { label: "Concerns", href: "/concerns", icon: MessageSquare },
+      { label: "Violations", href: "/violations", icon: ShieldAlert },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { label: "Digital ID", href: "/id", icon: IdCard },
+      { label: "Documents", href: "/documents", icon: FolderOpen },
+      { label: "Messages", href: "/messages", icon: FileText },
+      { label: "Profile", href: "/profile", icon: User },
+      { label: "Settings", href: "/settings", icon: Settings },
+    ],
+  },
 ];
 
-const staffNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard },
-  { label: "Concerns", href: "/staff/concerns", icon: MessageSquare },
-  { label: "Violations", href: "/staff/violations", icon: AlertTriangle },
-  { label: "QR Scanner", href: "/staff/scanner", icon: ScanLine },
-  { label: "Students", href: "/staff/students", icon: Users },
-  { label: "Messages", href: "/staff/messages", icon: FileText },
-  { label: "Calendar", href: "/staff/calendar", icon: CalendarDays },
+/**
+ * Staff navigation — grouped into "Console" and "Compliance" matching the
+ * admin mockup screens.
+ */
+const staffSections: NavSection[] = [
+  {
+    label: "Console",
+    items: [
+      { label: "Overview", href: "/staff/dashboard", icon: LayoutDashboard },
+      { label: "Concerns", href: "/staff/concerns", icon: MessageSquare },
+      { label: "Violations", href: "/staff/violations", icon: AlertTriangle },
+      { label: "Students", href: "/staff/students", icon: Users },
+      { label: "QR Scanner", href: "/staff/scanner", icon: ScanLine },
+      { label: "Files", href: "/staff/files", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "Compliance",
+    items: [
+      { label: "Messages", href: "/staff/messages", icon: FileText },
+      { label: "Calendar", href: "/staff/calendar", icon: CalendarDays },
+      { label: "Reports", href: "/staff/reports", icon: BarChart3 },
+      { label: "Settings", href: "/staff/settings", icon: Settings },
+    ],
+  },
 ];
 
 interface SidebarProps {
   role: "student" | "staff" | "admin";
-  userName?: string;
-  userAvatar?: string;
-  photoIsProvisional?: boolean;
+  /** Optional per-route badge counts for sidebar items (e.g. { "/concerns": 3 }) */
+  badges?: Record<string, number>;
   open?: boolean;
   onClose?: () => void;
 }
 
-export function Sidebar({ role, userName, userAvatar, photoIsProvisional, open, onClose }: SidebarProps) {
+export function Sidebar({ role, badges, open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const navItems = role === "student" ? studentNavItems : staffNavItems;
+  const sections = role === "student" ? studentSections : staffSections;
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -82,116 +118,98 @@ export function Sidebar({ role, userName, userAvatar, photoIsProvisional, open, 
       {/* Mobile overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — sits below the TUP header (top-[60px]) on desktop;
+          full-height slide-out drawer on mobile */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 lg:translate-x-0",
+          "fixed lg:sticky inset-y-0 lg:inset-auto left-0 z-40 lg:z-auto",
+          "w-60 flex flex-col bg-white border-r border-border",
+          "transition-transform duration-200 lg:translate-x-0",
+          "lg:top-[60px] lg:h-[calc(100vh-60px)]",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Header */}
-        <div className="flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-tup-maroon-900 text-white font-bold text-sm">
-              TUP
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">
-                TUP-Manila
-              </span>
-              <span className="text-xs text-sidebar-foreground/60">
-                {role === "student" ? "Student Portal" : "Staff Portal"}
-              </span>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden text-sidebar-foreground"
-            onClick={onClose}
-          >
+        {/* Mobile-only close button (header is hidden on mobile sidebar) */}
+        <div className="lg:hidden flex h-14 items-center justify-between px-4 border-b border-border bg-tup-maroon-600 text-white">
+          <span className="text-sm font-semibold">Navigation</span>
+          <button onClick={onClose} aria-label="Close menu">
             <X className="h-5 w-5" />
-          </Button>
+          </button>
         </div>
-
-        <Separator className="bg-sidebar-border" />
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/dashboard" &&
-                  item.href !== "/staff/dashboard" &&
-                  pathname.startsWith(item.href));
+          {sections.map((section, idx) => (
+            <div key={section.label} className={cn(idx > 0 && "mt-5")}>
+              {/* Section label — Geist Mono uppercase per mockup */}
+              <div className="px-3 pb-1 text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground">
+                {section.label}
+              </div>
 
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5 shrink-0" />
-                    <span>{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+              <ul className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== "/dashboard" &&
+                      item.href !== "/staff/dashboard" &&
+                      pathname.startsWith(item.href + "/"));
+                  const badge = badges?.[item.href];
+
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onClose}
+                        className={cn(
+                          "group flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors",
+                          isActive
+                            ? "bg-tup-maroon-600 text-white"
+                            : "text-foreground hover:bg-muted"
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground"
+                          )}
+                        />
+                        <span className="truncate">{item.label}</span>
+                        {badge !== undefined && badge > 0 && (
+                          <span
+                            className={cn(
+                              "ml-auto font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                              isActive
+                                ? "bg-white/25 text-white"
+                                : "bg-tup-gold-500 text-tup-maroon-700"
+                            )}
+                          >
+                            {badge}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
-        <Separator className="bg-sidebar-border" />
-
         {/* Footer */}
-        <div className="p-3 space-y-1">
-          <Link
-            href={role === "student" ? "/settings" : "/staff/settings"}
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
-          >
-            <Settings className="h-5 w-5" />
-            <span>Settings</span>
-          </Link>
+        <div className="border-t border-border px-3 py-3">
           <button
             onClick={handleSignOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive transition-colors"
+            className="flex w-full items-center gap-2.5 px-3 py-2 rounded-md text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
-            <LogOut className="h-5 w-5" />
-            <span>Sign Out</span>
+            <LogOut className="h-4 w-4" />
+            Sign out
           </button>
-          {userName && (
-            <div className="flex items-center gap-2 px-3 py-2">
-              <AvatarWithDot
-                src={userAvatar}
-                fallback={userName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)}
-                isProvisional={photoIsProvisional}
-                className="h-7 w-7"
-                fallbackClassName="bg-sidebar-accent text-sidebar-accent-foreground text-[10px]"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-sidebar-foreground/50">Signed in as</p>
-                <p className="text-xs font-medium text-sidebar-foreground/80 truncate">
-                  {userName}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </aside>
     </>

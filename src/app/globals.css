@@ -7,13 +7,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Body font: Inter (set via :root; --font-sans CSS var is injected by next/font) */
+  /* Geist Sans for body and headings (Vercel's institutional sans-serif).
+     Matches the mockup precisely. */
   --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
-  /* Display/heading font: Plus Jakarta Sans */
-  --font-display: var(--font-display), var(--font-sans), system-ui, sans-serif;
-  --font-heading: var(--font-display);
-  /* Mono font: JetBrains Mono */
+  /* No separate display font in this design — Geist Sans handles both. */
+  --font-display: var(--font-sans), system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  /* Geist Mono for breadcrumbs, badges, IDs, audit timestamps. */
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,100 +45,133 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* TUP Brand Colors */
-  --color-tup-maroon-50: #fdf2f2;
-  --color-tup-maroon-100: #fde8e8;
-  --color-tup-maroon-200: #fbd5d5;
-  --color-tup-maroon-300: #f8b4b4;
-  --color-tup-maroon-400: #f98080;
-  --color-tup-maroon-500: #f05252;
-  --color-tup-maroon-600: #e02424;
-  --color-tup-maroon-700: #c81e1e;
-  --color-tup-maroon-800: #9b1c1c;
-  --color-tup-maroon-900: #8B1A1A;
-  --color-tup-maroon-950: #5a1010;
-  --color-tup-gold-50: #fffbeb;
-  --color-tup-gold-100: #fef3c7;
-  --color-tup-gold-400: #fbbf24;
-  --color-tup-gold-600: #d97706;
+  /* Mockup uses 8px base radius (was 0.625rem = 10px). Tighter, more institutional. */
+  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-xl: calc(var(--radius) * 2);
+  --radius-2xl: calc(var(--radius) * 2.5);
+
+  /* ==========================================================
+     TUP INSTITUTIONAL PALETTE
+     ==========================================================
+     Matches the mockup precisely:
+     --tup-maroon: #7A1F2B (primary brand)
+     --tup-gold:   #d4a017 (accent)
+     ========================================================== */
+  --color-tup-maroon-50:  #fbf3f4;
+  --color-tup-maroon-100: #f4dde0;
+  --color-tup-maroon-200: #e9b9c0;
+  --color-tup-maroon-300: #d98290;
+  --color-tup-maroon-400: #c14e62;
+  --color-tup-maroon-500: #9b2c3a;
+  --color-tup-maroon-600: #7a1f2b;
+  --color-tup-maroon-700: #5e1721;
+  --color-tup-maroon-800: #4a121a;
+  --color-tup-maroon-900: #320c12;
+  --color-tup-maroon-950: #1c060a;
+
+  --color-tup-gold-50:  #fefce8;
+  --color-tup-gold-100: #fef9c3;
+  --color-tup-gold-200: #fef08a;
+  --color-tup-gold-300: #fde68a;
+  --color-tup-gold-400: #f5e6b3;
+  --color-tup-gold-500: #d4a017;
+  --color-tup-gold-600: #b58610;
+  --color-tup-gold-700: #92660d;
+  --color-tup-gold-800: #6e4d0a;
+
+  /* AI accent — distinct violet to mark AI surfaces (per the mockup
+     and trust-UX principle of differentiating AI output from human/system
+     output). Used for AI badges, panel headers, and module variants. */
+  --color-ai-accent:        #6d28d9;
+  --color-ai-accent-bg:     #f5f3ff;
+  --color-ai-accent-border: #ddd6fe;
 }
 
 :root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  /* TUP Maroon as primary */
-  --primary: oklch(0.35 0.12 20);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.01 80);
-  --secondary-foreground: oklch(0.2 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.96 0.01 80);
-  --accent-foreground: oklch(0.2 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.91 0 0);
-  --input: oklch(0.91 0 0);
-  --ring: oklch(0.35 0.12 20);
-  --chart-1: oklch(0.35 0.12 20);
-  --chart-2: oklch(0.75 0.15 80);
-  --chart-3: oklch(0.55 0.1 20);
-  --chart-4: oklch(0.65 0.12 160);
-  --chart-5: oklch(0.45 0.08 250);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.22 0.08 20);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.85 0.1 80);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.28 0.06 20);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.32 0.06 20);
-  --sidebar-ring: oklch(0.85 0.1 80);
+  /* Light mode: institutional white with Stone-50 page bg */
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+
+  /* PRIMARY = TUP Maroon #7A1F2B */
+  --primary: #7a1f2b;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f5f5f4;
+  --secondary-foreground: #1c1917;
+
+  /* Muted = Stone-100 (background for app body in mockup) */
+  --muted: #f5f5f4;
+  --muted-foreground: #737373;
+
+  /* Accent = Stone-50, slightly lighter than muted */
+  --accent: #fafaf9;
+  --accent-foreground: #1c1917;
+
+  --destructive: #dc2626;
+
+  --border: #e7e5e4;
+  --input: #e7e5e4;
+  --ring: #7a1f2b;
+
+  /* Charts: maroon → gold → violet → muted spectrum */
+  --chart-1: #7a1f2b; /* maroon */
+  --chart-2: #d4a017; /* gold */
+  --chart-3: #6d28d9; /* AI violet */
+  --chart-4: #16a34a; /* success green */
+  --chart-5: #2563eb; /* info blue */
+
+  --radius: 0.5rem; /* 8px base — institutional, tighter than shadcn default */
+
+  /* Sidebar stays white in the new design; active states use TUP maroon */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #7a1f2b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f4;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: #e7e5e4;
+  --sidebar-ring: #7a1f2b;
 }
 
 .dark {
-  --background: oklch(0.13 0.01 20);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.18 0.01 20);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.18 0.01 20);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.15 20);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.25 0.02 20);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.25 0.02 20);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.25 0.02 20);
-  --accent-foreground: oklch(0.95 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.65 0.15 20);
-  --chart-1: oklch(0.65 0.15 20);
-  --chart-2: oklch(0.75 0.15 80);
-  --chart-3: oklch(0.55 0.1 20);
-  --chart-4: oklch(0.65 0.12 160);
-  --chart-5: oklch(0.45 0.08 250);
-  --sidebar: oklch(0.15 0.02 20);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.85 0.1 80);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.22 0.03 20);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.5 0 0);
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --popover: #171717;
+  --popover-foreground: #fafafa;
+  --primary: #c14e62;
+  --primary-foreground: #ffffff;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --border: #292524;
+  --input: #292524;
+  --ring: #c14e62;
+  --chart-1: #c14e62;
+  --chart-2: #f5e6b3;
+  --chart-3: #a78bfa;
+  --chart-4: #4ade80;
+  --chart-5: #60a5fa;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #c14e62;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f1c1b;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #292524;
+  --sidebar-ring: #c14e62;
 }
 
 @layer base {
@@ -144,67 +179,56 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Body background is Stone-100 so cards float on a subtle gray —
+       matches mockup. Per-page main bg stays white via tup-content. */
+    background: var(--muted);
+    color: var(--foreground);
+    @apply antialiased;
+    font-feature-settings: "ss01", "ss03", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   html {
     @apply font-sans scroll-smooth;
   }
+  /* Headings use Geist Sans with tight tracking — institutional and clean */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight;
+    @apply font-sans;
+    letter-spacing: -0.02em;
   }
-  /* Tabular numbers for stat values — keeps things aligned */
+  /* Tabular numbers for stat values */
   .font-mono, code, pre, kbd, samp {
     font-feature-settings: "tnum", "calt";
   }
 }
 
-/* Custom scrollbar for the app */
+/* Custom scrollbar (Stone-300) */
 @layer base {
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: oklch(0.7 0 0);
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.5 0 0);
-  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
 }
 
-/* Reusable gradient utilities for hero sections */
 @layer utilities {
+  /* Login hero gradient (institutional maroon) */
   .bg-tup-gradient {
-    background: linear-gradient(
-      135deg,
-      oklch(0.32 0.13 20) 0%,
-      oklch(0.22 0.08 20) 50%,
-      oklch(0.18 0.06 30) 100%
-    );
+    background: linear-gradient(135deg, #7a1f2b 0%, #5e1721 100%);
   }
+  /* Card-style soft TUP gradient for hero strips */
   .bg-tup-gradient-soft {
-    background: linear-gradient(
-      135deg,
-      oklch(0.95 0.02 20) 0%,
-      oklch(0.97 0.01 80) 50%,
-      oklch(0.95 0.03 80) 100%
-    );
+    background: linear-gradient(135deg, #fbf3f4 0%, #fef9c3 100%);
   }
   .text-balance {
     text-wrap: balance;
   }
-  /* Subtle grid pattern for hero backgrounds */
-  .bg-grid-pattern {
-    background-image:
-      linear-gradient(to right, oklch(1 0 0 / 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, oklch(1 0 0 / 0.05) 1px, transparent 1px);
-    background-size: 32px 32px;
+  /* Decorative gold radial blob — used in login screen */
+  .bg-tup-gold-blob {
+    background: radial-gradient(circle, rgba(212, 160, 23, 0.15), transparent 70%);
   }
+  /* AI accent surfaces */
+  .bg-ai-accent      { background: #6d28d9; }
+  .bg-ai-accent-soft { background: #f5f3ff; }
+  .border-ai-accent  { border-color: #ddd6fe; }
+  .text-ai-accent    { color: #6d28d9; }
 }

@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   User,
-  BookOpen,
   Calendar,
-  GraduationCap,
   MessageSquare,
   FileText,
   AlertTriangle,
@@ -24,6 +22,10 @@ import {
   FolderOpen,
   ShieldAlert,
   BarChart3,
+  Bell,
+  Activity,
+  HeartPulse,
+  ScrollText,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -41,53 +43,83 @@ interface NavSection {
 }
 
 /**
- * Student navigation — grouped into "Main" and "Account" matching the mockup.
+ * Student navigation for the OSA System.
+ *
+ * Maps to requirement #5: ID validation and status, own schedule
+ * (appointments, not classes), notifications, scholarship eligibility,
+ * violations list, and clearance status.
  */
 const studentSections: NavSection[] = [
   {
     label: "Main",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Enrollment", href: "/enrollment", icon: BookOpen },
-      { label: "Schedule", href: "/schedule", icon: Calendar },
-      { label: "Grades", href: "/grades", icon: GraduationCap },
+      { label: "My Appointments", href: "/appointments", icon: Calendar },
+      { label: "Notifications", href: "/notifications", icon: Bell },
+      { label: "My Violations", href: "/violations", icon: ShieldAlert },
       { label: "Concerns", href: "/concerns", icon: MessageSquare },
-      { label: "Violations", href: "/violations", icon: ShieldAlert },
+    ],
+  },
+  {
+    label: "Services",
+    items: [
+      { label: "Scholarships", href: "/scholarships", icon: Award },
+      { label: "Clearance", href: "/clearance", icon: ClipboardCheck },
+      { label: "Digital ID", href: "/id", icon: IdCard },
+      { label: "Academic Records", href: "/records", icon: FileText },
+      { label: "Documents", href: "/documents", icon: FolderOpen },
     ],
   },
   {
     label: "Account",
     items: [
-      { label: "Digital ID", href: "/id", icon: IdCard },
-      { label: "Documents", href: "/documents", icon: FolderOpen },
-      { label: "Messages", href: "/messages", icon: FileText },
       { label: "Profile", href: "/profile", icon: User },
+      { label: "My Schedule", href: "/availability", icon: CalendarDays },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
   },
 ];
 
 /**
- * Staff navigation — grouped into "Console" and "Compliance" matching the
- * admin mockup screens.
+ * Staff navigation for the OSA console.
+ *
+ * Maps to requirement #4: schedule repercussion appointments, see which
+ * students have violations, notify students. Plus the ML early warning
+ * system, which is the staff-facing headline feature.
  */
 const staffSections: NavSection[] = [
   {
     label: "Console",
     items: [
       { label: "Overview", href: "/staff/dashboard", icon: LayoutDashboard },
-      { label: "Concerns", href: "/staff/concerns", icon: MessageSquare },
-      { label: "Violations", href: "/staff/violations", icon: AlertTriangle },
+      { label: "Cases", href: "/staff/cases", icon: AlertTriangle },
+      { label: "Hearings", href: "/staff/hearings", icon: CalendarDays },
       { label: "Students", href: "/staff/students", icon: Users },
+      { label: "Concerns", href: "/staff/concerns", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Early Warning",
+    items: [
+      { label: "At-Risk Students", href: "/staff/risk", icon: Activity },
+      { label: "Interventions", href: "/staff/interventions", icon: HeartPulse },
+      { label: "Guidance", href: "/staff/guidance", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Services",
+    items: [
+      { label: "Scholarships", href: "/staff/scholarships", icon: Award },
+      { label: "Clearance", href: "/staff/clearance", icon: ClipboardCheck },
+      { label: "ID Validation", href: "/staff/id-validation", icon: IdCard },
       { label: "QR Scanner", href: "/staff/scanner", icon: ScanLine },
-      { label: "Files", href: "/staff/files", icon: FolderOpen },
+      { label: "Document Review", href: "/staff/documents", icon: FolderOpen },
     ],
   },
   {
     label: "Compliance",
     items: [
-      { label: "Messages", href: "/staff/messages", icon: FileText },
-      { label: "Calendar", href: "/staff/calendar", icon: CalendarDays },
+      { label: "Audit Log", href: "/staff/audit", icon: ScrollText },
       { label: "Reports", href: "/staff/reports", icon: BarChart3 },
       { label: "Settings", href: "/staff/settings", icon: Settings },
     ],

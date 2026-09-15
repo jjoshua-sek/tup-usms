@@ -16,8 +16,20 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface DpaConsentDialogProps {
-  trigger: React.ReactNode;
-  /** Called when student clicks "I understand and agree" */
+  /**
+   * Optional trigger element. Omit when driving the dialog with the
+   * `open` / `onOpenChange` pair instead.
+   *
+   * IMPORTANT: never nest this trigger inside a `<label htmlFor=...>`.
+   * The browser retargets clicks inside a label to its associated form
+   * control, which swallows the trigger's click and makes the dialog
+   * unopenable.
+   */
+  trigger?: React.ReactNode;
+  /** Controlled open state. When provided, internal state is bypassed. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Called when the student clicks "I understand and agree". */
   onAccept: () => void;
 }
 
@@ -34,8 +46,22 @@ interface DpaConsentDialogProps {
  * The acceptance event is timestamped + IP-logged via the audit_logs table
  * (handled by the calling Server Action).
  */
-export function DpaConsentDialog({ trigger, onAccept }: DpaConsentDialogProps) {
-  const [open, setOpen] = useState(false);
+export function DpaConsentDialog({
+  trigger,
+  open: controlledOpen,
+  onOpenChange,
+  onAccept,
+}: DpaConsentDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Controlled when the caller supplies `open`; otherwise self-managed.
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  };
 
   const handleAccept = () => {
     onAccept();
@@ -44,7 +70,7 @@ export function DpaConsentDialog({ trigger, onAccept }: DpaConsentDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">

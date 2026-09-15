@@ -56,6 +56,9 @@ export function Step1Personal({
 }: Step1PersonalProps) {
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
+  // Lifted out of DpaConsentDialog so both the "Read the notice" button and
+  // the checkbox can open it. See the structure note at the consent block.
+  const [dpaDialogOpen, setDpaDialogOpen] = useState(false);
 
   const {
     register,
@@ -273,9 +276,9 @@ export function Step1Personal({
                 <Input type="email" {...register("email_address")} disabled={isPending} />
               </Field>
               <Field
-                label="Cellphone (+63XXXXXXXXXX)"
+                label="Cellphone"
                 error={errors.cellphone?.message}
-                hint="Format: +639171234567"
+                hint="e.g. 09171234567 — any common format works"
               >
                 <Input {...register("cellphone")} disabled={isPending} placeholder="+63" />
               </Field>
@@ -309,7 +312,7 @@ export function Step1Personal({
                 label="ZIP Code"
                 required
                 error={errors.address_zip?.message}
-                hint="4 digits"
+                hint="e.g. 1008"
               >
                 <Input {...register("address_zip")} disabled={isPending} />
               </Field>
@@ -324,57 +327,84 @@ export function Step1Personal({
 
           <Separator />
 
-          {/* DPA Consent */}
+          {/* ==========================================================
+              DPA CONSENT
+
+              STRUCTURE NOTE: the dialog trigger must NOT be nested inside
+              a <label htmlFor="dpa_consent">. Browsers retarget any click
+              inside a label to its associated form control, which swallows
+              the trigger's click and makes the dialog impossible to open.
+              The dialog is therefore driven by explicit open state, and
+              both the button and the checkbox can raise it.
+              ========================================================== */}
           <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-primary/10 p-2">
+              <div className="rounded-lg bg-primary/10 p-2 shrink-0">
                 <Shield className="h-4 w-4 text-primary" />
               </div>
-              <div className="flex-1 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                  Data Privacy Act Consent — Required
-                </p>
-                <p className="text-sm">
-                  Per RA 10173, we need your explicit consent to collect and
-                  process your personal information. Read the notice in detail
-                  before agreeing.
-                </p>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                    Data Privacy Act Consent — Required
+                  </p>
+                  <p className="text-sm mt-1">
+                    Per RA 10173, we need your explicit consent before
+                    collecting and processing your personal information.
+                  </p>
+                </div>
 
-                <div className="flex items-start gap-2 pt-2">
+                {/* Primary action — reading the notice is the required step,
+                    so it gets a real button rather than an inline link. */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isPending}
+                  onClick={() => setDpaDialogOpen(true)}
+                  className="border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  <Shield className="mr-1.5 h-3.5 w-3.5" />
+                  {dpaConsent
+                    ? "Review the Data Privacy Notice"
+                    : "Read the Data Privacy Notice"}
+                </Button>
+
+                {/* Status row. The checkbox reflects consent; clicking it
+                    while unchecked opens the notice, because consent cannot
+                    be given without reading it first. */}
+                <div className="flex items-start gap-2 pt-1">
                   <Checkbox
                     id="dpa_consent"
                     checked={!!dpaConsent}
                     disabled={isPending}
                     onCheckedChange={(checked) => {
-                      // Don't allow self-checking — must go through the dialog
-                      if (!checked) {
+                      if (checked) {
+                        // Consent must be informed: route through the notice
+                        // rather than letting a bare tick stand as consent.
+                        setDpaDialogOpen(true);
+                      } else {
                         setValue("dpa_consent", false as unknown as true, {
                           shouldValidate: true,
                         });
                       }
                     }}
+                    className="mt-0.5"
                   />
                   <label
                     htmlFor="dpa_consent"
-                    className="text-sm flex-1 cursor-default select-none"
+                    className="text-sm flex-1 cursor-pointer select-none"
                   >
-                    I have read and consent to the collection and processing of
-                    my personal data per the{" "}
-                    <DpaConsentDialog
-                      trigger={
-                        <span className="text-primary font-medium underline-offset-2 hover:underline cursor-pointer">
-                          Data Privacy Notice
-                        </span>
-                      }
-                      onAccept={() =>
-                        setValue("dpa_consent", true as never, {
-                          shouldValidate: true,
-                        })
-                      }
-                    />
-                    .
+                    I have read and consent to the collection and processing
+                    of my personal data.
                   </label>
                 </div>
+
+                {!dpaConsent && (
+                  <p className="text-xs text-muted-foreground">
+                    Open the notice above and choose &ldquo;I understand and
+                    agree&rdquo; to continue.
+                  </p>
+                )}
 
                 {errors.dpa_consent && (
                   <p className="text-xs text-destructive">
@@ -384,6 +414,16 @@ export function Step1Personal({
               </div>
             </div>
           </div>
+
+          {/* Rendered outside the consent card so no ancestor label can
+              intercept its interactions. */}
+          <DpaConsentDialog
+            open={dpaDialogOpen}
+            onOpenChange={setDpaDialogOpen}
+            onAccept={() =>
+              setValue("dpa_consent", true as never, { shouldValidate: true })
+            }
+          />
 
           <Button
             type="submit"

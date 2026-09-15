@@ -115,8 +115,9 @@ export function Step2Family({ initialData, onComplete, onBack }: Step2FamilyProp
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Source of Financial Support</Label>
+              {/* `?? ""` keeps the Select controlled from first render. */}
               <Select
-                value={watch("financial_support")}
+                value={watch("financial_support") ?? ""}
                 onValueChange={(v) =>
                   v &&
                   setValue("financial_support", v as (typeof FINANCIAL_SUPPORT)[number])

@@ -125,7 +125,7 @@ export function ConcernForm({ trigger }: ConcernFormProps) {
               Category <span className="text-destructive">*</span>
             </Label>
             <Select
-              value={watch("category")}
+              value={watch("category") ?? ""}
               onValueChange={(value) =>
                 setValue("category", value as (typeof CONCERN_CATEGORIES)[number], {
                   shouldValidate: true,

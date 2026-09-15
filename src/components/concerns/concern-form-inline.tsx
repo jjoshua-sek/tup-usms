@@ -131,7 +131,7 @@ export function ConcernFormInline() {
           error={errors.category?.message}
         >
           <Select
-            value={watch("category")}
+            value={watch("category") ?? ""}
             onValueChange={(v) =>
               v &&
               setValue("category", v as (typeof CONCERN_CATEGORIES)[number], {

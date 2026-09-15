@@ -210,9 +210,13 @@ export function Step1Personal({
               <Field label="Birth Place" error={errors.birth_place?.message}>
                 <Input {...register("birth_place")} disabled={isPending} placeholder="City, Province" />
               </Field>
+              {/* `?? ""` on the Select values below keeps them controlled from
+                  the first render. Passing undefined makes Base UI treat the
+                  Select as uncontrolled, and switching to a real value later
+                  trips React's uncontrolled-to-controlled warning. */}
               <Field label="Gender" required error={errors.gender?.message}>
                 <Select
-                  value={watch("gender")}
+                  value={watch("gender") ?? ""}
                   onValueChange={(v) =>
                     v && setValue("gender", v as (typeof GENDERS)[number], { shouldValidate: true })
                   }

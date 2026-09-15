@@ -40,6 +40,107 @@ async function getAuthenticatedStudent() {
   return { supabase, user, studentNumber, error: null };
 }
 
+/**
+ * Normalizes a Philippine mobile number to +63XXXXXXXXXX.
+ *
+ * Accepts every form students actually type:
+ *   09171234567      → +639171234567
+ *   +63 917 123 4567 → +639171234567
+ *   0917-123-4567    → +639171234567
+ *   639171234567     → +639171234567
+ *
+ * Returns null for empty input. Returns the digits-only original if the
+ * value doesn't match a recognizable PH pattern — better to store
+ * something the student can correct later than to silently discard it.
+ */
+function normalizePhoneNumber(input: string | undefined | null): string | null {
+  if (!input) return null;
+
+  const digits = input.replace(/\D/g, "");
+  if (digits.length === 0) return null;
+
+  // 09171234567 → drop leading 0, prefix +63
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return `+63${digits.slice(1)}`;
+  }
+  // 639171234567 (with or without a typed +)
+  if (digits.length === 12 && digits.startsWith("63")) {
+    return `+${digits}`;
+  }
+  // 9171234567 — typed without the leading zero
+  if (digits.length === 10 && digits.startsWith("9")) {
+    return `+63${digits}`;
+  }
+
+  // Unrecognized shape (international number, typo). Preserve it rather
+  // than dropping data the student entered deliberately.
+  return input.trim();
+}
+
+/**
+ * Translates a Postgres error into something a student can act on.
+ *
+ * Without this, a CHECK-constraint violation surfaces as the generic
+ * "Failed to save. Please try again." — which is the worst possible
+ * message, because retrying produces the identical failure. The student
+ * has no way to learn that it was the phone field.
+ */
+function describeDbError(err: {
+  message?: string;
+  code?: string;
+  details?: string;
+}): string {
+  const msg = err.message ?? "";
+
+  // 23514 = check_violation
+  if (err.code === "23514" || msg.includes("violates check constraint")) {
+    if (msg.includes("cellphone")) {
+      return "That phone number format wasn't accepted. Try 09171234567 or leave it blank.";
+    }
+    if (msg.includes("address_zip")) {
+      return "ZIP code must be 3–6 digits (e.g. 1008).";
+    }
+    if (msg.includes("lrn")) {
+      return "LRN must be exactly 12 digits, or left blank.";
+    }
+    if (msg.includes("gender")) {
+      return "Please select a gender from the list.";
+    }
+    if (msg.includes("civil_status")) {
+      return "Please select a civil status from the list, or leave it blank.";
+    }
+    return "One of the fields has an invalid value. Please review your entries.";
+  }
+
+  // 23505 = unique_violation
+  if (err.code === "23505" || msg.includes("duplicate key")) {
+    if (msg.includes("student_number")) {
+      return "A profile already exists for this student number. Contact the Registrar.";
+    }
+    return "This record already exists.";
+  }
+
+  // 23502 = not_null_violation
+  if (err.code === "23502" || msg.includes("null value in column")) {
+    const match = msg.match(/column "(\w+)"/);
+    return match
+      ? `Required field missing: ${match[1].replace(/_/g, " ")}.`
+      : "A required field is missing.";
+  }
+
+  // 42P10 = invalid_column_reference — the ON CONFLICT bug this file used
+  // to hit. Surfaced explicitly so it is unmistakable if it recurs.
+  if (msg.includes("no unique or exclusion constraint")) {
+    return "Database configuration issue. Please run migration 00014 and try again.";
+  }
+
+  // Fall through with the raw message: an unhelpful specific error still
+  // beats a helpful-sounding generic one, because it is reportable.
+  return msg
+    ? `Could not save: ${msg}`
+    : "Failed to save. Please try again.";
+}
+
 // ============================================================
 // STEP 1: Personal info + DPA consent
 // ============================================================
@@ -84,8 +185,12 @@ export async function saveProfileStep1(formData: FormData): Promise<ActionResult
     gender: data.gender,
     citizenship: data.citizenship,
     religion: data.religion ? sanitizeText(data.religion, 100) : null,
+    // Empty string violates the CHECK constraint, which permits NULL or a
+    // value from the allowed set — never ''.
     civil_status: data.civil_status || null,
-    cellphone: data.cellphone || null,
+    // Normalized to +63XXXXXXXXXX so stored numbers are consistent
+    // regardless of how the student typed them.
+    cellphone: normalizePhoneNumber(data.cellphone),
     email_address: data.email_address,
     address_unit: data.address_unit ? sanitizeText(data.address_unit, 100) : null,
     address_street: data.address_street ? sanitizeText(data.address_street, 200) : null,
@@ -100,25 +205,50 @@ export async function saveProfileStep1(formData: FormData): Promise<ActionResult
     dpa_consent_date: new Date().toISOString(),
   };
 
-  // Upsert: insert if no row, update if exists
+  // Explicit check-then-write rather than upsert.
+  //
+  // upsert({ onConflict: "user_id" }) requires a UNIQUE constraint on that
+  // column; the original schema created only a plain index, so every
+  // upsert failed. Migration 00014 adds the constraint, but doing the
+  // branch explicitly is clearer and yields far better error messages —
+  // which matters because this is the first thing a new student ever does.
+  const { data: existingRaw } = await supabase
+    .from("students")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const existing = existingRaw as { id: string } | null;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase types regenerated separately
-  const { error } = await (supabase as any).from("students").upsert(
-    {
+  const db = supabase as any;
+  let writeError: { message?: string; code?: string; details?: string } | null = null;
+
+  if (existing) {
+    const { error } = await db
+      .from("students")
+      .update(sanitized)
+      .eq("user_id", user.id);
+    writeError = error;
+  } else {
+    const { error } = await db.from("students").insert({
       user_id: user.id,
       student_number: studentNumber,
-      // Default placeholders for required fields not yet captured
+      // Placeholders for NOT NULL academic columns the student has not
+      // reached yet. The Registrar corrects these later; see the column
+      // comments added in migration 00014.
       campus: "Manila",
       department: "TBD",
       program: "TBD",
       year_level: "1st Year",
       ...sanitized,
-    },
-    { onConflict: "user_id" }
-  );
+    });
+    writeError = error;
+  }
 
-  if (error) {
-    console.error("Step 1 save failed:", error);
-    return { error: "Failed to save. Please try again." };
+  if (writeError) {
+    console.error("Step 1 save failed:", writeError);
+    return { error: describeDbError(writeError) };
   }
 
   await logAuditEvent(user.id, "profile_update", "students/step1", {
@@ -170,7 +300,7 @@ export async function saveProfileStep2(formData: FormData): Promise<ActionResult
 
   if (error) {
     console.error("Step 2 save failed:", error);
-    return { error: "Failed to save. Please try again." };
+    return { error: describeDbError(error) };
   }
 
   await logAuditEvent(user.id, "profile_update", "students/step2");
@@ -213,7 +343,7 @@ export async function saveProfileStep3(formData: FormData): Promise<ActionResult
 
   if (error) {
     console.error("Step 3 save failed:", error);
-    return { error: "Failed to save. Please try again." };
+    return { error: describeDbError(error) };
   }
 
   await logAuditEvent(user.id, "profile_update", "students/step3");
@@ -325,7 +455,7 @@ export async function finalizeProfile(formData: FormData): Promise<ActionResult>
 
   if (error) {
     console.error("Profile finalize failed:", error);
-    return { error: "Failed to complete profile." };
+    return { error: describeDbError(error) };
   }
 
   await logAuditEvent(user.id, "profile_update", "students/finalize", {

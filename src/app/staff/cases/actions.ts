@@ -14,6 +14,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose, type LooseClient } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
+import { checkRateLimit } from "@/lib/utils/rate-limit";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import { CASE_STATUSES, type CaseStatus } from "@/types/osa";
 
@@ -21,6 +22,262 @@ interface Result {
   ok?: boolean;
   message?: string;
   error?: string;
+}
+
+export interface StudentMatch {
+  id: string;
+  student_number: string;
+  first_name: string;
+  last_name: string;
+  program: string | null;
+  year_level: string | null;
+}
+
+/**
+ * Type-ahead for the complainee field.
+ *
+ * Filing against the wrong student is the most damaging mistake this form can
+ * make, so the filer picks a real record rather than typing a number and
+ * hoping. Results are capped and the query is only run for staff.
+ */
+export async function searchStudentsForCase(query: string): Promise<{
+  students?: StudentMatch[];
+  error?: string;
+}> {
+  const staff = await getStaffContext();
+  if (!staff) return { error: "Only staff can file a case." };
+
+  const term = query.trim();
+  if (term.length < 2) return { students: [] };
+
+  const escaped = term.replace(/[%_,()]/g, " ");
+  const db = loose(createAdminClient());
+
+  const { data } = await db
+    .from("students")
+    .select("id, student_number, first_name, last_name, program, year_level")
+    .or(
+      `student_number.ilike.%${escaped}%,last_name.ilike.%${escaped}%,first_name.ilike.%${escaped}%`,
+    )
+    .order("last_name", { ascending: true })
+    .limit(8);
+
+  return { students: (data as StudentMatch[] | null) ?? [] };
+}
+
+export interface TrackRecord {
+  minor: number;
+  major: number;
+  open: number;
+  lastIncidentDate: string | null;
+}
+
+/**
+ * The complainee's history (requirement #2), shown to the filer before they
+ * submit. A repeat minor offense is handled differently from a first one, and
+ * the person filing is usually the first to need that context.
+ *
+ * Counts only — never the case details, which stay with the OSA.
+ */
+export async function getStudentTrackRecord(studentId: string): Promise<{
+  record?: TrackRecord;
+  error?: string;
+}> {
+  const staff = await getStaffContext();
+  if (!staff) return { error: "Not permitted." };
+
+  const db = loose(createAdminClient());
+  const { data } = await db
+    .from("violation_cases")
+    .select("classification, status, incident_date")
+    .eq("student_id", studentId)
+    // CODI matters never inform a general filing screen.
+    .neq("confidentiality", "codi")
+    .order("incident_date", { ascending: false });
+
+  const rows =
+    (data as Array<{
+      classification: string;
+      status: CaseStatus;
+      incident_date: string;
+    }> | null) ?? [];
+
+  return {
+    record: {
+      minor: rows.filter((row) => row.classification === "minor").length,
+      major: rows.filter((row) => row.classification === "major").length,
+      open: rows.filter((row) => !["closed", "dismissed"].includes(row.status)).length,
+      lastIncidentDate: rows[0]?.incident_date ?? null,
+    },
+  };
+}
+
+const fileCaseSchema = z.object({
+  student_id: z.string().uuid({ message: "Pick the student from the search results." }),
+  violation_type_id: z.string().uuid({ message: "Choose what happened." }),
+  complainant_type: z.enum(["faculty", "staff", "student", "osa_initiated", "external"]),
+  complainant_name: z.string().trim().max(120).optional().or(z.literal("")),
+  incident_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "Give the date of the incident.",
+  }),
+  incident_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { message: "Time must look like 14:30." })
+    .optional()
+    .or(z.literal("")),
+  incident_location: z.string().trim().max(120).optional().or(z.literal("")),
+  description: z
+    .string()
+    .trim()
+    .min(30, { message: "Describe what happened in at least a couple of sentences." })
+    .max(5000),
+});
+
+/**
+ * Files a complaint (requirement #4).
+ *
+ * Three things are decided here rather than left to the filer:
+ *   - the classification comes from the violation type, not from a dropdown
+ *     the complainant can talk themselves into; OSA can reclassify later,
+ *     and that reclassification is recorded
+ *   - a type marked `auto_route_codi` (harassment and the like) is filed as
+ *     confidential and disappears from the general OSA queue immediately,
+ *     per the OSA process document
+ *   - the student is NOT notified on filing. Notice comes with the summons,
+ *     after the OSA has triaged and a date is approved.
+ */
+export async function fileCase(formData: FormData): Promise<Result & { caseId?: string }> {
+  const staff = await getStaffContext();
+  if (!staff) return { error: "Only staff can file a case." };
+
+  // A complaint is cheap to file and expensive to receive; this is the brake
+  // on a bad afternoon turning into forty cases.
+  const limit = checkRateLimit({
+    identifier: `file-case:${staff.userId}`,
+    maxRequests: 20,
+    windowSeconds: 3600,
+  });
+  if (!limit.success) {
+    return { error: "You've filed a lot of cases in the last hour. Take a moment." };
+  }
+
+  const parsed = fileCaseSchema.safeParse({
+    student_id: formData.get("student_id"),
+    violation_type_id: formData.get("violation_type_id"),
+    complainant_type: formData.get("complainant_type") ?? "faculty",
+    complainant_name: formData.get("complainant_name") ?? "",
+    incident_date: formData.get("incident_date"),
+    incident_time: formData.get("incident_time") ?? "",
+    incident_location: formData.get("incident_location") ?? "",
+    description: formData.get("description") ?? "",
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+
+  // An incident cannot have happened tomorrow.
+  const incidentDate = new Date(`${parsed.data.incident_date}T00:00:00`);
+  if (incidentDate.getTime() > Date.now()) {
+    return { error: "The incident date is in the future." };
+  }
+
+  const db = loose(createAdminClient());
+
+  const { data: typeRow } = await db
+    .from("violation_types")
+    .select("id, code, name, default_classification, auto_route_codi, is_active")
+    .eq("id", parsed.data.violation_type_id)
+    .maybeSingle();
+
+  const violationType = typeRow as {
+    id: string;
+    code: string;
+    name: string;
+    default_classification: "minor" | "major" | "confidential";
+    auto_route_codi: boolean;
+    is_active: boolean;
+  } | null;
+  if (!violationType || !violationType.is_active) {
+    return { error: "That offense type is no longer available." };
+  }
+
+  const isConfidential =
+    violationType.auto_route_codi || violationType.default_classification === "confidential";
+
+  const { data: studentRow } = await db
+    .from("students")
+    .select("id, first_name, last_name, student_number")
+    .eq("id", parsed.data.student_id)
+    .maybeSingle();
+
+  const student = studentRow as {
+    id: string;
+    first_name: string;
+    last_name: string;
+    student_number: string;
+  } | null;
+  if (!student) return { error: "That student record no longer exists." };
+
+  const { data: inserted, error } = await db
+    .from("violation_cases")
+    .insert({
+      student_id: student.id,
+      complainant_staff_id: parsed.data.complainant_type === "osa_initiated" ? null : staff.staffId,
+      complainant_type: parsed.data.complainant_type,
+      complainant_name:
+        parsed.data.complainant_name?.trim() ||
+        (parsed.data.complainant_type === "osa_initiated" ? "OSA-initiated" : staff.fullName),
+      violation_type_id: violationType.id,
+      classification: isConfidential ? "confidential" : violationType.default_classification,
+      incident_date: parsed.data.incident_date,
+      incident_time: parsed.data.incident_time || null,
+      incident_location: parsed.data.incident_location
+        ? sanitizeText(parsed.data.incident_location, 120)
+        : null,
+      description: sanitizeText(parsed.data.description, 5000),
+      status: isConfidential ? "referred_codi" : "filed",
+      confidentiality: isConfidential ? "codi" : "normal",
+      resolution_path: isConfidential ? "codi_referral" : null,
+    })
+    .select("id, case_number")
+    .maybeSingle();
+
+  if (error) return { error: "Could not file the case. Please try again." };
+
+  const created = inserted as { id: string; case_number: string } | null;
+  if (!created) return { error: "The case was not created." };
+
+  await addTimelineEntry(db, {
+    caseId: created.id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "case_filed",
+    summary: `${staff.fullName} filed a complaint for ${violationType.name} (${violationType.code}).`,
+    toStatus: isConfidential ? "referred_codi" : "filed",
+    details: {
+      violation_code: violationType.code,
+      classification: isConfidential ? "confidential" : violationType.default_classification,
+      routed_to_codi: isConfidential,
+    },
+  });
+
+  await logAuditEvent(staff.userId, "case_filed", "violation_cases", {
+    case_id: created.id,
+    case_number: created.case_number,
+    student_number: student.student_number,
+    violation_code: violationType.code,
+    confidential: isConfidential,
+  });
+
+  revalidatePath("/staff/cases");
+  return {
+    ok: true,
+    caseId: created.id,
+    message: isConfidential
+      ? `Filed as ${created.case_number} and routed to CODI. It will not appear in the general case queue.`
+      : `Filed as ${created.case_number}.`,
+  };
 }
 
 /** Appends to the append-only case history. Never throws into the caller. */

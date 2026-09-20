@@ -165,11 +165,11 @@ export default async function StaffDashboardPage() {
           Export Report
         </button>
         <Link
-          href="/staff/concerns"
+          href="/staff/cases/new"
           className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
-          New Action
+          File a Case
         </Link>
       </PageHeader>
 

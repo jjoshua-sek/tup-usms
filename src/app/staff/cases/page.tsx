@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, FolderOpen, Gavel, Scale } from "lucide-react";
+import { AlertTriangle, FolderOpen, Gavel, Plus, Scale } from "lucide-react";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
+import { buttonVariants } from "@/components/ui/button";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -100,7 +101,15 @@ export default async function StaffCasesPage({
         breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Cases" }]}
         title="Discipline Cases"
         description="Every case filed with the OSA, and where each one stands in the process."
-      />
+      >
+        <Link
+          href="/staff/cases/new"
+          className={buttonVariants({ size: "sm", className: "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700" })}
+        >
+          <Plus className="mr-1.5 h-4 w-4" />
+          File a case
+        </Link>
+      </PageHeader>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard label="Open cases" value={open.length} icon={FolderOpen} />

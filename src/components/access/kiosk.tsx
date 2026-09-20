@@ -438,7 +438,8 @@ export function GateKiosk() {
     );
   }
 
-  const tone = result?.tone ?? "neutral";
+  // A denial the gate didn't act on (monitor mode) gets its own amber
+  // treatment: green would lie, red would imply the arm stayed shut.
   const monitorOnly = result?.decision === "deny" && !result.enforced;
 
   return (

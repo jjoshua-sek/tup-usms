@@ -5,6 +5,7 @@ import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
 import { EmptyState } from "@/components/osa/empty-state";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { ApologyLetterPanel } from "@/components/violations/apology-letter-panel";
+import { SignSettlementButton } from "@/components/violations/settlement-agreement";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { loose } from "@/lib/supabase/loose";
@@ -23,9 +24,33 @@ interface ApologyLetterSummary {
   file_path: string | null;
 }
 
+interface SettlementSummary {
+  id: string;
+  terms: string;
+  student_obligations: string | null;
+  compliance_deadline: string | null;
+  student_signed_at: string | null;
+  complainant_signed_at: string | null;
+  osa_witnessed_at: string | null;
+  is_complied: boolean | null;
+}
+
 interface CaseWithApologies extends ViolationCaseWithRelations {
   apology_letters: ApologyLetterSummary[] | null;
+  case_settlements: SettlementSummary[] | null;
 }
+
+/**
+ * Plain-language reading of the committee stages. A student told their case
+ * went "to the SDB" and nothing else has no idea whether to be worried or
+ * what happens next — so the status says what the body is and what follows.
+ */
+const COMMITTEE_EXPLANATIONS: Partial<Record<string, string>> = {
+  escalated_pic:
+    "Your case is with the Preliminary Investigation Committee. They gather the facts and decide whether it goes to a formal hearing. You'll be notified if a hearing is scheduled, and you may bring someone with you.",
+  escalated_sdb:
+    "Your case is with the Student Disciplinary Board. They hold a formal hearing before deciding. You'll be summoned with a date, and you have the right to explain your side and to be accompanied.",
+};
 
 /** What the student is told about each review outcome, and what to do next. */
 const APOLOGY_META: Record<
@@ -99,7 +124,7 @@ export default async function ViolationsPage() {
   const { data: caseRows } = await db
     .from("violation_cases")
     .select(
-      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction), apology_letters(id, review_status, submitted_at, reviewer_notes, file_path)",
+      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction), apology_letters(id, review_status, submitted_at, reviewer_notes, file_path), case_settlements(id, terms, student_obligations, compliance_deadline, student_signed_at, complainant_signed_at, osa_witnessed_at, is_complied)",
     )
     .eq("student_id", student.id)
     .order("incident_date", { ascending: false });
@@ -245,6 +270,70 @@ export default async function ViolationsPage() {
                     </div>
                   );
                 })()}
+
+                {/* MAJOR path: mediated settlement awaiting the student's agreement */}
+                {(violationCase.case_settlements ?? []).map((settlement) => {
+                  const fullySigned =
+                    settlement.student_signed_at &&
+                    settlement.complainant_signed_at &&
+                    settlement.osa_witnessed_at;
+
+                  return (
+                    <div
+                      key={settlement.id}
+                      className="mt-4 rounded-lg border border-border bg-muted/40 p-3"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[12px] font-semibold">Settlement</p>
+                        {settlement.is_complied ? (
+                          <ToneBadge label="Completed" tone="success" />
+                        ) : settlement.student_signed_at ? (
+                          <ToneBadge
+                            label={fullySigned ? "In effect" : "Waiting on the other parties"}
+                            tone={fullySigned ? "success" : "info"}
+                          />
+                        ) : (
+                          <ToneBadge label="Needs your agreement" tone="warning" />
+                        )}
+                      </div>
+
+                      <p className="mt-2 whitespace-pre-wrap rounded-md bg-background p-3 text-[12px] leading-relaxed">
+                        {settlement.terms}
+                      </p>
+
+                      {settlement.student_obligations && (
+                        <p className="mt-2 text-[12px]">
+                          <strong>What you agreed to do:</strong>{" "}
+                          {settlement.student_obligations}
+                          {settlement.compliance_deadline && (
+                            <span className="block text-[11px] text-muted-foreground">
+                              Complete by{" "}
+                              {formatDate(settlement.compliance_deadline)}. The OSA closes the
+                              case once you have.
+                            </span>
+                          )}
+                        </p>
+                      )}
+
+                      {!settlement.student_signed_at && (
+                        <div className="mt-3">
+                          <SignSettlementButton settlementId={settlement.id} />
+                          <p className="mt-1.5 text-[11px] text-muted-foreground">
+                            Read the terms carefully. If you don&apos;t agree with them, talk
+                            to the OSA before accepting — mediation can continue.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* MAJOR path: committee referral, explained */}
+                {COMMITTEE_EXPLANATIONS[violationCase.status] && (
+                  <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-900">
+                    {COMMITTEE_EXPLANATIONS[violationCase.status]}
+                  </p>
+                )}
 
                 {!statusMeta?.isTerminal && (
                   <p className="mt-3 text-[12px] text-muted-foreground">

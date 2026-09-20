@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
@@ -135,5 +136,106 @@ export async function submitApologyLetter(formData: FormData): Promise<Result> {
   return {
     ok: true,
     message: "Submitted. The OSA will read it and let you know.",
+  };
+}
+
+/**
+ * Student accepts the terms of a mediated settlement.
+ *
+ * Consent has to come from the student themselves, so this is a student
+ * action rather than something an officer ticks on their behalf. Ownership is
+ * verified here before the service-role client writes, because the resulting
+ * case transition (to `settled`, once all three parties have signed) is not
+ * something a student may perform under RLS — and should not be.
+ *
+ * Declining is deliberately not a button: a student who does not accept the
+ * terms says so at the OSA, and mediation either continues or the case
+ * escalates. Recording "declined" in the portal would end a conversation that
+ * is supposed to stay open.
+ */
+export async function signSettlement(settlementId: string): Promise<Result> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You are signed out." };
+
+  const db = loose(supabase);
+
+  const { data: studentRow } = await db
+    .from("students")
+    .select("id, first_name, last_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const student = studentRow as {
+    id: string;
+    first_name: string;
+    last_name: string;
+  } | null;
+  if (!student) return { error: "Complete your profile first." };
+
+  const admin = loose(createAdminClient());
+
+  const { data: settlementRow } = await admin
+    .from("case_settlements")
+    .select(
+      "id, case_id, student_signed_at, complainant_signed_at, osa_witnessed_at, violation_cases(student_id, status)",
+    )
+    .eq("id", settlementId)
+    .maybeSingle();
+
+  const settlement = settlementRow as {
+    id: string;
+    case_id: string;
+    student_signed_at: string | null;
+    complainant_signed_at: string | null;
+    osa_witnessed_at: string | null;
+    violation_cases: { student_id: string; status: string } | null;
+  } | null;
+  if (!settlement || settlement.violation_cases?.student_id !== student.id) {
+    return { error: "That settlement isn't yours." };
+  }
+  if (settlement.student_signed_at) {
+    return { ok: true, message: "You've already accepted these terms." };
+  }
+
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("case_settlements")
+    .update({ student_signed_at: now })
+    .eq("id", settlementId);
+
+  if (error) return { error: "Could not record your agreement. Please try again." };
+
+  await admin.from("case_timeline").insert({
+    case_id: settlement.case_id,
+    actor_id: user.id,
+    actor_label: `${student.first_name} ${student.last_name}`,
+    event_type: "settlement_signed",
+    summary: "Student accepted the settlement terms.",
+  });
+
+  // Last signature in the door takes the case to settled.
+  if (settlement.complainant_signed_at && settlement.osa_witnessed_at) {
+    await admin
+      .from("violation_cases")
+      .update({ status: "settled", resolution_path: "mediation_settlement" })
+      .eq("id", settlement.case_id);
+
+    await admin.from("case_timeline").insert({
+      case_id: settlement.case_id,
+      actor_id: user.id,
+      actor_label: "System",
+      event_type: "status_changed",
+      summary: "All parties have signed. The settlement is in effect.",
+      from_status: settlement.violation_cases?.status ?? null,
+      to_status: "settled",
+    });
+  }
+
+  revalidatePath("/violations");
+  return {
+    ok: true,
+    message: "Recorded. Keep to what was agreed and the OSA will close the case.",
   };
 }

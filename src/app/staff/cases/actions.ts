@@ -838,6 +838,555 @@ export async function getApologyFileUrl(letterId: string): Promise<{
   return { url: signed.signedUrl };
 }
 
+// ============================================================
+// SETTLEMENTS — the mediated "win-win" close-out
+// ============================================================
+
+const settlementSchema = z.object({
+  case_id: z.string().uuid(),
+  hearing_id: z.string().uuid().optional().or(z.literal("")),
+  terms: z
+    .string()
+    .trim()
+    .min(20, { message: "Write out what both sides agreed to." })
+    .max(4000),
+  student_obligations: z.string().trim().max(2000).optional().or(z.literal("")),
+  compliance_deadline: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Give a deadline date." })
+    .optional()
+    .or(z.literal("")),
+});
+
+/**
+ * Records the agreement reached at mediation.
+ *
+ * Drafting does not settle the case. A settlement takes effect only when all
+ * three parties have signed — student, complainant, OSA as witness — which is
+ * what `recordSettlementSignature` below tracks. Writing the terms down and
+ * calling the case settled in the same step would record consent nobody gave.
+ */
+export async function draftSettlement(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can draft a settlement." };
+
+  const parsed = settlementSchema.safeParse({
+    case_id: formData.get("case_id"),
+    hearing_id: formData.get("hearing_id") ?? "",
+    terms: formData.get("terms") ?? "",
+    student_obligations: formData.get("student_obligations") ?? "",
+    compliance_deadline: formData.get("compliance_deadline") ?? "",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the settlement terms." };
+  }
+
+  const db = loose(createAdminClient());
+
+  const { data: caseRow } = await db
+    .from("violation_cases")
+    .select("id, case_number, status, students(user_id)")
+    .eq("id", parsed.data.case_id)
+    .maybeSingle();
+
+  const violationCase = caseRow as {
+    id: string;
+    case_number: string;
+    status: CaseStatus;
+    students: { user_id: string } | null;
+  } | null;
+  if (!violationCase) return { error: "Case not found." };
+
+  const { error } = await db.from("case_settlements").insert({
+    case_id: parsed.data.case_id,
+    hearing_id: parsed.data.hearing_id || null,
+    terms: sanitizeText(parsed.data.terms, 4000),
+    student_obligations: parsed.data.student_obligations
+      ? sanitizeText(parsed.data.student_obligations, 2000)
+      : null,
+    compliance_deadline: parsed.data.compliance_deadline || null,
+    // The OSA officer drafting it is the witness to the agreement.
+    osa_witnessed_by: staff.staffId,
+    osa_witnessed_at: new Date().toISOString(),
+  });
+
+  if (error) return { error: "Could not save the settlement." };
+
+  if (!["settled", "closed", "dismissed"].includes(violationCase.status)) {
+    await db
+      .from("violation_cases")
+      .update({ status: "in_mediation" })
+      .eq("id", parsed.data.case_id);
+  }
+
+  await addTimelineEntry(db, {
+    caseId: parsed.data.case_id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "settlement_drafted",
+    summary: `Settlement drafted and witnessed by ${staff.fullName}. Awaiting signatures.`,
+    fromStatus: violationCase.status,
+    toStatus: "in_mediation",
+  });
+
+  if (violationCase.students?.user_id) {
+    await db.rpc("create_notification", {
+      p_user_id: violationCase.students.user_id,
+      p_type: "settlement",
+      p_title: "A settlement is waiting for your agreement",
+      p_body: `Read the terms agreed for case ${violationCase.case_number} and confirm whether you accept them.`,
+      p_priority: "high",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/violations",
+      p_action_label: "Read the terms",
+      p_entity_type: "case_settlement",
+      p_entity_id: parsed.data.case_id,
+    });
+  }
+
+  revalidatePath(`/staff/cases/${parsed.data.case_id}`);
+  return { ok: true, message: "Settlement drafted. The student has been asked to sign." };
+}
+
+/**
+ * Applies one party's signature and, when the last one lands, moves the case
+ * to settled. The check runs on the row as it is after this write, so the
+ * order in which the three parties sign doesn't matter.
+ */
+export async function recordSettlementSignature(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff) return { error: "You are signed out." };
+
+  const settlementId = String(formData.get("settlement_id") ?? "");
+  const party = String(formData.get("party") ?? "");
+  if (!settlementId || !["complainant", "osa"].includes(party)) {
+    return { error: "Invalid signature." };
+  }
+
+  const db = loose(createAdminClient());
+
+  const { data: settlementRow } = await db
+    .from("case_settlements")
+    .select(
+      "id, case_id, student_signed_at, complainant_signed_at, osa_witnessed_at, violation_cases(case_number, complainant_staff_id, status)",
+    )
+    .eq("id", settlementId)
+    .maybeSingle();
+
+  const settlement = settlementRow as {
+    id: string;
+    case_id: string;
+    student_signed_at: string | null;
+    complainant_signed_at: string | null;
+    osa_witnessed_at: string | null;
+    violation_cases: {
+      case_number: string;
+      complainant_staff_id: string | null;
+      status: CaseStatus;
+    } | null;
+  } | null;
+  if (!settlement) return { error: "Settlement not found." };
+
+  const isComplainant =
+    settlement.violation_cases?.complainant_staff_id === staff.staffId;
+  if (party === "complainant" && !isComplainant && !staff.isOsa) {
+    return { error: "Only the complainant can sign on their behalf." };
+  }
+  if (party === "osa" && !staff.isOsa) {
+    return { error: "Only OSA staff can witness a settlement." };
+  }
+
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> =
+    party === "complainant"
+      ? { complainant_signed_at: now }
+      : { osa_witnessed_at: now, osa_witnessed_by: staff.staffId };
+
+  const { error } = await db.from("case_settlements").update(patch).eq("id", settlementId);
+  if (error) return { error: "Could not record the signature." };
+
+  const signed = {
+    student: Boolean(settlement.student_signed_at),
+    complainant: party === "complainant" ? true : Boolean(settlement.complainant_signed_at),
+    osa: party === "osa" ? true : Boolean(settlement.osa_witnessed_at),
+  };
+
+  await addTimelineEntry(db, {
+    caseId: settlement.case_id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "settlement_signed",
+    summary: `${party === "osa" ? "OSA witnessed" : "Complainant signed"} the settlement.`,
+  });
+
+  if (signed.student && signed.complainant && signed.osa) {
+    await db
+      .from("violation_cases")
+      .update({ status: "settled", resolution_path: "mediation_settlement" })
+      .eq("id", settlement.case_id);
+
+    await addTimelineEntry(db, {
+      caseId: settlement.case_id,
+      actorId: staff.userId,
+      actorLabel: staff.fullName,
+      eventType: "status_changed",
+      summary: "All parties have signed. The settlement is in effect.",
+      fromStatus: settlement.violation_cases?.status ?? null,
+      toStatus: "settled",
+    });
+  }
+
+  revalidatePath(`/staff/cases/${settlement.case_id}`);
+  return { ok: true, message: "Signature recorded." };
+}
+
+/**
+ * Closes the loop on what the student actually agreed to do. A settlement
+ * nobody checks is a promise, not a sanction — so compliance is recorded
+ * explicitly, and complying is what finally closes the case.
+ */
+export async function recordSettlementCompliance(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can record compliance." };
+
+  const settlementId = String(formData.get("settlement_id") ?? "");
+  const complied = String(formData.get("complied") ?? "") === "yes";
+  const notes = String(formData.get("notes") ?? "").trim();
+  if (!settlementId) return { error: "Invalid settlement." };
+
+  const db = loose(createAdminClient());
+
+  const { data: settlementRow } = await db
+    .from("case_settlements")
+    .select("id, case_id, violation_cases(case_number, status, students(user_id))")
+    .eq("id", settlementId)
+    .maybeSingle();
+
+  const settlement = settlementRow as {
+    id: string;
+    case_id: string;
+    violation_cases: {
+      case_number: string;
+      status: CaseStatus;
+      students: { user_id: string } | null;
+    } | null;
+  } | null;
+  if (!settlement) return { error: "Settlement not found." };
+
+  const now = new Date().toISOString();
+  const { error } = await db
+    .from("case_settlements")
+    .update({ is_complied: complied, complied_at: complied ? now : null })
+    .eq("id", settlementId);
+
+  if (error) return { error: "Could not record compliance." };
+
+  if (complied) {
+    await db
+      .from("violation_cases")
+      .update({
+        status: "closed",
+        resolution_path: "mediation_settlement",
+        closed_at: now,
+        resolution_notes: notes ? sanitizeText(notes, 1000) : null,
+      })
+      .eq("id", settlement.case_id);
+  }
+
+  await addTimelineEntry(db, {
+    caseId: settlement.case_id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: complied ? "closed" : "note_added",
+    summary: complied
+      ? `Settlement obligations completed. Case closed.${notes ? ` ${notes}` : ""}`
+      : `Settlement obligations NOT met.${notes ? ` ${notes}` : ""}`,
+    fromStatus: settlement.violation_cases?.status ?? null,
+    toStatus: complied ? "closed" : null,
+  });
+
+  if (complied && settlement.violation_cases?.students?.user_id) {
+    await db.rpc("create_notification", {
+      p_user_id: settlement.violation_cases.students.user_id,
+      p_type: "case_status",
+      p_title: "Your case is closed",
+      p_body: `You completed what was agreed in case ${settlement.violation_cases.case_number}. Nothing further is required.`,
+      p_priority: "normal",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/violations",
+      p_action_label: "Open my violations",
+      p_entity_type: "violation_case",
+      p_entity_id: settlement.case_id,
+    });
+  }
+
+  revalidatePath(`/staff/cases/${settlement.case_id}`);
+  revalidatePath("/staff/cases");
+  return { ok: true, message: complied ? "Recorded — case closed." : "Recorded." };
+}
+
+// ============================================================
+// ESCALATIONS — PIC / SDB / CODI
+// ============================================================
+
+const escalationSchema = z.object({
+  case_id: z.string().uuid(),
+  escalated_to: z.enum(["PIC", "SDB", "CODI"]),
+  reason: z
+    .string()
+    .trim()
+    .min(20, { message: "Say why the case needs a committee." })
+    .max(2000),
+});
+
+/** Case status that each committee referral puts the case into. */
+const ESCALATION_STATUS: Record<"PIC" | "SDB" | "CODI", CaseStatus> = {
+  PIC: "escalated_pic",
+  SDB: "escalated_sdb",
+  CODI: "referred_codi",
+};
+
+/**
+ * Refers a case to a committee.
+ *
+ * A CODI referral also flips the case to confidential, which removes it from
+ * the general OSA queue immediately — and from the student's own portal,
+ * since RLS hides `confidentiality = 'codi'` rows from them. That is the OSA
+ * process document's rule, not a UI preference, so the student is told by the
+ * committee through its own channel rather than by a portal notification
+ * pointing at a page they can no longer open.
+ */
+export async function escalateCase(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can escalate a case." };
+
+  const parsed = escalationSchema.safeParse({
+    case_id: formData.get("case_id"),
+    escalated_to: formData.get("escalated_to"),
+    reason: formData.get("reason") ?? "",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the escalation." };
+  }
+
+  const db = loose(createAdminClient());
+
+  const { data: caseRow } = await db
+    .from("violation_cases")
+    .select("id, case_number, status, confidentiality, students(user_id)")
+    .eq("id", parsed.data.case_id)
+    .maybeSingle();
+
+  const violationCase = caseRow as {
+    id: string;
+    case_number: string;
+    status: CaseStatus;
+    students: { user_id: string } | null;
+  } | null;
+  if (!violationCase) return { error: "Case not found." };
+
+  const { error } = await db.from("case_escalations").insert({
+    case_id: parsed.data.case_id,
+    escalated_to: parsed.data.escalated_to,
+    escalated_by: staff.staffId,
+    reason: sanitizeText(parsed.data.reason, 2000),
+    outcome: "pending",
+  });
+
+  if (error) return { error: "Could not record the escalation." };
+
+  const toCodi = parsed.data.escalated_to === "CODI";
+  const casePatch: Record<string, unknown> = {
+    status: ESCALATION_STATUS[parsed.data.escalated_to],
+  };
+  if (toCodi) {
+    casePatch.confidentiality = "codi";
+    casePatch.classification = "confidential";
+    casePatch.resolution_path = "codi_referral";
+  }
+
+  await db.from("violation_cases").update(casePatch).eq("id", parsed.data.case_id);
+
+  await addTimelineEntry(db, {
+    caseId: parsed.data.case_id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "escalated",
+    summary: `Referred to ${parsed.data.escalated_to}: ${parsed.data.reason}`,
+    fromStatus: violationCase.status,
+    toStatus: ESCALATION_STATUS[parsed.data.escalated_to],
+  });
+
+  if (!toCodi && violationCase.students?.user_id) {
+    await db.rpc("create_notification", {
+      p_user_id: violationCase.students.user_id,
+      p_type: "case_status",
+      p_title: `Your case was referred to the ${parsed.data.escalated_to}`,
+      p_body: `Case ${violationCase.case_number} now goes before the ${parsed.data.escalated_to === "PIC" ? "Preliminary Investigation Committee" : "Student Disciplinary Board"}. You will be told when a hearing is scheduled.`,
+      p_priority: "high",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/violations",
+      p_action_label: "Open my violations",
+      p_entity_type: "violation_case",
+      p_entity_id: parsed.data.case_id,
+    });
+  }
+
+  await logAuditEvent(staff.userId, "case_updated", "case_escalations", {
+    case_id: parsed.data.case_id,
+    escalated_to: parsed.data.escalated_to,
+  });
+
+  revalidatePath(`/staff/cases/${parsed.data.case_id}`);
+  revalidatePath("/staff/cases");
+  return {
+    ok: true,
+    message: toCodi
+      ? "Referred to CODI. The case is now confidential and has left the general queue."
+      : `Referred to the ${parsed.data.escalated_to}.`,
+  };
+}
+
+const outcomeSchema = z.object({
+  escalation_id: z.string().uuid(),
+  outcome: z.enum(["upheld", "dismissed", "referred_further", "sanction_recommended"]),
+  outcome_notes: z.string().trim().max(2000).optional().or(z.literal("")),
+  sanction_recommended: z.string().trim().max(500).optional().or(z.literal("")),
+  external_reference: z.string().trim().max(80).optional().or(z.literal("")),
+});
+
+/**
+ * Records what the committee decided, and moves the case accordingly.
+ *
+ * Committee members can file their own outcome — the RLS policy on
+ * `case_escalations` already lets PIC and SDB members write — so a decision
+ * doesn't have to be relayed through an OSA officer and lose detail on the way.
+ */
+export async function recordEscalationOutcome(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff || (!staff.isOsa && !staff.isCommittee)) {
+    return { error: "Only OSA staff and committee members can record an outcome." };
+  }
+
+  const parsed = outcomeSchema.safeParse({
+    escalation_id: formData.get("escalation_id"),
+    outcome: formData.get("outcome"),
+    outcome_notes: formData.get("outcome_notes") ?? "",
+    sanction_recommended: formData.get("sanction_recommended") ?? "",
+    external_reference: formData.get("external_reference") ?? "",
+  });
+  if (!parsed.success) return { error: "Invalid outcome." };
+
+  if (parsed.data.outcome === "sanction_recommended" && !parsed.data.sanction_recommended) {
+    return { error: "Name the sanction the committee recommended." };
+  }
+
+  const db = loose(createAdminClient());
+
+  const { data: escalationRow } = await db
+    .from("case_escalations")
+    .select("id, case_id, escalated_to, violation_cases(case_number, status, students(user_id))")
+    .eq("id", parsed.data.escalation_id)
+    .maybeSingle();
+
+  const escalation = escalationRow as {
+    id: string;
+    case_id: string;
+    escalated_to: string;
+    violation_cases: {
+      case_number: string;
+      status: CaseStatus;
+      students: { user_id: string } | null;
+    } | null;
+  } | null;
+  if (!escalation) return { error: "Escalation not found." };
+
+  const now = new Date().toISOString();
+  const { error } = await db
+    .from("case_escalations")
+    .update({
+      outcome: parsed.data.outcome,
+      outcome_notes: parsed.data.outcome_notes
+        ? sanitizeText(parsed.data.outcome_notes, 2000)
+        : null,
+      sanction_recommended: parsed.data.sanction_recommended || null,
+      external_reference: parsed.data.external_reference || null,
+      decided_at: now,
+    })
+    .eq("id", parsed.data.escalation_id);
+
+  if (error) return { error: "Could not save the outcome." };
+
+  // Only two outcomes move the case by themselves. "Upheld" and "referred
+  // further" leave it where it is, because what happens next is another
+  // committee's decision, not this one's.
+  let toStatus: CaseStatus | null = null;
+  const casePatch: Record<string, unknown> = {};
+
+  if (parsed.data.outcome === "sanction_recommended") {
+    toStatus = "sanctioned";
+    casePatch.status = "sanctioned";
+    casePatch.sanction_applied = parsed.data.sanction_recommended;
+    casePatch.resolution_path = "pic_sdb";
+  } else if (parsed.data.outcome === "dismissed") {
+    toStatus = "dismissed";
+    casePatch.status = "dismissed";
+    casePatch.resolution_path = "dismissed";
+    casePatch.closed_at = now;
+  }
+
+  if (toStatus) {
+    await db.from("violation_cases").update(casePatch).eq("id", escalation.case_id);
+  }
+
+  await addTimelineEntry(db, {
+    caseId: escalation.case_id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType:
+      parsed.data.outcome === "sanction_recommended"
+        ? "sanction_applied"
+        : parsed.data.outcome === "dismissed"
+          ? "dismissed"
+          : "escalated",
+    summary: `${escalation.escalated_to} decision: ${parsed.data.outcome.replace(/_/g, " ")}.${
+      parsed.data.sanction_recommended ? ` Sanction: ${parsed.data.sanction_recommended}.` : ""
+    }${parsed.data.outcome_notes ? ` ${parsed.data.outcome_notes}` : ""}`,
+    fromStatus: escalation.violation_cases?.status ?? null,
+    toStatus,
+  });
+
+  if (toStatus && escalation.violation_cases?.students?.user_id) {
+    await db.rpc("create_notification", {
+      p_user_id: escalation.violation_cases.students.user_id,
+      p_type: "case_status",
+      p_title:
+        toStatus === "dismissed"
+          ? "Your case was dismissed"
+          : "A sanction has been recorded",
+      p_body:
+        toStatus === "dismissed"
+          ? `The ${escalation.escalated_to} dismissed case ${escalation.violation_cases.case_number}. No sanction was applied.`
+          : `The ${escalation.escalated_to} recommended: ${parsed.data.sanction_recommended}. See your violations page for the full record.`,
+      p_priority: "high",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/violations",
+      p_action_label: "Open my violations",
+      p_entity_type: "violation_case",
+      p_entity_id: escalation.case_id,
+    });
+  }
+
+  await logAuditEvent(staff.userId, "case_updated", "case_escalations", {
+    escalation_id: escalation.id,
+    outcome: parsed.data.outcome,
+  });
+
+  revalidatePath(`/staff/cases/${escalation.case_id}`);
+  revalidatePath("/staff/cases");
+  return { ok: true, message: "Outcome recorded." };
+}
+
 const statusSchema = z.object({
   case_id: z.string().uuid(),
   status: z.enum(CASE_STATUSES),

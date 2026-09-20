@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  ArrowUpRight,
   CalendarClock,
   CalendarSearch,
+  Handshake,
   History,
   Mail,
   MapPin,
@@ -14,6 +16,15 @@ import {
   ApologyFileLink,
   ApologyReviewControls,
 } from "@/components/cases/apology-review";
+import {
+  EscalateForm,
+  EscalationOutcomeForm,
+} from "@/components/cases/escalation-panel";
+import {
+  ComplianceForm,
+  DraftSettlementForm,
+  SettlementSignature,
+} from "@/components/cases/settlement-panel";
 import {
   CaseStatusForm,
   HearingActions,
@@ -30,7 +41,9 @@ import { createClient } from "@/lib/supabase/server";
 import {
   CASE_STATUS_META,
   HEARING_STATUS_LABELS,
+  type CaseEscalation,
   type CaseHearing,
+  type CaseSettlement,
   type CaseStatus,
   type CaseTimelineEntry,
   type HearingStatus,
@@ -154,6 +167,8 @@ export default async function StaffCaseDetailPage({
     { data: hearingRows },
     { data: proposalRows },
     { data: apologyRows },
+    { data: settlementRows },
+    { data: escalationRows },
   ] = await Promise.all([
       db
         .from("case_timeline")
@@ -178,12 +193,24 @@ export default async function StaffCaseDetailPage({
         )
         .eq("case_id", id)
         .order("submitted_at", { ascending: false }),
+      db
+        .from("case_settlements")
+        .select("*")
+        .eq("case_id", id)
+        .order("created_at", { ascending: false }),
+      db
+        .from("case_escalations")
+        .select("*")
+        .eq("case_id", id)
+        .order("escalated_at", { ascending: false }),
     ]);
 
   const timeline = (timelineRows as CaseTimelineEntry[] | null) ?? [];
   const hearings = (hearingRows as CaseHearing[] | null) ?? [];
   const proposals = (proposalRows as ProposalView[] | null) ?? [];
   const apologies = (apologyRows as ApologyLetterRow[] | null) ?? [];
+  const settlements = (settlementRows as CaseSettlement[] | null) ?? [];
+  const escalations = (escalationRows as CaseEscalation[] | null) ?? [];
 
   const statusMeta = CASE_STATUS_META[violationCase.status];
   const isComplainant = violationCase.complainant_staff_id === staff.staffId;
@@ -374,6 +401,189 @@ export default async function StaffCaseDetailPage({
             </section>
           )}
 
+          {/* Settlement — the mediated close-out */}
+          {staff.isOsa && (
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-display text-base font-semibold">
+                  <Handshake className="h-4 w-4 text-muted-foreground" />
+                  Settlement
+                </h2>
+                {settlements.length === 0 && (
+                  <DraftSettlementForm
+                    caseId={violationCase.id}
+                    hearings={hearings.map((hearing) => ({
+                      id: hearing.id,
+                      label: `${hearing.hearing_type.replace(/_/g, " ")} · ${formatDateTime(hearing.scheduled_start)}`,
+                    }))}
+                  />
+                )}
+              </div>
+
+              {settlements.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground">
+                  Nothing agreed yet. Draft the terms once mediation has produced an
+                  agreement — the student is then asked to accept them in the portal.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {settlements.map((settlement) => {
+                    const allSigned =
+                      settlement.student_signed_at &&
+                      settlement.complainant_signed_at &&
+                      settlement.osa_witnessed_at;
+
+                    return (
+                      <li key={settlement.id} className="rounded-lg border border-border p-3">
+                        <p className="whitespace-pre-wrap text-[13px] leading-relaxed">
+                          {settlement.terms}
+                        </p>
+
+                        {settlement.student_obligations && (
+                          <p className="mt-2 rounded-md bg-muted p-2 text-[12px]">
+                            <strong>Student must:</strong> {settlement.student_obligations}
+                            {settlement.compliance_deadline && (
+                              <span className="block text-[11px] text-muted-foreground">
+                                by{" "}
+                                {new Date(settlement.compliance_deadline).toLocaleDateString(
+                                  "en-PH",
+                                  { month: "long", day: "numeric", year: "numeric" },
+                                )}
+                              </span>
+                            )}
+                          </p>
+                        )}
+
+                        {/* Tri-party signature state */}
+                        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-2">
+                          <SignatureChip
+                            label="Student"
+                            signedAt={settlement.student_signed_at}
+                          />
+                          {settlement.complainant_signed_at ? (
+                            <SignatureChip
+                              label="Complainant"
+                              signedAt={settlement.complainant_signed_at}
+                            />
+                          ) : (
+                            <SettlementSignature
+                              settlementId={settlement.id}
+                              party="complainant"
+                              label="Complainant signs"
+                            />
+                          )}
+                          {settlement.osa_witnessed_at ? (
+                            <SignatureChip
+                              label="OSA witness"
+                              signedAt={settlement.osa_witnessed_at}
+                            />
+                          ) : (
+                            <SettlementSignature
+                              settlementId={settlement.id}
+                              party="osa"
+                              label="Witness as OSA"
+                            />
+                          )}
+                        </div>
+
+                        {!settlement.student_signed_at && (
+                          <p className="mt-2 text-[11px] text-muted-foreground">
+                            Waiting on the student. They were notified and can accept from
+                            their violations page.
+                          </p>
+                        )}
+
+                        {settlement.is_complied != null && (
+                          <p className="mt-2 text-[12px]">
+                            <ToneBadge
+                              label={settlement.is_complied ? "Obligations met" : "Not yet met"}
+                              tone={settlement.is_complied ? "success" : "warning"}
+                            />
+                          </p>
+                        )}
+
+                        {allSigned && settlement.is_complied !== true && (
+                          <ComplianceForm settlementId={settlement.id} />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {/* Escalations — committee referrals */}
+          {(staff.isOsa || staff.isCommittee) && (
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-display text-base font-semibold">
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                  Committee referrals
+                </h2>
+                {staff.isOsa && <EscalateForm caseId={violationCase.id} />}
+              </div>
+
+              {escalations.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground">
+                  Not referred. Escalate when the OSA&apos;s own process can&apos;t resolve
+                  the matter — the committee&apos;s decision comes back here.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {escalations.map((escalation) => (
+                    <li key={escalation.id} className="rounded-lg border border-border p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-display text-[14px] font-semibold">
+                          {escalation.escalated_to}
+                        </span>
+                        <ToneBadge
+                          label={
+                            escalation.outcome && escalation.outcome !== "pending"
+                              ? escalation.outcome.replace(/_/g, " ")
+                              : "Deliberating"
+                          }
+                          tone={
+                            escalation.outcome === "dismissed"
+                              ? "neutral"
+                              : escalation.outcome === "sanction_recommended"
+                                ? "danger"
+                                : escalation.outcome === "upheld"
+                                  ? "warning"
+                                  : "info"
+                          }
+                        />
+                        <span className="text-[11px] text-muted-foreground">
+                          referred {formatDateTime(escalation.escalated_at)}
+                          {escalation.external_reference
+                            ? ` · ${escalation.external_reference}`
+                            : ""}
+                        </span>
+                      </div>
+
+                      <p className="mt-1.5 text-[12px] text-muted-foreground">
+                        {escalation.reason}
+                      </p>
+
+                      {escalation.sanction_recommended && (
+                        <p className="mt-2 rounded-md bg-red-50 p-2 text-[12px] text-red-900">
+                          <strong>Sanction:</strong> {escalation.sanction_recommended}
+                        </p>
+                      )}
+                      {escalation.outcome_notes && (
+                        <p className="mt-1.5 text-[12px]">{escalation.outcome_notes}</p>
+                      )}
+
+                      {(!escalation.outcome || escalation.outcome === "pending") && (
+                        <EscalationOutcomeForm escalationId={escalation.id} />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
           {/* Timeline */}
           <section className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-3 flex items-center gap-2 font-display text-base font-semibold">
@@ -443,6 +653,27 @@ export default async function StaffCaseDetailPage({
         </div>
       </div>
     </div>
+  );
+}
+
+function SignatureChip({
+  label,
+  signedAt,
+}: {
+  label: string;
+  signedAt: string | null;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+        signedAt
+          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+          : "border-border text-muted-foreground"
+      }`}
+    >
+      {label}
+      {signedAt ? ` ✓ ${formatDateTime(signedAt)}` : " — pending"}
+    </span>
   );
 }
 

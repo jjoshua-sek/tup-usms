@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { runAcademicExtraction } from "@/lib/ai/run-extraction";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
@@ -11,6 +12,7 @@ interface Result {
   ok?: boolean;
   message?: string;
   error?: string;
+  documentId?: string;
 }
 
 const ALLOWED_MIME = [
@@ -84,20 +86,86 @@ export async function registerAcademicDocument(
   const student = studentRow as { id: string } | null;
   if (!student) return { error: "Complete your profile first." };
 
-  const { error } = await db.from("academic_documents").insert({
-    student_id: student.id,
-    document_type: parsed.data.document_type,
-    school_year: parsed.data.school_year,
-    semester: parsed.data.semester,
-    file_path: parsed.data.file_path,
-    file_name: parsed.data.file_name,
-    mime_type: parsed.data.mime_type,
-    file_size: parsed.data.file_size,
-    processing_status: "uploaded",
-  });
+  const { data: inserted, error } = await db
+    .from("academic_documents")
+    .insert({
+      student_id: student.id,
+      document_type: parsed.data.document_type,
+      school_year: parsed.data.school_year,
+      semester: parsed.data.semester,
+      file_path: parsed.data.file_path,
+      file_name: parsed.data.file_name,
+      mime_type: parsed.data.mime_type,
+      file_size: parsed.data.file_size,
+      processing_status: "uploaded",
+    })
+    .select("id")
+    .maybeSingle();
 
   if (error) return { error: "Could not save your upload. Please try again." };
 
   revalidatePath("/records");
-  return { ok: true, message: "Uploaded. The OSA will verify it shortly." };
+  return {
+    ok: true,
+    documentId: (inserted as { id: string } | null)?.id,
+    message: "Uploaded. The OSA will verify it shortly.",
+  };
+}
+
+/**
+ * Kicks off the AI read of a document the student just uploaded.
+ *
+ * Separate from the upload so the file lands safely first: reading a document
+ * takes tens of seconds, and a failure there should never cost the student
+ * their upload. If this never runs — network drop, closed tab, no API key —
+ * the document simply waits for an OSA officer to read it by hand.
+ */
+export async function extractMyDocument(documentId: string): Promise<Result> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You are signed out." };
+
+  // Each run costs real money, so it's capped per student per hour.
+  const limit = checkRateLimit({
+    identifier: `academic-extract:${user.id}`,
+    maxRequests: 12,
+    windowSeconds: 3600,
+  });
+  if (!limit.success) {
+    return { error: "Too many documents read recently. The OSA can still verify this by hand." };
+  }
+
+  const db = loose(supabase);
+
+  const { data: studentRow } = await db
+    .from("students")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const student = studentRow as { id: string } | null;
+  if (!student) return { error: "Complete your profile first." };
+
+  // Ownership check before spending anything: RLS would hide someone else's
+  // row from this select, so a mismatch means it isn't theirs.
+  const { data: documentRow } = await db
+    .from("academic_documents")
+    .select("id")
+    .eq("id", documentId)
+    .eq("student_id", student.id)
+    .maybeSingle();
+  if (!documentRow) return { error: "That document isn't yours." };
+
+  const outcome = await runAcademicExtraction(documentId);
+  if (outcome.error) return { error: outcome.error };
+
+  revalidatePath("/records");
+  return {
+    ok: true,
+    message:
+      outcome.confidence != null && outcome.confidence < 0.6
+        ? "Read, but some figures were hard to make out. The OSA will check them."
+        : "Read. The OSA will confirm the figures.",
+  };
 }

@@ -3,11 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { runAcademicExtraction } from "@/lib/ai/run-extraction";
 import { getStaffContext } from "@/lib/osa/staff-context";
+import { classScheduleToBlocks } from "@/lib/scheduling/find-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { sanitizeText } from "@/lib/utils/sanitize";
+import type { ExtractedAcademicData } from "@/types/osa";
 
 interface Result {
   ok?: boolean;
@@ -67,7 +70,9 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
 
   const { data: documentRow } = await db
     .from("academic_documents")
-    .select("id, student_id, school_year, semester, document_type")
+    .select(
+      "id, student_id, school_year, semester, document_type, extracted_data, students(user_id)",
+    )
     .eq("id", parsed.data.document_id)
     .maybeSingle();
 
@@ -77,6 +82,8 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
     school_year: string;
     semester: string;
     document_type: string;
+    extracted_data: ExtractedAcademicData | null;
+    students: { user_id: string } | null;
   } | null;
   if (!document) return { error: "Document not found." };
 
@@ -132,14 +139,146 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
 
   if (error) return { error: "Verified the document, but the term snapshot failed to save." };
 
+  // A verified COR carries the student's class times. Turning them into busy
+  // blocks here is what lets the hearing scheduler avoid booking a meeting
+  // on top of a lecture — the student never has to type their timetable in.
+  let importedBlocks = 0;
+  if (
+    document.document_type === "certificate_of_registration" &&
+    document.students?.user_id
+  ) {
+    importedBlocks = await importCorSchedule(db, {
+      userId: document.students.user_id,
+      extracted: document.extracted_data,
+      schoolYear: document.school_year,
+      semester: document.semester,
+    });
+  }
+
   await logAuditEvent(staff.userId, "academic_doc_reviewed", "academic_documents", {
     document_id: document.id,
     decision: "verified",
+    imported_schedule_blocks: importedBlocks,
   });
 
   revalidatePath("/staff/documents");
   revalidatePath("/staff/risk");
-  return { ok: true, message: "Verified — the term snapshot is updated." };
+  return {
+    ok: true,
+    message: importedBlocks
+      ? `Verified — snapshot updated and ${importedBlocks} class times imported.`
+      : "Verified — the term snapshot is updated.",
+  };
+}
+
+const DAY_NAMES = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const;
+
+/** "9:00" / "09:00" / "09:00:00" → "09:00:00"; anything else → null. */
+function toTimeString(value: string | undefined): string | null {
+  if (!value) return null;
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  if (hours > 23) return null;
+  return `${String(hours).padStart(2, "0")}:${match[2]}:00`;
+}
+
+function normalizeDay(value: string | undefined): string | null {
+  if (!value) return null;
+  const candidate = value.trim().toLowerCase();
+  return DAY_NAMES.find((day) => day.toLowerCase() === candidate) ?? null;
+}
+
+/**
+ * Replaces this term's COR-imported blocks with the verified schedule.
+ *
+ * Replace rather than append: a student who re-uploads after adding or
+ * dropping a subject would otherwise accumulate phantom classes, and the
+ * scheduler would quietly stop finding any free slot. Manually entered blocks
+ * are left alone — those are the student's own.
+ */
+async function importCorSchedule(
+  db: ReturnType<typeof loose>,
+  input: {
+    userId: string;
+    extracted: ExtractedAcademicData | null;
+    schoolYear: string;
+    semester: string;
+  },
+): Promise<number> {
+  const entries = (input.extracted?.subjects ?? []).flatMap((subject) =>
+    (subject.schedule ?? []).flatMap((slot) => {
+      const day = normalizeDay(slot.day_of_week);
+      const start = toTimeString(slot.start_time);
+      const end = toTimeString(slot.end_time);
+      // Skip anything that didn't come back clean — a half-read row is worse
+      // than a missing one, because it silently blocks real free time.
+      if (!day || !start || !end || end <= start) return [];
+      return [
+        {
+          day_of_week: day,
+          start_time: start,
+          end_time: end,
+          subject_code: subject.subject_code,
+        },
+      ];
+    }),
+  );
+
+  if (entries.length === 0) return 0;
+
+  await db
+    .from("availability_blocks")
+    .delete()
+    .eq("user_id", input.userId)
+    .eq("source", "cor_import")
+    .eq("school_year", input.schoolYear)
+    .eq("semester", input.semester);
+
+  const blocks = classScheduleToBlocks(input.userId, entries, {
+    school_year: input.schoolYear,
+    semester: input.semester,
+  }).map((block) => ({
+    ...block,
+    school_year: input.schoolYear,
+    semester: input.semester,
+  }));
+
+  const { error } = await db.from("availability_blocks").insert(blocks);
+  return error ? 0 : blocks.length;
+}
+
+/**
+ * Re-reads a document with the model.
+ *
+ * Staff-triggered because staff are the ones who can see that the extraction
+ * came back thin — a rotated photo, a page half out of frame — and who bear
+ * the cost of typing it out otherwise.
+ */
+export async function rerunExtraction(documentId: string): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can re-run extraction." };
+
+  const outcome = await runAcademicExtraction(documentId);
+  if (outcome.error) return { error: outcome.error };
+
+  revalidatePath("/staff/documents");
+  return {
+    ok: true,
+    message:
+      outcome.confidence != null
+        ? `Read with ${Math.round(outcome.confidence * 100)}% confidence.`
+        : "Read.",
+  };
 }
 
 const rejectSchema = z.object({

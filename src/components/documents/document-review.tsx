@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ExternalLink, Eye, Loader2, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import {
+  ExternalLink,
+  Eye,
+  Loader2,
+  Sparkles,
+  ThumbsDown,
+  ThumbsUp,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
   getDocumentViewUrl,
   rejectAcademicDocument,
+  rerunExtraction,
   verifyAcademicDocument,
 } from "@/app/staff/documents/actions";
 import { Button } from "@/components/ui/button";
+import type { ExtractedAcademicData } from "@/types/osa";
 
 /**
  * Opening the file is a two-step click on purpose: the signed URL is fetched
@@ -57,12 +67,45 @@ export function ViewFileButton({ documentId }: { documentId: string }) {
   );
 }
 
+/** Re-reads a document the model made a poor job of the first time. */
+export function RerunExtractionButton({ documentId }: { documentId: string }) {
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <button
+      type="button"
+      disabled={isPending}
+      onClick={() =>
+        startTransition(async () => {
+          const result = await rerunExtraction(documentId);
+          if (result.error) toast.error(result.error);
+          else toast.success(result.message ?? "Read.");
+        })
+      }
+      className="inline-flex items-center gap-1 rounded-md border border-ai-accent px-2 py-1 text-[11px] font-medium text-ai-accent transition-colors hover:bg-ai-accent-soft"
+    >
+      {isPending ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <Sparkles className="h-3 w-3" />
+      )}
+      {isPending ? "Reading…" : "Re-read with AI"}
+    </button>
+  );
+}
+
 interface VerifyFormProps {
   documentId: string;
   documentType: string;
+  /** Figures the model read, used to pre-fill the form. */
+  extracted?: ExtractedAcademicData | null;
 }
 
-export function DocumentReviewForms({ documentId, documentType }: VerifyFormProps) {
+export function DocumentReviewForms({
+  documentId,
+  documentType,
+  extracted,
+}: VerifyFormProps) {
   const [mode, setMode] = useState<"idle" | "verify" | "reject">("idle");
   const [isPending, startTransition] = useTransition();
 
@@ -141,6 +184,14 @@ export function DocumentReviewForms({ documentId, documentType }: VerifyFormProp
       <input type="hidden" name="document_id" value={documentId} />
       <Header title="Confirm the figures" onCancel={() => setMode("idle")} />
 
+      {extracted && (
+        <p className="rounded-md bg-ai-accent-soft p-2 text-[11px] leading-relaxed text-ai-accent">
+          <Sparkles className="mr-1 inline h-3 w-3" />
+          Pre-filled from the document. Check each figure against the page before
+          confirming — you are the one signing for these numbers.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {/* A COR has no grades yet — only what the student enrolled in. */}
         {!isCor && (
@@ -153,23 +204,45 @@ export function DocumentReviewForms({ documentId, documentType }: VerifyFormProp
               min="1"
               max="5"
               placeholder="2.25"
+              defaultValue={extracted?.gwa ?? ""}
               className={inputClass}
             />
           </label>
         )}
         <label className="block space-y-1">
           <span className="text-[10px] font-medium">Units enrolled</span>
-          <input name="units_enrolled" type="number" min="0" max="60" className={inputClass} />
+          <input
+            name="units_enrolled"
+            type="number"
+            min="0"
+            max="60"
+            defaultValue={extracted?.units_enrolled ?? ""}
+            className={inputClass}
+          />
         </label>
         {!isCor && (
           <>
             <label className="block space-y-1">
               <span className="text-[10px] font-medium">Units passed</span>
-              <input name="units_passed" type="number" min="0" max="60" className={inputClass} />
+              <input
+                name="units_passed"
+                type="number"
+                min="0"
+                max="60"
+                defaultValue={extracted?.units_passed ?? ""}
+                className={inputClass}
+              />
             </label>
             <label className="block space-y-1">
               <span className="text-[10px] font-medium">Units failed</span>
-              <input name="units_failed" type="number" min="0" max="60" className={inputClass} />
+              <input
+                name="units_failed"
+                type="number"
+                min="0"
+                max="60"
+                defaultValue={extracted?.units_failed ?? ""}
+                className={inputClass}
+              />
             </label>
           </>
         )}
@@ -179,10 +252,56 @@ export function DocumentReviewForms({ documentId, documentType }: VerifyFormProp
             name="scholastic_status"
             maxLength={60}
             placeholder="Regular / Probation"
+            defaultValue={extracted?.scholastic_status ?? ""}
             className={inputClass}
           />
         </label>
       </div>
+
+      {/* Subject-level read, so an officer can spot a misread row */}
+      {(extracted?.subjects?.length ?? 0) > 0 && (
+        <details className="rounded-md border border-border p-2">
+          <summary className="cursor-pointer text-[11px] font-medium">
+            {extracted!.subjects!.length} subjects read
+            {isCor
+              ? ` · ${extracted!.subjects!.reduce(
+                  (sum, subject) => sum + (subject.schedule?.length ?? 0),
+                  0,
+                )} class times`
+              : ""}
+          </summary>
+          <ul className="mt-2 space-y-1">
+            {extracted!.subjects!.map((subject, index) => (
+              <li key={`${subject.subject_code ?? index}`} className="text-[11px]">
+                <span className="font-mono">{subject.subject_code ?? "—"}</span>
+                {subject.units != null && (
+                  <span className="text-muted-foreground"> · {subject.units}u</span>
+                )}
+                {subject.grade != null && (
+                  <span className="text-muted-foreground"> · {String(subject.grade)}</span>
+                )}
+                {(subject.schedule?.length ?? 0) > 0 && (
+                  <span className="text-muted-foreground">
+                    {" · "}
+                    {subject
+                      .schedule!.map(
+                        (slot) =>
+                          `${slot.day_of_week?.slice(0, 3) ?? "?"} ${slot.start_time ?? "?"}–${slot.end_time ?? "?"}`,
+                      )
+                      .join(", ")}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {isCor && (
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Verifying imports these class times into the student&apos;s schedule, so
+              hearings aren&apos;t booked on top of a lecture.
+            </p>
+          )}
+        </details>
+      )}
 
       <input
         name="notes"

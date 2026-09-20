@@ -4,7 +4,10 @@ import { useRef, useState, useTransition } from "react";
 import { FileUp, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-import { registerAcademicDocument } from "@/app/(student)/records/actions";
+import {
+  extractMyDocument,
+  registerAcademicDocument,
+} from "@/app/(student)/records/actions";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -31,6 +34,7 @@ export function DocumentUpload({
 }: DocumentUploadProps) {
   const [isPending, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (formData: FormData) => {
@@ -95,6 +99,19 @@ export function DocumentUpload({
 
         toast.success(result.message ?? "Uploaded.");
         formRef.current?.reset();
+
+        // The upload is already safe at this point. Reading it is a bonus
+        // step: if it fails or the student closes the tab, the document is
+        // still in the queue for an officer to read by hand.
+        if (result.documentId) {
+          setReading(true);
+          const extraction = await extractMyDocument(result.documentId);
+          setReading(false);
+          if (extraction.error) toast.message("Saved — the OSA will read it.", {
+            description: extraction.error,
+          });
+          else toast.success(extraction.message ?? "Read.");
+        }
       });
     } finally {
       setBusy(false);
@@ -159,7 +176,7 @@ export function DocumentUpload({
         ) : (
           <Upload className="mr-1.5 h-4 w-4" />
         )}
-        {working ? "Uploading…" : "Upload document"}
+        {reading ? "Reading your document…" : working ? "Uploading…" : "Upload document"}
       </Button>
 
       <p className="text-[11px] leading-relaxed text-muted-foreground sm:col-span-2 lg:col-span-4">

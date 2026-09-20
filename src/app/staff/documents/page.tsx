@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, FileSearch, FolderOpen } from "lucide-react";
+import { CheckCircle2, FileSearch, FolderOpen, Sparkles } from "lucide-react";
 
 import {
   DocumentReviewForms,
+  RerunExtractionButton,
   ViewFileButton,
 } from "@/components/documents/document-review";
 import { EmptyState } from "@/components/osa/empty-state";
@@ -201,14 +202,38 @@ function Group({
                 )}
               </div>
 
-              <ViewFileButton documentId={document.id} />
+              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                <ViewFileButton documentId={document.id} />
+                {actionable && <RerunExtractionButton documentId={document.id} />}
+              </div>
             </div>
+
+            {/* What the model made of it — including how sure it was */}
+            {document.extraction_confidence != null && (
+              <p
+                className={`mt-2 flex items-start gap-1.5 rounded-md p-2 text-[11px] leading-relaxed ${
+                  document.extraction_confidence < 0.6
+                    ? "bg-amber-50 text-amber-900"
+                    : "bg-ai-accent-soft text-ai-accent"
+                }`}
+              >
+                <Sparkles className="mt-0.5 h-3 w-3 shrink-0" />
+                <span>
+                  Read with {Math.round(document.extraction_confidence * 100)}% confidence
+                  {document.extraction_model ? ` (${document.extraction_model})` : ""}.
+                  {document.extraction_confidence < 0.6 &&
+                    " Low — check every figure against the page, or re-read it."}
+                  {document.extraction_error && ` Note: ${document.extraction_error}`}
+                </span>
+              </p>
+            )}
 
             {actionable && (
               <div className="mt-3 border-t border-border pt-3">
                 <DocumentReviewForms
                   documentId={document.id}
                   documentType={document.document_type}
+                  extracted={document.corrected_data ?? document.extracted_data}
                 />
               </div>
             )}

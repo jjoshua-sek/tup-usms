@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
 
 import { EmptyState } from "@/components/osa/empty-state";
-import { ToneBadge } from "@/components/osa/tone-badge";
+import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
+import { ApologyLetterPanel } from "@/components/violations/apology-letter-panel";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { loose } from "@/lib/supabase/loose";
@@ -12,6 +13,49 @@ import { CASE_STATUS_META, type ViolationCaseWithRelations } from "@/types/osa";
 
 export const metadata: Metadata = {
   title: "My Violations",
+};
+
+interface ApologyLetterSummary {
+  id: string;
+  review_status: "pending" | "accepted" | "revision_requested" | "rejected";
+  submitted_at: string;
+  reviewer_notes: string | null;
+  file_path: string | null;
+}
+
+interface CaseWithApologies extends ViolationCaseWithRelations {
+  apology_letters: ApologyLetterSummary[] | null;
+}
+
+/** What the student is told about each review outcome, and what to do next. */
+const APOLOGY_META: Record<
+  ApologyLetterSummary["review_status"],
+  { label: string; tone: Tone; hint: string; canResubmit: boolean }
+> = {
+  pending: {
+    label: "With the OSA",
+    tone: "info",
+    hint: "Your letter has been received and is waiting to be read.",
+    canResubmit: false,
+  },
+  accepted: {
+    label: "Accepted",
+    tone: "success",
+    hint: "Your letter was accepted. This case is settled on your side.",
+    canResubmit: false,
+  },
+  revision_requested: {
+    label: "Changes requested",
+    tone: "warning",
+    hint: "The OSA asked for a revised letter. Read their note, then send a new one.",
+    canResubmit: true,
+  },
+  rejected: {
+    label: "Not accepted",
+    tone: "danger",
+    hint: "The OSA did not accept this letter. Read their note and submit again.",
+    canResubmit: true,
+  },
 };
 
 const CLASSIFICATION_META = {
@@ -55,12 +99,12 @@ export default async function ViolationsPage() {
   const { data: caseRows } = await db
     .from("violation_cases")
     .select(
-      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction)",
+      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction), apology_letters(id, review_status, submitted_at, reviewer_notes, file_path)",
     )
     .eq("student_id", student.id)
     .order("incident_date", { ascending: false });
 
-  const cases = (caseRows as ViolationCaseWithRelations[] | null) ?? [];
+  const cases = (caseRows as CaseWithApologies[] | null) ?? [];
 
   const minorCount = cases.filter((c) => c.classification === "minor").length;
   const majorCount = cases.filter((c) => c.classification === "major").length;
@@ -151,6 +195,56 @@ export default async function ViolationsPage() {
                     <strong>Sanction:</strong> {violationCase.sanction_applied}
                   </p>
                 )}
+
+                {/* MINOR path close-out: the apology letter exchange */}
+                {(() => {
+                  const letters = [...(violationCase.apology_letters ?? [])].sort(
+                    (a, b) =>
+                      new Date(b.submitted_at).getTime() -
+                      new Date(a.submitted_at).getTime(),
+                  );
+                  const latest = letters[0];
+                  const awaiting = violationCase.status === "awaiting_apology";
+
+                  if (!latest && !awaiting) return null;
+
+                  const meta = latest ? APOLOGY_META[latest.review_status] : null;
+
+                  return (
+                    <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[12px] font-semibold">Apology letter</p>
+                        {meta && <ToneBadge label={meta.label} tone={meta.tone} />}
+                      </div>
+
+                      {meta ? (
+                        <p className="mt-1 text-[12px] text-muted-foreground">
+                          {meta.hint}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[12px] text-muted-foreground">
+                          This case closes once you send a written apology and the OSA
+                          accepts it.
+                        </p>
+                      )}
+
+                      {latest?.reviewer_notes && (
+                        <p className="mt-2 rounded-md bg-background p-2 text-[12px]">
+                          <strong>OSA note:</strong> {latest.reviewer_notes}
+                        </p>
+                      )}
+
+                      {awaiting && (!latest || meta?.canResubmit) && (
+                        <div className="mt-2">
+                          <ApologyLetterPanel
+                            caseId={violationCase.id}
+                            caseNumber={violationCase.case_number}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {!statusMeta?.isTerminal && (
                   <p className="mt-3 text-[12px] text-muted-foreground">

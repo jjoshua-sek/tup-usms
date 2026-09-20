@@ -5,10 +5,15 @@ import {
   CalendarClock,
   CalendarSearch,
   History,
+  Mail,
   MapPin,
   User,
 } from "lucide-react";
 
+import {
+  ApologyFileLink,
+  ApologyReviewControls,
+} from "@/components/cases/apology-review";
 import {
   CaseStatusForm,
   HearingActions,
@@ -46,6 +51,30 @@ const HEARING_TONE: Record<HearingStatus, Tone> = {
   cancelled: "neutral",
   no_show_student: "danger",
   no_show_complainant: "danger",
+};
+
+interface ApologyLetterRow {
+  id: string;
+  letter_text: string | null;
+  file_path: string | null;
+  submitted_at: string;
+  review_status: "pending" | "accepted" | "revision_requested" | "rejected";
+  reviewed_at: string | null;
+  reviewer_notes: string | null;
+}
+
+const APOLOGY_TONE: Record<ApologyLetterRow["review_status"], Tone> = {
+  pending: "warning",
+  accepted: "success",
+  revision_requested: "info",
+  rejected: "danger",
+};
+
+const APOLOGY_LABEL: Record<ApologyLetterRow["review_status"], string> = {
+  pending: "Awaiting your review",
+  accepted: "Accepted",
+  revision_requested: "Revision requested",
+  rejected: "Not accepted",
 };
 
 interface CaseDetail {
@@ -120,8 +149,12 @@ export default async function StaffCaseDetailPage({
   // is the right answer for both "missing" and "not yours".
   if (!violationCase) notFound();
 
-  const [{ data: timelineRows }, { data: hearingRows }, { data: proposalRows }] =
-    await Promise.all([
+  const [
+    { data: timelineRows },
+    { data: hearingRows },
+    { data: proposalRows },
+    { data: apologyRows },
+  ] = await Promise.all([
       db
         .from("case_timeline")
         .select("*")
@@ -138,11 +171,19 @@ export default async function StaffCaseDetailPage({
         .eq("case_id", id)
         .eq("status", "suggested")
         .order("rank", { ascending: true }),
+      db
+        .from("apology_letters")
+        .select(
+          "id, letter_text, file_path, submitted_at, review_status, reviewed_at, reviewer_notes",
+        )
+        .eq("case_id", id)
+        .order("submitted_at", { ascending: false }),
     ]);
 
   const timeline = (timelineRows as CaseTimelineEntry[] | null) ?? [];
   const hearings = (hearingRows as CaseHearing[] | null) ?? [];
   const proposals = (proposalRows as ProposalView[] | null) ?? [];
+  const apologies = (apologyRows as ApologyLetterRow[] | null) ?? [];
 
   const statusMeta = CASE_STATUS_META[violationCase.status];
   const isComplainant = violationCase.complainant_staff_id === staff.staffId;
@@ -275,6 +316,63 @@ export default async function StaffCaseDetailPage({
               )
             )}
           </section>
+
+          {/* Apology letters — the MINOR path close-out */}
+          {(apologies.length > 0 || violationCase.status === "awaiting_apology") && (
+            <section className="rounded-xl border border-border bg-card p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-base font-semibold">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                Apology letter
+              </h2>
+
+              {apologies.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border p-6 text-center text-[13px] text-muted-foreground">
+                  Waiting for the student to submit. They were notified when this case moved
+                  to &ldquo;awaiting apology&rdquo; and can submit from their violations page.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {apologies.map((letter, index) => (
+                    <li key={letter.id} className="rounded-lg border border-border p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ToneBadge
+                            label={APOLOGY_LABEL[letter.review_status]}
+                            tone={APOLOGY_TONE[letter.review_status]}
+                          />
+                          <span className="text-[11px] text-muted-foreground">
+                            submitted {formatDateTime(letter.submitted_at)}
+                            {index > 0 ? " · earlier version" : ""}
+                          </span>
+                        </div>
+                        {letter.file_path && <ApologyFileLink letterId={letter.id} />}
+                      </div>
+
+                      {letter.letter_text ? (
+                        <p className="mt-2 whitespace-pre-wrap rounded-md bg-muted p-3 text-[13px] leading-relaxed">
+                          {letter.letter_text}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-[12px] text-muted-foreground">
+                          Submitted as an attachment only.
+                        </p>
+                      )}
+
+                      {letter.reviewer_notes && (
+                        <p className="mt-2 text-[12px] text-muted-foreground">
+                          <strong>Your note:</strong> {letter.reviewer_notes}
+                        </p>
+                      )}
+
+                      {staff.isOsa && letter.review_status === "pending" && (
+                        <ApologyReviewControls letterId={letter.id} />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
           {/* Timeline */}
           <section className="rounded-xl border border-border bg-card p-5">

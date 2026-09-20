@@ -29,9 +29,19 @@ const CLASSIFICATION_TONE = {
 const FILTERS = [
   { key: "open", label: "Open" },
   { key: "scheduling", label: "Needs scheduling" },
+  { key: "apology", label: "Apology letters" },
   { key: "escalated", label: "Escalated" },
   { key: "all", label: "All" },
 ] as const;
+
+interface CaseRow extends ViolationCaseWithRelations {
+  apology_letters: Array<{ review_status: string }> | null;
+}
+
+/** A letter sitting unread is work for the OSA, not for the student. */
+function hasPendingLetter(row: CaseRow): boolean {
+  return (row.apology_letters ?? []).some((letter) => letter.review_status === "pending");
+}
 
 const SCHEDULING_STATUSES = ["filed", "under_review", "counselling_scheduled"];
 const ESCALATED_STATUSES = ["escalated_pic", "escalated_sdb", "referred_codi"];
@@ -75,16 +85,20 @@ export default async function StaffCasesPage({
   const { data: rows } = await db
     .from("violation_cases")
     .select(
-      "id, case_number, classification, status, incident_date, created_at, confidentiality, students(first_name, last_name, student_number, program), violation_types(code, name)",
+      "id, case_number, classification, status, incident_date, created_at, confidentiality, students(first_name, last_name, student_number, program), violation_types(code, name), apology_letters(review_status)",
     )
     .order("created_at", { ascending: false })
     .limit(300);
 
-  const cases = (rows as ViolationCaseWithRelations[] | null) ?? [];
+  const cases = (rows as CaseRow[] | null) ?? [];
 
   const open = cases.filter((c) => !CASE_STATUS_META[c.status]?.isTerminal);
   const needsScheduling = open.filter((c) => SCHEDULING_STATUSES.includes(c.status));
   const escalated = open.filter((c) => ESCALATED_STATUSES.includes(c.status));
+  // Letters to read first, then cases still waiting on the student.
+  const apologyWork = cases
+    .filter((c) => hasPendingLetter(c) || c.status === "awaiting_apology")
+    .sort((a, b) => Number(hasPendingLetter(b)) - Number(hasPendingLetter(a)));
 
   const visible =
     activeFilter === "all"
@@ -93,7 +107,9 @@ export default async function StaffCasesPage({
         ? needsScheduling
         : activeFilter === "escalated"
           ? escalated
-          : open;
+          : activeFilter === "apology"
+            ? apologyWork
+            : open;
 
   return (
     <div>
@@ -203,6 +219,11 @@ export default async function StaffCasesPage({
                         label={statusMeta?.label ?? violationCase.status}
                         tone={statusMeta?.tone ?? "neutral"}
                       />
+                      {hasPendingLetter(violationCase) && (
+                        <div className="mt-1">
+                          <ToneBadge label="Letter to review" tone="warning" />
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

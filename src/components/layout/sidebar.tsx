@@ -26,6 +26,7 @@ import {
   Activity,
   HeartPulse,
   ScrollText,
+  DoorOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -112,6 +113,7 @@ const staffSections: NavSection[] = [
       { label: "Scholarships", href: "/staff/scholarships", icon: Award },
       { label: "Clearance", href: "/staff/clearance", icon: ClipboardCheck },
       { label: "ID Validation", href: "/staff/id-validation", icon: IdCard },
+      { label: "Gates & Access", href: "/staff/gates", icon: DoorOpen },
       { label: "QR Scanner", href: "/staff/scanner", icon: ScanLine },
       { label: "Document Review", href: "/staff/documents", icon: FolderOpen },
     ],

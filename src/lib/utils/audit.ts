@@ -15,7 +15,14 @@ type AuditAction =
   | "message_send"
   | "enrollment_change"
   | "evaluation_submit"
-  | "graduation_apply";
+  | "graduation_apply"
+  // Campus access control (migration 00015)
+  | "id_validation_requested"
+  | "access_gate_created"
+  | "access_gate_updated"
+  | "access_gate_key_rotated"
+  | "access_desk_scan"
+  | "access_anomaly_reviewed";
 
 /**
  * Logs an audit event to the audit_logs table.

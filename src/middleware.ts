@@ -4,37 +4,43 @@ import { updateSession } from "@/lib/supabase/middleware";
 // Routes that don't require authentication
 const PUBLIC_ROUTES = ["/login", "/reset-password", "/auth/callback"];
 
-// Role-based route prefixes
+/**
+ * Routes that carry their own authentication and must never see the Supabase
+ * session cookie dance:
+ *   /kiosk       — unattended gate terminal; authenticates with a device key
+ *   /api/access/ — gate endpoints; authenticate with a Bearer device key
+ *
+ * These are checked before `updateSession()` so a kiosk with no cookies is
+ * never redirected to /login mid-scan.
+ */
+const DEVICE_ROUTES = ["/kiosk", "/api/access/"];
+
+// Student-facing route prefixes (OSA System).
 const STUDENT_ROUTES = [
   "/dashboard",
   "/profile",
-  "/enrollment",
-  "/schedule",
-  "/grades",
   "/concerns",
   "/messages",
   "/documents",
   "/violations",
-  "/evaluation",
-  "/graduation",
   "/settings",
-];
-
-const STAFF_ROUTES = [
-  "/staff/dashboard",
-  "/staff/concerns",
-  "/staff/violations",
-  "/staff/scanner",
-  "/staff/students",
-  "/staff/messages",
-  "/staff/calendar",
-  "/staff/settings",
+  "/id",
+  "/appointments",
+  "/notifications",
+  "/scholarships",
+  "/clearance",
+  "/records",
+  "/availability",
 ];
 
 export async function middleware(request: NextRequest) {
-  const { user, supabaseResponse } = await updateSession(request);
-
   const { pathname } = request.nextUrl;
+
+  if (DEVICE_ROUTES.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
+
+  const { user, supabaseResponse } = await updateSession(request);
 
   // Allow public routes
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
@@ -59,21 +65,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const role = user.user_metadata?.role || "student";
+  // app_metadata is server-only. user_metadata is writable by the user via
+  // the client SDK, so reading the role from there would let any student
+  // claim to be staff — and (because the default kicks in) it also resolved
+  // every real admin to "student".
+  const role = user.app_metadata?.role || "student";
+  const isStaffArea = pathname === "/staff" || pathname.startsWith("/staff/");
 
   // Prevent students from accessing staff routes
-  if (
-    role === "student" &&
-    STAFF_ROUTES.some((route) => pathname.startsWith(route))
-  ) {
+  if (role === "student" && isStaffArea) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // Prevent staff from accessing student-specific routes (they have their own)
   if (
     (role === "staff" || role === "admin") &&
-    STUDENT_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/")) &&
-    !STAFF_ROUTES.some((route) => pathname.startsWith(route))
+    !isStaffArea &&
+    STUDENT_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(route + "/"),
+    )
   ) {
     return NextResponse.redirect(new URL("/staff/dashboard", request.url));
   }

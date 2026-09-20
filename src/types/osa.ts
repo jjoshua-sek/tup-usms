@@ -25,6 +25,7 @@ export const STAFF_ROLES = [
   "codi_member",
   "registrar",
   "cashier",
+  "security_guard",
   "admin",
 ] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
@@ -39,6 +40,7 @@ export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
   codi_member: "CODI Member",
   registrar: "Registrar",
   cashier: "Cashier",
+  security_guard: "Security Guard",
   admin: "Administrator",
 };
 

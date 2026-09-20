@@ -8,6 +8,7 @@ import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { isUpcoming } from "@/lib/utils/time";
 import { HEARING_STATUS_LABELS, type HearingStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -111,10 +112,9 @@ export default async function AppointmentsPage() {
   const hearings = (hearingRows as HearingRow[] | null) ?? [];
   const guidance = (guidanceRows as GuidanceRow[] | null) ?? [];
 
-  const now = Date.now();
   const upcoming = hearings.filter(
     (hearing) =>
-      new Date(hearing.scheduled_end).getTime() >= now &&
+      isUpcoming(hearing.scheduled_end) &&
       !["cancelled", "completed"].includes(hearing.status),
   );
   const past = hearings.filter((hearing) => !upcoming.includes(hearing));

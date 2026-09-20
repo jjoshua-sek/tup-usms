@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
@@ -87,7 +88,7 @@ export default async function StaffDashboardPage() {
     concernsYesterdayResult,
     highUrgencyResult,
     enrolledStudentsResult,
-    activeViolationsResult,
+    openCasesResult,
     recentConcernsResult,
   ] = await Promise.all([
     supabase
@@ -107,10 +108,12 @@ export default async function StaffDashboardPage() {
     supabase
       .from("students")
       .select("*", { count: "exact", head: true }),
-    supabase
-      .from("violations")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "active"),
+    // `violations` was dropped in migration 00007 in favour of the OSA case
+    // file. Anything not closed or dismissed is still live work.
+    loose(supabase)
+      .from("violation_cases")
+      .select("id", { count: "exact", head: true })
+      .not("status", "in", "(closed,dismissed)"),
     supabase
       .from("concerns")
       .select(
@@ -138,7 +141,7 @@ export default async function StaffDashboardPage() {
   const concernsDelta = concernsToday - concernsYesterday;
   const highUrgency = highUrgencyResult.count ?? 0;
   const enrolledStudents = enrolledStudentsResult.count ?? 0;
-  const activeViolations = activeViolationsResult.count ?? 0;
+  const openCases = openCasesResult.count ?? 0;
   const recentConcerns = (recentConcernsResult.data as unknown as ConcernRow[]) ?? [];
 
   const totalActive = highUrgency + (concernsTodayResult.count ?? 0);
@@ -205,7 +208,7 @@ export default async function StaffDashboardPage() {
         <StatsCard
           label="Enrolled Students"
           value={enrolledStudents}
-          trend={`${activeViolations} active violations`}
+          trend={`${openCases} open discipline case${openCases === 1 ? "" : "s"}`}
           icon={Users}
           iconTone="neutral"
         />

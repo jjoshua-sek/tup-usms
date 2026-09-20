@@ -19,7 +19,10 @@
 
 export interface LooseClient {
   from: (table: string) => any;
-  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ error: unknown }>;
+  rpc: (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: any; error: unknown }>;
 }
 
 export function loose(client: unknown): LooseClient {

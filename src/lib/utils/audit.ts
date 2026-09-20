@@ -22,7 +22,18 @@ type AuditAction =
   | "access_gate_updated"
   | "access_gate_key_rotated"
   | "access_desk_scan"
-  | "access_anomaly_reviewed";
+  | "access_anomaly_reviewed"
+  // OSA workflows (migrations 00007–00012)
+  | "clearance_requested"
+  | "clearance_reviewed"
+  | "scholarship_interest"
+  | "case_filed"
+  | "case_updated"
+  | "hearing_scheduled"
+  | "hearing_notified"
+  | "academic_doc_reviewed"
+  | "id_validation_reviewed"
+  | "intervention_created";
 
 /**
  * Logs an audit event to the audit_logs table.

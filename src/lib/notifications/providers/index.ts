@@ -22,7 +22,13 @@ export function resolveProvider(env: NodeJS.ProcessEnv = process.env): EmailProv
 
   if (choice === "gmail") {
     const user = env.GMAIL_USER?.trim();
-    const password = env.GMAIL_APP_PASSWORD?.trim();
+    // Google shows App Passwords as four groups of four ("abcd efgh ijkl
+    // mnop") and people paste them exactly as shown. SMTP wants the sixteen
+    // characters with nothing between them, and the failure it returns —
+    // "535 Username and Password not accepted" — points at the account
+    // rather than at the spaces, which sends people hunting in the wrong
+    // place entirely.
+    const password = env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "");
     if (!user || !password) {
       console.error(
         "[notifications] EMAIL_PROVIDER=gmail but GMAIL_USER or GMAIL_APP_PASSWORD is unset; falling back to console.",

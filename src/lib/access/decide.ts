@@ -21,6 +21,7 @@ export type AccessReason =
   | "expired"
   | "suspended"
   | "revoked"
+  | "surrendered"
   | "passback"
   | "concurrent_use"
   | "gate_inactive"
@@ -138,6 +139,14 @@ export const ACCESS_REASON_META: Record<AccessReason, AccessReasonMeta> = {
     tone: "danger",
     discreet: true,
   },
+  surrendered: {
+    staffLabel: "ID surrendered on clearance",
+    kioskHeadline: "ID no longer active",
+    kioskHint: "This ID was handed in. Please see the guard.",
+    tone: "neutral",
+    // Not a sanction — no need to be cagey about it.
+    discreet: false,
+  },
   passback: {
     staffLabel: "Anti-passback — entry with no exit recorded",
     kioskHeadline: "Access denied",
@@ -254,6 +263,10 @@ export function decideAccess(facts: PolicyFacts): PolicyVerdict {
     });
     return deny(status);
   }
+
+  // A surrendered ID is a graduate's, not an offender's — denied, but it
+  // raises no anomaly and gets no discreet treatment.
+  if (status === "surrendered") return deny("surrendered");
 
   if (status !== "validated") {
     // pending / under_review / rejected / missing all mean "not validated yet".

@@ -17,7 +17,7 @@ interface Result {
 
 const reviewSchema = z.object({
   validation_id: z.string().uuid(),
-  decision: z.enum(["validate", "reject", "suspend", "revoke", "reinstate"]),
+  decision: z.enum(["validate", "reject", "suspend", "revoke", "reinstate", "surrender"]),
   sticker_number: z.string().trim().max(40).optional().or(z.literal("")),
   reason: z.string().trim().max(500).optional().or(z.literal("")),
 });
@@ -55,6 +55,14 @@ const DECISION_MAP: Record<
     status: "validated",
     title: "Campus access restored",
     body: "Your ID is valid again and will open the campus turnstiles.",
+    needsReason: false,
+  },
+  // Handbook, Application for Clearance: the ID is handed in to the OSA before
+  // credentials are released. It stops opening gates from that moment.
+  surrender: {
+    status: "surrendered",
+    title: "Your ID has been received",
+    body: "The OSA has received your university ID for clearance. It no longer opens the campus turnstiles.",
     needsReason: false,
   },
 };

@@ -167,7 +167,13 @@ export type IdValidationStatus =
   | "rejected"
   | "expired"
   | "suspended"
-  | "revoked";
+  | "revoked"
+  /**
+   * Handed in to the OSA before credentials are released on clearance
+   * (Handbook, Application for Clearance). Distinct from 'revoked': the
+   * student did nothing wrong, they graduated or transferred out.
+   */
+  | "surrendered";
 
 export const ID_STATUS_META: Record<
   IdValidationStatus,
@@ -180,6 +186,7 @@ export const ID_STATUS_META: Record<
   expired:      { label: "Expired",      tone: "warning" },
   suspended:    { label: "Suspended",    tone: "danger" },
   revoked:      { label: "Revoked",      tone: "danger" },
+  surrendered:  { label: "Surrendered",  tone: "neutral" },
 };
 
 // ============================================================

@@ -19,6 +19,7 @@ import {
   verifyAcademicDocument,
 } from "@/app/staff/documents/actions";
 import { Button } from "@/components/ui/button";
+import { assessScholasticStanding } from "@/lib/osa/sanctions";
 import type { ExtractedAcademicData } from "@/types/osa";
 
 /**
@@ -167,6 +168,18 @@ export function DocumentReviewForms({
 
   const isCor = documentType === "certificate_of_registration";
 
+  // The handbook defines probation and dismissal by figures, so the standing
+  // can be computed rather than typed — and the reasons shown, so the officer
+  // is confirming an argument instead of accepting a label.
+  const standing =
+    !isCor && extracted
+      ? assessScholasticStanding({
+          unitsEnrolled: extracted.units_enrolled ?? null,
+          unitsPassed: extracted.units_passed ?? null,
+          grades: (extracted.subjects ?? []).map((subject) => subject.grade),
+        })
+      : null;
+
   return (
     <form
       action={(formData) =>
@@ -252,11 +265,42 @@ export function DocumentReviewForms({
             name="scholastic_status"
             maxLength={60}
             placeholder="Regular / Probation"
-            defaultValue={extracted?.scholastic_status ?? ""}
+            defaultValue={extracted?.scholastic_status ?? standing?.label ?? ""}
             className={inputClass}
           />
         </label>
       </div>
+
+      {standing && (
+        <div
+          className={`rounded-md p-2 text-[11px] leading-relaxed ${
+            standing.standing === "regular"
+              ? "bg-muted text-muted-foreground"
+              : "bg-amber-50 text-amber-900"
+          }`}
+        >
+          <p className="font-semibold">
+            Handbook standing: {standing.label}
+            <span className="ml-1.5 font-normal opacity-70">
+              ({standing.handbookReference})
+            </span>
+          </p>
+          <ul className="mt-1 ml-4 list-disc">
+            {standing.reasons.map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
+          {standing.notAssessed.length > 0 && (
+            <p className="mt-1 opacity-80">
+              Not visible on this document: {standing.notAssessed.join(" ")}
+            </p>
+          )}
+          <p className="mt-1 opacity-80">
+            Computed from the figures above, not from the registrar&rsquo;s record. Change the
+            field if their record says otherwise.
+          </p>
+        </div>
+      )}
 
       {/* Subject-level read, so an officer can spot a misread row */}
       {(extracted?.subjects?.length ?? 0) > 0 && (

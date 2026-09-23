@@ -30,6 +30,7 @@ const HOLD_LABELS: Record<string, string> = {
   unresolved_sanction: "Sanction not yet served",
   unsubmitted_apology_letter: "Apology letter not submitted",
   unsigned_settlement: "Settlement not signed",
+  unserved_community_service: "Community service not completed",
   unpaid_fee: "Unpaid fee",
   unreturned_item: "Unreturned item",
   missing_document: "Missing document",

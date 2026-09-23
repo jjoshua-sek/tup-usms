@@ -6,9 +6,11 @@ import {
   CalendarClock,
   CalendarSearch,
   Handshake,
+  HardHat,
   History,
   Mail,
   MapPin,
+  Scale,
   User,
 } from "lucide-react";
 
@@ -20,6 +22,14 @@ import {
   EscalateForm,
   EscalationOutcomeForm,
 } from "@/components/cases/escalation-panel";
+import {
+  AppealOutcomeForm,
+  AppealWindowForm,
+  CommunityServiceForm,
+  ManualHearingForm,
+  NonAppearanceForm,
+  ServiceProgressForm,
+} from "@/components/cases/sanction-panel";
 import {
   ComplianceForm,
   DraftSettlementForm,
@@ -35,6 +45,12 @@ import {
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
+import {
+  appealWindow,
+  inferPenaltyBasis,
+  resolveAppealRoute,
+  type PenaltyBasis,
+} from "@/lib/osa/sanctions";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -64,6 +80,54 @@ const HEARING_TONE: Record<HearingStatus, Tone> = {
   cancelled: "neutral",
   no_show_student: "danger",
   no_show_complainant: "danger",
+};
+
+interface ServiceAssignmentRow {
+  id: string;
+  offense_sequence: number;
+  count_basis: string;
+  hours_required: number;
+  band_min: number | null;
+  band_max: number | null;
+  handbook_reference: string | null;
+  service_detail: string | null;
+  deadline: string | null;
+  hours_completed: number;
+  verifier_role: string | null;
+  verified_at: string | null;
+  verification_notes: string | null;
+  status: "assigned" | "in_progress" | "completed" | "not_served" | "waived";
+  assigned_at: string;
+}
+
+const SERVICE_TONE: Record<ServiceAssignmentRow["status"], Tone> = {
+  assigned: "warning",
+  in_progress: "info",
+  completed: "success",
+  not_served: "danger",
+  waived: "neutral",
+};
+
+interface AppealRow {
+  id: string;
+  penalty_basis: string;
+  appellate_body: string;
+  notice_received_on: string;
+  appeal_deadline: string;
+  filed_on: string | null;
+  status: "window_open" | "filed" | "decided" | "lapsed" | "withdrawn";
+  outcome: string | null;
+  outcome_notes: string | null;
+  decided_on: string | null;
+  external_reference: string | null;
+}
+
+const APPEAL_TONE: Record<AppealRow["status"], Tone> = {
+  window_open: "warning",
+  filed: "info",
+  decided: "neutral",
+  lapsed: "neutral",
+  withdrawn: "neutral",
 };
 
 interface ApologyLetterRow {
@@ -169,6 +233,8 @@ export default async function StaffCaseDetailPage({
     { data: apologyRows },
     { data: settlementRows },
     { data: escalationRows },
+    { data: serviceRows },
+    { data: appealRows },
   ] = await Promise.all([
       db
         .from("case_timeline")
@@ -203,6 +269,16 @@ export default async function StaffCaseDetailPage({
         .select("*")
         .eq("case_id", id)
         .order("escalated_at", { ascending: false }),
+      db
+        .from("community_service_assignments")
+        .select("*")
+        .eq("case_id", id)
+        .order("assigned_at", { ascending: false }),
+      db
+        .from("case_appeals")
+        .select("*")
+        .eq("case_id", id)
+        .order("created_at", { ascending: false }),
     ]);
 
   const timeline = (timelineRows as CaseTimelineEntry[] | null) ?? [];
@@ -211,6 +287,8 @@ export default async function StaffCaseDetailPage({
   const apologies = (apologyRows as ApologyLetterRow[] | null) ?? [];
   const settlements = (settlementRows as CaseSettlement[] | null) ?? [];
   const escalations = (escalationRows as CaseEscalation[] | null) ?? [];
+  const serviceAssignments = (serviceRows as ServiceAssignmentRow[] | null) ?? [];
+  const appeals = (appealRows as AppealRow[] | null) ?? [];
 
   const statusMeta = CASE_STATUS_META[violationCase.status];
   const isComplainant = violationCase.complainant_staff_id === staff.staffId;
@@ -280,7 +358,12 @@ export default async function StaffCaseDetailPage({
           <section className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-base font-semibold">Meeting schedule</h2>
-              {staff.isOsa && <ProposeSlotsButton caseId={violationCase.id} />}
+              {staff.isOsa && (
+                <div className="flex flex-wrap gap-2">
+                  <ProposeSlotsButton caseId={violationCase.id} />
+                  <ManualHearingForm caseId={violationCase.id} />
+                </div>
+              )}
             </div>
 
             {hearings.length > 0 && (
@@ -305,12 +388,18 @@ export default async function StaffCaseDetailPage({
                         </div>
                       </div>
 
-                      <HearingActions
-                        hearingId={hearing.id}
-                        status={hearing.status}
-                        canApprove={isComplainant || staff.isOsa}
-                        canNotify={staff.isOsa}
-                      />
+                      <div className="flex flex-wrap items-start gap-2">
+                        <HearingActions
+                          hearingId={hearing.id}
+                          status={hearing.status}
+                          canApprove={isComplainant || staff.isOsa}
+                          canNotify={staff.isOsa}
+                        />
+                        {staff.isOsa &&
+                          ["student_notified", "student_acknowledged", "confirmed"].includes(
+                            hearing.status,
+                          ) && <NonAppearanceForm hearingId={hearing.id} />}
+                      </div>
                     </div>
 
                     {hearing.status === "awaiting_complainant" && (
@@ -396,6 +485,190 @@ export default async function StaffCaseDetailPage({
                       )}
                     </li>
                   ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {/* Sanction ladder — Table of Offenses (Minor) */}
+          {staff.isOsa && violationCase.classification === "minor" && (
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-display text-base font-semibold">
+                  <HardHat className="h-4 w-4 text-muted-foreground" />
+                  Community service
+                </h2>
+                {serviceAssignments.length === 0 && (
+                  <CommunityServiceForm caseId={violationCase.id} />
+                )}
+              </div>
+
+              {serviceAssignments.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground">
+                  A first minor offense carries a warning and a letter of apology. From the
+                  second, the handbook prescribes community service &mdash; 10 to 20 hours,
+                  then 30 to 50. Assigning it here counts the student&rsquo;s prior offenses
+                  first.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {serviceAssignments.map((assignment) => {
+                    const overdue =
+                      assignment.deadline != null &&
+                      ["assigned", "in_progress"].includes(assignment.status) &&
+                      new Date(assignment.deadline) < new Date();
+
+                    return (
+                      <li key={assignment.id} className="rounded-lg border border-border p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-display text-[15px] font-semibold">
+                            {assignment.hours_completed} / {assignment.hours_required} hours
+                          </span>
+                          <ToneBadge
+                            label={assignment.status.replace(/_/g, " ")}
+                            tone={SERVICE_TONE[assignment.status]}
+                          />
+                          {overdue && <ToneBadge label="Past the deadline" tone="danger" />}
+                        </div>
+
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Offense no. {assignment.offense_sequence} &middot;{" "}
+                          {assignment.band_min != null
+                            ? `band ${assignment.band_min}–${assignment.band_max} hours`
+                            : "no band"}{" "}
+                          &middot; counted as {assignment.count_basis.replace(/_/g, " ")}
+                          {assignment.handbook_reference
+                            ? ` · ${assignment.handbook_reference}`
+                            : ""}
+                        </p>
+
+                        {assignment.service_detail && (
+                          <p className="mt-1.5 rounded-md bg-muted p-2 text-[12px]">
+                            {assignment.service_detail}
+                          </p>
+                        )}
+
+                        <p className="mt-1.5 text-[11px] text-muted-foreground">
+                          {assignment.deadline
+                            ? `Due ${new Date(assignment.deadline).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}`
+                            : "No deadline set"}
+                          {assignment.verified_at
+                            ? ` · verified ${formatDateTime(assignment.verified_at)}${assignment.verifier_role ? ` by ${assignment.verifier_role}` : ""}`
+                            : ""}
+                        </p>
+
+                        {assignment.verification_notes && (
+                          <p className="mt-1 text-[12px]">{assignment.verification_notes}</p>
+                        )}
+
+                        {["assigned", "in_progress", "not_served"].includes(
+                          assignment.status,
+                        ) && (
+                          <ServiceProgressForm
+                            assignmentId={assignment.id}
+                            hoursRequired={assignment.hours_required}
+                            hoursCompleted={Number(assignment.hours_completed)}
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {/* Appeal — Rules on Discipline Sec. 9 */}
+          {staff.isOsa &&
+            (appeals.length > 0 ||
+              ["sanctioned", "escalated_sdb", "escalated_pic"].includes(
+                violationCase.status,
+              )) && (
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-display text-base font-semibold">
+                  <Scale className="h-4 w-4 text-muted-foreground" />
+                  Appeal
+                </h2>
+                {appeals.length === 0 && (
+                  <AppealWindowForm
+                    caseId={violationCase.id}
+                    escalationId={escalations[0]?.id ?? null}
+                    suggestedBasis={inferPenaltyBasis(violationCase.sanction_applied)}
+                  />
+                )}
+              </div>
+
+              {appeals.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground">
+                  Once the Notice of Decision has been served, record the date the student
+                  received it. The appellate body and the 10-day deadline follow from the
+                  penalty, and the student is told both. The OSA does not decide the appeal.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {appeals.map((appeal) => {
+                    const window = appealWindow(appeal.notice_received_on);
+                    return (
+                      <li key={appeal.id} className="rounded-lg border border-border p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ToneBadge
+                            label={appeal.status.replace(/_/g, " ")}
+                            tone={APPEAL_TONE[appeal.status]}
+                          />
+                          {appeal.status === "window_open" && (
+                            <span
+                              className={`text-[11px] font-medium ${window.daysRemaining <= 2 ? "text-red-600" : "text-muted-foreground"}`}
+                            >
+                              {window.isOpen
+                                ? `${window.daysRemaining} day${window.daysRemaining === 1 ? "" : "s"} left`
+                                : "Window has closed"}
+                            </span>
+                          )}
+                          {appeal.external_reference && (
+                            <span className="font-mono text-[11px] text-muted-foreground">
+                              {appeal.external_reference}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-1.5 text-[13px]">
+                          {resolveAppealRoute(appeal.penalty_basis as PenaltyBasis).bodyLabel}
+                          <span className="block text-[11px] text-muted-foreground">
+                            Notice received{" "}
+                            {new Date(appeal.notice_received_on).toLocaleDateString("en-PH", {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            })}{" "}
+                            &middot; deadline{" "}
+                            {new Date(appeal.appeal_deadline).toLocaleDateString("en-PH", {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                            {appeal.filed_on
+                              ? ` · filed ${new Date(appeal.filed_on).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}`
+                              : ""}
+                          </span>
+                        </p>
+
+                        {appeal.outcome && (
+                          <p className="mt-2 rounded-md bg-muted p-2 text-[12px]">
+                            <strong>{appeal.outcome}</strong>
+                            {appeal.decided_on
+                              ? ` on ${new Date(appeal.decided_on).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}`
+                              : ""}
+                            {appeal.outcome_notes ? `. ${appeal.outcome_notes}` : ""}
+                          </p>
+                        )}
+
+                        {appeal.status !== "decided" && (
+                          <AppealOutcomeForm appealId={appeal.id} />
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>

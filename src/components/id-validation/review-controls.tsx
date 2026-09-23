@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { BadgeCheck, Ban, Loader2, RotateCcw, ShieldX, X } from "lucide-react";
+import { Archive, BadgeCheck, Ban, Loader2, RotateCcw, ShieldX, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { reviewIdValidation } from "@/app/staff/id-validation/actions";
 import { Button } from "@/components/ui/button";
 
-type Decision = "validate" | "reject" | "suspend" | "revoke" | "reinstate";
+type Decision = "validate" | "reject" | "suspend" | "revoke" | "reinstate" | "surrender";
 
 const NEEDS_REASON: Decision[] = ["reject", "suspend", "revoke"];
 
@@ -17,6 +17,7 @@ const DECISION_COPY: Record<Decision, { label: string; prompt: string }> = {
   suspend: { label: "Suspend", prompt: "Why is campus access being suspended?" },
   revoke: { label: "Revoke", prompt: "Why is this ID being revoked?" },
   reinstate: { label: "Reinstate", prompt: "" },
+  surrender: { label: "Received on clearance", prompt: "" },
 };
 
 interface ReviewControlsProps {
@@ -127,5 +128,7 @@ function DecisionIcon({ decision }: { decision: Decision }) {
       return <Ban className={className} />;
     case "revoke":
       return <ShieldX className={className} />;
+    case "surrender":
+      return <Archive className={className} />;
   }
 }

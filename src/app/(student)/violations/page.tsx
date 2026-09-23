@@ -8,6 +8,11 @@ import { ApologyLetterPanel } from "@/components/violations/apology-letter-panel
 import { SignSettlementButton } from "@/components/violations/settlement-agreement";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
+import {
+  appealWindow,
+  resolveAppealRoute,
+  type PenaltyBasis,
+} from "@/lib/osa/sanctions";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { CASE_STATUS_META, type ViolationCaseWithRelations } from "@/types/osa";
@@ -35,10 +40,41 @@ interface SettlementSummary {
   is_complied: boolean | null;
 }
 
+interface ServiceSummary {
+  id: string;
+  offense_sequence: number;
+  hours_required: number;
+  hours_completed: number;
+  deadline: string | null;
+  service_detail: string | null;
+  status: "assigned" | "in_progress" | "completed" | "not_served" | "waived";
+}
+
+interface AppealSummary {
+  id: string;
+  penalty_basis: string;
+  appellate_body: string;
+  notice_received_on: string;
+  appeal_deadline: string;
+  status: "window_open" | "filed" | "decided" | "lapsed" | "withdrawn";
+  outcome: string | null;
+  outcome_notes: string | null;
+}
+
 interface CaseWithApologies extends ViolationCaseWithRelations {
   apology_letters: ApologyLetterSummary[] | null;
   case_settlements: SettlementSummary[] | null;
+  community_service_assignments: ServiceSummary[] | null;
+  case_appeals: AppealSummary[] | null;
 }
+
+const SERVICE_STATUS: Record<ServiceSummary["status"], { label: string; tone: Tone }> = {
+  assigned: { label: "Not started", tone: "warning" },
+  in_progress: { label: "In progress", tone: "info" },
+  completed: { label: "Completed", tone: "success" },
+  not_served: { label: "Not served", tone: "danger" },
+  waived: { label: "Waived", tone: "neutral" },
+};
 
 /**
  * Plain-language reading of the committee stages. A student told their case
@@ -124,7 +160,7 @@ export default async function ViolationsPage() {
   const { data: caseRows } = await db
     .from("violation_cases")
     .select(
-      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction), apology_letters(id, review_status, submitted_at, reviewer_notes, file_path), case_settlements(id, terms, student_obligations, compliance_deadline, student_signed_at, complainant_signed_at, osa_witnessed_at, is_complied)",
+      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction), apology_letters(id, review_status, submitted_at, reviewer_notes, file_path), case_settlements(id, terms, student_obligations, compliance_deadline, student_signed_at, complainant_signed_at, osa_witnessed_at, is_complied), community_service_assignments(id, offense_sequence, hours_required, hours_completed, deadline, service_detail, status), case_appeals(id, penalty_basis, appellate_body, notice_received_on, appeal_deadline, status, outcome, outcome_notes)",
     )
     .eq("student_id", student.id)
     .order("incident_date", { ascending: false });
@@ -270,6 +306,130 @@ export default async function ViolationsPage() {
                     </div>
                   );
                 })()}
+
+                {/* MINOR path, second offense onward: community service */}
+                {(violationCase.community_service_assignments ?? []).map((service) => {
+                  const meta = SERVICE_STATUS[service.status];
+                  const remaining = Math.max(
+                    service.hours_required - Number(service.hours_completed),
+                    0,
+                  );
+                  const pct = Math.min(
+                    Math.round((Number(service.hours_completed) / service.hours_required) * 100),
+                    100,
+                  );
+
+                  return (
+                    <div
+                      key={service.id}
+                      className="mt-4 rounded-lg border border-border bg-muted/40 p-3"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[12px] font-semibold">Community service</p>
+                        <ToneBadge label={meta.label} tone={meta.tone} />
+                      </div>
+
+                      <p className="mt-1.5 text-[13px]">
+                        <strong>
+                          {service.hours_completed} of {service.hours_required} hours
+                        </strong>{" "}
+                        recorded
+                        {remaining > 0 && service.status !== "waived" && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            &mdash; {remaining} to go
+                          </span>
+                        )}
+                      </p>
+
+                      <div
+                        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border"
+                        role="img"
+                        aria-label={`${pct}% of the required hours recorded`}
+                      >
+                        <div
+                          className="h-full rounded-full bg-tup-maroon-600"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+
+                      {service.service_detail && (
+                        <p className="mt-2 text-[12px]">{service.service_detail}</p>
+                      )}
+
+                      <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        {service.deadline
+                          ? `Complete by ${formatDate(service.deadline)}.`
+                          : "No deadline set."}{" "}
+                        Clearance and Good Moral requests are held until the hours are served.
+                        Ask the office where you served to sign off, then the OSA records it.
+                      </p>
+                    </div>
+                  );
+                })}
+
+                {/* After a sanction: the appeal window, which is the student's own deadline */}
+                {(violationCase.case_appeals ?? []).map((appeal) => {
+                  const window = appealWindow(appeal.notice_received_on);
+                  const route = resolveAppealRoute(appeal.penalty_basis as PenaltyBasis);
+                  const open = appeal.status === "window_open" && window.isOpen;
+
+                  return (
+                    <div
+                      key={appeal.id}
+                      className={`mt-4 rounded-lg border p-3 ${open ? "border-amber-200 bg-amber-50" : "border-border bg-muted/40"}`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p
+                          className={`text-[12px] font-semibold ${open ? "text-amber-900" : ""}`}
+                        >
+                          Your right to appeal
+                        </p>
+                        {open && (
+                          <ToneBadge
+                            label={
+                              window.daysRemaining === 0
+                                ? "Last day"
+                                : `${window.daysRemaining} days left`
+                            }
+                            tone={window.daysRemaining <= 2 ? "danger" : "warning"}
+                          />
+                        )}
+                      </div>
+
+                      <p className={`mt-1.5 text-[12px] leading-relaxed ${open ? "text-amber-900" : ""}`}>
+                        {open ? (
+                          <>
+                            You may appeal this decision to the{" "}
+                            <strong>{route.bodyLabel}</strong> until{" "}
+                            <strong>{formatDate(appeal.appeal_deadline)}</strong> &mdash;{" "}
+                            {route.days} days from when you received the Notice of Decision.
+                            File it with that office; the OSA does not decide appeals.
+                            {route.furtherRecourse ? ` ${route.furtherRecourse}` : ""}
+                          </>
+                        ) : appeal.status === "lapsed" ? (
+                          <>
+                            The appeal period closed on {formatDate(appeal.appeal_deadline)}{" "}
+                            without an appeal, so the decision stands.
+                          </>
+                        ) : appeal.outcome ? (
+                          <>
+                            Appeal <strong>{appeal.outcome}</strong> by the {route.bodyLabel}.
+                            {appeal.outcome_notes ? ` ${appeal.outcome_notes}` : ""}
+                          </>
+                        ) : (
+                          <>
+                            Appeal filed with the {route.bodyLabel}. You will be told the
+                            outcome.
+                          </>
+                        )}
+                      </p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {route.handbookReference}
+                      </p>
+                    </div>
+                  );
+                })}
 
                 {/* MAJOR path: mediated settlement awaiting the student's agreement */}
                 {(violationCase.case_settlements ?? []).map((settlement) => {

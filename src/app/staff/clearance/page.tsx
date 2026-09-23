@@ -23,6 +23,19 @@ export const metadata: Metadata = {
 
 export const revalidate = 20;
 
+const HOLD_LABELS: Record<string, string> = {
+  pending_violation_case: "Open case",
+  unresolved_sanction: "Sanction not served",
+  unsubmitted_apology_letter: "Apology letter",
+  unsigned_settlement: "Settlement unsigned",
+  unserved_community_service: "Community service",
+  unpaid_fee: "Unpaid fee",
+  unreturned_item: "Unreturned item",
+  missing_document: "Missing document",
+  incomplete_requirements: "Incomplete requirements",
+  other: "Other",
+};
+
 const TYPE_LABELS: Record<string, string> = {
   good_moral: "Good Moral",
   graduation_clearance: "Graduation",
@@ -217,6 +230,9 @@ function Queue({
                   {openHolds.map((hold) => (
                     <li key={hold.id} className="space-y-1.5">
                       <p className="text-[12px] font-medium text-red-900">
+                        <span className="mr-1.5 rounded bg-red-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+                          {HOLD_LABELS[hold.hold_reason] ?? hold.hold_reason}
+                        </span>
                         {hold.description}
                       </p>
                       <p className="text-[11px] text-red-900/80">

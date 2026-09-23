@@ -40,14 +40,19 @@ interface ValidationRow {
 }
 
 /** Which actions make sense from each state. */
-const DECISIONS: Record<IdValidationStatus, Array<"validate" | "reject" | "suspend" | "revoke" | "reinstate">> = {
+type Decision = "validate" | "reject" | "suspend" | "revoke" | "reinstate" | "surrender";
+
+const DECISIONS: Record<IdValidationStatus, Decision[]> = {
   pending: ["validate", "reject"],
   under_review: ["validate", "reject"],
-  validated: ["suspend", "revoke"],
+  validated: ["suspend", "revoke", "surrender"],
   rejected: ["validate"],
   expired: ["validate"],
   suspended: ["reinstate", "revoke"],
   revoked: ["reinstate"],
+  // Handed in on clearance. Nothing to do unless the student re-enrolls, which
+  // starts a fresh validation for the new term.
+  surrendered: [],
 };
 
 function formatDate(iso: string): string {

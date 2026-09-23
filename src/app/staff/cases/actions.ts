@@ -6,13 +6,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getStaffContext } from "@/lib/osa/staff-context";
+import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import {
   findAvailableSlots,
   formatSlot,
   type AvailabilityBlock,
 } from "@/lib/scheduling/find-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { loose, type LooseClient } from "@/lib/supabase/loose";
+import { loose } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 import { sanitizeText } from "@/lib/utils/sanitize";
@@ -280,31 +281,13 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
   };
 }
 
-/** Appends to the append-only case history. Never throws into the caller. */
-async function addTimelineEntry(
-  db: LooseClient,
-  entry: {
-    caseId: string;
-    actorId: string | null;
-    actorLabel: string;
-    eventType: string;
-    summary: string;
-    fromStatus?: string | null;
-    toStatus?: string | null;
-    details?: Record<string, unknown>;
-  },
-): Promise<void> {
-  await db.from("case_timeline").insert({
-    case_id: entry.caseId,
-    actor_id: entry.actorId,
-    actor_label: entry.actorLabel,
-    event_type: entry.eventType,
-    from_status: entry.fromStatus ?? null,
-    to_status: entry.toStatus ?? null,
-    summary: entry.summary,
-    details: entry.details ?? null,
-  });
-}
+/**
+ * Local alias for the shared history helper, kept so the call sites below read
+ * unchanged. The implementation lives in lib/osa/timeline.ts because an export
+ * from a "use server" module is a public endpoint, and forging case history
+ * must not be one.
+ */
+const addTimelineEntry = addCaseTimelineEntry;
 
 /**
  * Cross-checks the complainant's and the student's schedules and records the

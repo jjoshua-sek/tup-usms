@@ -16,10 +16,16 @@ interface Result {
 }
 
 interface ClearanceCheck {
-  result: "clear" | "has_pending_cases" | "has_unresolved_sanctions";
+  result:
+    | "clear"
+    | "has_pending_cases"
+    | "has_unresolved_sanctions"
+    | "has_unserved_sanctions";
   pending_cases: number;
   unresolved_sanctions: number;
   unsubmitted_apologies: number;
+  /** Community service assignments still outstanding (migration 00018). */
+  unserved_service?: number;
   blocking_cases: Array<{
     case_id: string;
     case_number: string;
@@ -59,7 +65,9 @@ export async function runClearanceCheck(requestId: string): Promise<Result> {
   if (checkError) return { error: "The record check failed. Try again." };
 
   const check = checkData as ClearanceCheck;
-  const isClear = check.result === "clear" && check.unsubmitted_apologies === 0;
+  const unservedService = check.unserved_service ?? 0;
+  const isClear =
+    check.result === "clear" && check.unsubmitted_apologies === 0 && unservedService === 0;
 
   await db
     .from("clearance_requests")
@@ -83,7 +91,17 @@ export async function runClearanceCheck(requestId: string): Promise<Result> {
       .is("resolved_at", null)
       .eq("placed_by", staff.staffId);
 
-    const holds = check.blocking_cases.map((blocker) => ({
+    interface HoldInsert {
+      clearance_request_id: string;
+      hold_reason: string;
+      related_case_id: string | null;
+      description: string;
+      resolution_instructions: string;
+      responsible_office: string;
+      placed_by: string;
+    }
+
+    const holds: HoldInsert[] = check.blocking_cases.map((blocker) => ({
       clearance_request_id: requestId,
       hold_reason:
         blocker.status === "sanctioned"
@@ -102,6 +120,34 @@ export async function runClearanceCheck(requestId: string): Promise<Result> {
       responsible_office: "Office of Student Affairs",
       placed_by: staff.staffId,
     }));
+
+    // Outstanding community service blocks clearance in its own right — the
+    // case may be closed while the hours are not yet served.
+    if (unservedService > 0) {
+      const { data: serviceRows } = await db
+        .from("community_service_assignments")
+        .select("id, hours_required, hours_completed, deadline, service_detail")
+        .eq("student_id", request.student_id)
+        .in("status", ["assigned", "in_progress", "not_served"]);
+
+      for (const row of (serviceRows as Array<{
+        hours_required: number;
+        hours_completed: number;
+        deadline: string | null;
+        service_detail: string | null;
+      }> | null) ?? []) {
+        const remaining = Math.max(row.hours_required - Number(row.hours_completed), 0);
+        holds.push({
+          clearance_request_id: requestId,
+          hold_reason: "unserved_community_service",
+          related_case_id: null,
+          description: `${remaining} of ${row.hours_required} community service hours are still outstanding.`,
+          resolution_instructions: `Complete the remaining ${remaining} hours${row.service_detail ? ` (${row.service_detail})` : ""}, have the office where you served sign off, then bring the signed record to the OSA.${row.deadline ? ` The deadline is ${row.deadline}.` : ""}`,
+          responsible_office: "Office of Student Affairs",
+          placed_by: staff.staffId,
+        });
+      }
+    }
 
     if (holds.length > 0) {
       await db.from("clearance_holds").insert(holds);

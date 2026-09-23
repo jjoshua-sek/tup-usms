@@ -79,6 +79,8 @@ const STATUS_GUIDANCE: Record<IdValidationStatus | "none", string> = {
     "Campus access is on hold. This cannot be lifted online — please report to the OSA in person.",
   revoked:
     "This ID has been reported lost or revoked. Request a replacement card at the OSA before using the gates.",
+  surrendered:
+    "You handed this ID in to the OSA for clearance, so it no longer opens the campus gates. If you are enrolling again, request validation for the new term.",
 };
 
 const TONE_CLASSES: Record<string, string> = {

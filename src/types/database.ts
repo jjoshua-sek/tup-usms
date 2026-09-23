@@ -18,6 +18,8 @@
  * and the `as` casts at query sites can be removed.
  */
 
+import type { NotificationEntityType, NotificationType } from "@/lib/notifications/policy";
+
 export type Json =
   | string
   | number
@@ -105,16 +107,17 @@ export interface Database {
         Returns: Json;
       };
       create_notification: {
+        /** Same shape as CreateNotificationArgs in lib/supabase/loose.ts. */
         Args: {
           p_user_id: string;
-          p_type: string;
+          p_type: NotificationType;
           p_title: string;
           p_body: string;
-          p_priority?: string;
-          p_channels?: string[];
+          p_priority?: "low" | "normal" | "high" | "urgent";
+          p_channels?: Array<"in_app" | "email">;
           p_action_url?: string;
           p_action_label?: string;
-          p_entity_type?: string;
+          p_entity_type?: NotificationEntityType;
           p_entity_id?: string;
         };
         Returns: string;

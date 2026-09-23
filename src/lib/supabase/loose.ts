@@ -17,7 +17,7 @@
  * — these call sites can drop `loose()` and get real type checking back.
  */
 
-import type { NotificationType } from "@/lib/notifications/policy";
+import type { NotificationEntityType, NotificationType } from "@/lib/notifications/policy";
 
 type RpcResult = Promise<{ data: any; error: unknown }>;
 
@@ -29,6 +29,10 @@ type RpcResult = Promise<{ data: any; error: unknown }>;
  * rejects, the discarded error hid it, and no student was ever notified of a
  * summons. `p_type` is the union rather than `string` so the next typo is a
  * compile error instead of a silent one.
+ *
+ * `p_entity_type` is typed for the same reason, one bug later: the table has
+ * a second CHECK constraint, and two call sites (apology_letter,
+ * case_settlement) kept failing against it after the first was fixed.
  */
 export interface CreateNotificationArgs {
   p_user_id: string;
@@ -39,7 +43,7 @@ export interface CreateNotificationArgs {
   p_channels?: Array<"in_app" | "email">;
   p_action_url?: string;
   p_action_label?: string;
-  p_entity_type?: string;
+  p_entity_type?: NotificationEntityType;
   p_entity_id?: string;
 }
 

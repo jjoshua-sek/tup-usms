@@ -15,47 +15,80 @@
  * (migration 00019, section 7).
  */
 
-/** Every notification_type permitted by the CHECK constraint in 00012. */
-export type NotificationType =
+/**
+ * Every notification_type the CHECK constraint permits (latest definition:
+ * migration 00019).
+ *
+ * A runtime array rather than a bare union so schema-drift.test.ts can
+ * compare it against the SQL. The union and the constraint drifting apart
+ * is exactly how thirteen notification call sites failed silently.
+ */
+export const NOTIFICATION_TYPES = [
   // Disciplinary
-  | "case_filed"
-  | "hearing_scheduled"
-  | "hearing_reminder"
-  | "hearing_rescheduled"
-  | "apology_required"
-  | "apology_reviewed"
-  | "settlement_ready"
-  | "case_resolved"
-  | "sanction_applied"
-  | "case_escalated"
-  | "appeal_window_opened"
+  "case_filed",
+  "hearing_scheduled",
+  "hearing_reminder",
+  "hearing_rescheduled",
+  "apology_required",
+  "apology_reviewed",
+  "settlement_ready",
+  "case_resolved",
+  "sanction_applied",
+  "case_escalated",
+  "appeal_window_opened",
   // Scheduling
-  | "schedule_proposed"
-  | "schedule_approval_needed"
+  "schedule_proposed",
+  "schedule_approval_needed",
   // Scholarships
-  | "scholarship_match"
-  | "scholarship_deadline"
-  | "scholarship_status"
-  | "masterlist_listed"
+  "scholarship_match",
+  "scholarship_deadline",
+  "scholarship_status",
+  "masterlist_listed",
   // Clearance
-  | "clearance_update"
-  | "clearance_on_hold"
-  | "clearance_ready"
+  "clearance_update",
+  "clearance_on_hold",
+  "clearance_ready",
   // ID validation
-  | "id_validation_status"
-  | "id_expiring"
+  "id_validation_status",
+  "id_expiring",
   // Guidance & risk
-  | "guidance_scheduled"
-  | "guidance_reminder"
-  | "intervention_assigned"
-  | "risk_alert"
+  "guidance_scheduled",
+  "guidance_reminder",
+  "intervention_assigned",
+  "risk_alert",
   // Academic documents
-  | "document_verified"
-  | "document_rejected"
-  | "document_needed"
+  "document_verified",
+  "document_rejected",
+  "document_needed",
   // General
-  | "announcement"
-  | "general";
+  "announcement",
+  "general",
+] as const;
+
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+/**
+ * Every related_entity_type the second CHECK constraint on notifications
+ * permits (latest definition: migration 00020). Two call sites passed
+ * values outside this list — apology_letter and case_settlement — and failed
+ * silently for the life of the feature after the first constraint was fixed.
+ */
+export const NOTIFICATION_ENTITY_TYPES = [
+  "violation_case",
+  "case_hearing",
+  "apology_letter",
+  "case_settlement",
+  "clearance_request",
+  "scholarship",
+  "scholarship_application",
+  "id_validation",
+  "guidance_session",
+  "risk_assessment",
+  "risk_intervention",
+  "academic_document",
+] as const;
+
+export type NotificationEntityType = (typeof NOTIFICATION_ENTITY_TYPES)[number];
 
 export interface NotificationPreferences {
   email_enabled: boolean;

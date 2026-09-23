@@ -33,7 +33,11 @@ type AuditAction =
   | "hearing_notified"
   | "academic_doc_reviewed"
   | "id_validation_reviewed"
-  | "intervention_created";
+  | "intervention_created"
+  // Reads of a student's consolidated record. RA 10173 cares who *looked*
+  // as much as who changed something; this page aggregates discipline, risk
+  // and clearance in one view, so opening it is logged.
+  | "student_record_viewed";
 
 /**
  * Logs an audit event to the audit_logs table.
@@ -59,7 +63,7 @@ export async function logAuditEvent(
     const supabase = await createClient();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Types will be auto-generated from Supabase
-    await (supabase as any).from("audit_logs").insert({
+    const { error: insertError } = await (supabase as any).from("audit_logs").insert({
       user_id: userId,
       action,
       resource,
@@ -67,6 +71,14 @@ export async function logAuditEvent(
       ip_address: ip,
       user_agent: userAgent,
     });
+
+    // supabase-js returns a refused insert rather than throwing it, so the
+    // catch below never sees an RLS or constraint failure. Swallowing the
+    // result is how create_notification failed silently for months; an
+    // audit trail with invisible gaps is worse than one that complains.
+    if (insertError) {
+      console.error(`Audit log refused (${action} on ${resource}):`, insertError);
+    }
   } catch (error) {
     // Audit logging should never break the main flow
     console.error("Audit log error:", error);

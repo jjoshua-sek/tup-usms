@@ -11,7 +11,6 @@ import {
   IdCard,
   ShieldAlert,
   Megaphone,
-  ArrowRight,
 } from "lucide-react";
 
 import { getCurrentTerm } from "@/lib/access/term";
@@ -20,7 +19,6 @@ import { formatManilaMonthDay, manilaWallClock } from "@/lib/utils/time";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { ModuleCard } from "@/components/shared/module-card";
-import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Dashboard",

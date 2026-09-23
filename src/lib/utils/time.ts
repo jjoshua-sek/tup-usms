@@ -131,6 +131,17 @@ export function manilaInstant(year: number, month: number, day: number, minutes 
   return new Date(Date.UTC(year, month, day, 0, minutes) - MANILA_OFFSET_MS);
 }
 
+/**
+ * Manila midnight at the start of the day `now` falls on — the start of any
+ * "today" window. `setHours(0, 0, 0, 0)` finds the server's midnight instead,
+ * which on Vercel is 8 AM in Manila: before then, "today" would take in most
+ * of yesterday, and after it, miss the small hours.
+ */
+export function startOfManilaDay(now: Date = new Date()): Date {
+  const { year, month, day } = manilaWallClock(now);
+  return manilaInstant(year, month, day);
+}
+
 const WALL_CLOCK_INPUT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
 /**

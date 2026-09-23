@@ -11,6 +11,8 @@
  * staff member can check it against the page.
  */
 
+import { manilaWallClock } from "@/lib/utils/time";
+
 // ============================================================
 // MINOR OFFENSE LADDER — Table of Offenses (Minor)
 // ============================================================
@@ -209,20 +211,25 @@ export interface AppealWindow {
  * The window runs from receipt of the Notice of Decision, not from the
  * decision date — Sec. 9.2 is specific about that, and the difference is
  * usually several days of mail room.
+ *
+ * `deadline` is UTC midnight of the last day, the shape a Postgres `date`
+ * column arrives in, so `toISOString().slice(0, 10)` is the date to store.
  */
 export function appealWindow(
   noticeReceivedOn: string | Date,
   days = 10,
   now: Date = new Date(),
 ): AppealWindow {
-  const received = new Date(noticeReceivedOn);
-  const deadline = new Date(received);
-  deadline.setDate(deadline.getDate() + days);
+  // Compare whole days: a deadline is a date, not a moment. Both dates are
+  // read on the Manila calendar, because the server's is UTC and stays on
+  // yesterday until 8 AM — long enough to tell a student on the morning
+  // after the last day that they can still appeal.
+  const received = manilaWallClock(new Date(noticeReceivedOn));
+  const deadline = new Date(Date.UTC(received.year, received.month, received.day + days));
 
-  // Compare whole days: a deadline is a date, not a moment.
-  const toDay = (value: Date) =>
-    Date.UTC(value.getFullYear(), value.getMonth(), value.getDate());
-  const daysRemaining = Math.round((toDay(deadline) - toDay(now)) / 86_400_000);
+  const today = manilaWallClock(now);
+  const daysRemaining =
+    (deadline.getTime() - Date.UTC(today.year, today.month, today.day)) / 86_400_000;
 
   return { deadline, daysRemaining, isOpen: daysRemaining >= 0 };
 }

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
-import { formatManilaMonthDay } from "@/lib/utils/time";
+import { formatManilaMonthDay, manilaWallClock } from "@/lib/utils/time";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { ModuleCard } from "@/components/shared/module-card";
@@ -38,7 +38,9 @@ interface StudentRow {
 }
 
 function getGreeting(): string {
-  const hour = new Date().getHours();
+  // The Manila hour. The server's clock is UTC, which would greet a student
+  // at 7 PM with "Good morning".
+  const hour = Math.floor(manilaWallClock(new Date()).minutes / 60);
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";

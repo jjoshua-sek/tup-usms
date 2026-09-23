@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { cn } from "@/lib/utils";
-import { formatManilaLongDate } from "@/lib/utils/time";
+import { formatManilaLongDate, startOfManilaDay } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Overview",
@@ -72,13 +72,13 @@ export default async function StaffDashboardPage() {
 
   const dateString = formatManilaLongDate(new Date());
 
-  // Compute today's window for "Concerns Today"
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  // "Concerns Today" counts from Manila midnight. The server's own midnight
+  // is UTC's, 8 AM here, which would shift both windows by eight hours.
+  const todayStart = startOfManilaDay();
 
-  // Compute yesterday's window for the comparison
-  const yesterdayStart = new Date(todayStart);
-  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  // Yesterday's window for the comparison. Manila keeps no daylight saving,
+  // so every day there is exactly 24 hours long.
+  const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
 
   const [
     concernsTodayResult,

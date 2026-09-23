@@ -9,6 +9,7 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { getAccessStaff } from "@/lib/access/guards";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { startOfManilaDay } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Gates & Access",
@@ -42,9 +43,9 @@ export default async function StaffGatesPage() {
   const supabase = await createClient();
   const db = loose(supabase);
 
-  const dayStart = new Date();
-  dayStart.setHours(0, 0, 0, 0);
-  const dayStartIso = dayStart.toISOString();
+  // Today's entries and denials count from Manila midnight. The server's own
+  // midnight is UTC's, which falls at 8 AM here.
+  const dayStartIso = startOfManilaDay().toISOString();
 
   const [
     { data: gatesRaw },

@@ -9,6 +9,7 @@ import {
   manilaInstant,
   manilaWallClock,
   parseManilaDateTime,
+  startOfManilaDay,
 } from "./time";
 
 // Run as Vercel does. On a developer machine set to Manila time, every one of
@@ -82,6 +83,30 @@ describe("manilaInstant", () => {
 
   it("rolls days over into the next month", () => {
     expect(manilaInstant(2026, 8, 31).toISOString()).toBe("2026-09-30T16:00:00.000Z");
+  });
+});
+
+describe("startOfManilaDay", () => {
+  it("counts the small hours as today", () => {
+    // 7:30 AM Friday in Manila. UTC is still on Thursday, and its midnight
+    // fell at 8 AM Thursday here: a window from there counts most of
+    // Thursday as today.
+    expect(startOfManilaDay(new Date("2026-09-24T23:30:00Z")).toISOString()).toBe(
+      "2026-09-24T16:00:00.000Z",
+    );
+  });
+
+  it("keeps the same start once UTC has caught up", () => {
+    // 11:30 PM Friday in Manila, Friday in UTC too. A UTC-midnight window
+    // would start at 8 AM and miss everything filed before it.
+    expect(startOfManilaDay(new Date("2026-09-25T15:30:00Z")).toISOString()).toBe(
+      "2026-09-24T16:00:00.000Z",
+    );
+  });
+
+  it("is its own start at midnight", () => {
+    const midnight = manilaInstant(2026, 8, 25);
+    expect(startOfManilaDay(midnight).getTime()).toBe(midnight.getTime());
   });
 });
 

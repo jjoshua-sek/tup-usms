@@ -5,15 +5,18 @@ import { updateSession } from "@/lib/supabase/middleware";
 const PUBLIC_ROUTES = ["/login", "/reset-password", "/auth/callback"];
 
 /**
- * Routes that carry their own authentication and must never see the Supabase
- * session cookie dance:
- *   /kiosk       — unattended gate terminal; authenticates with a device key
- *   /api/access/ — gate endpoints; authenticate with a Bearer device key
+ * Routes called by machines rather than people. Each carries its own
+ * authentication and must never see the Supabase session cookie dance:
+ *   /kiosk              — unattended gate terminal; device key
+ *   /api/access/        — gate endpoints; Bearer device key
+ *   /api/notifications/ — the email dispatcher; Bearer CRON_SECRET, called
+ *                         by pg_cron from Supabase (migration 00019 §6)
  *
- * These are checked before `updateSession()` so a kiosk with no cookies is
- * never redirected to /login mid-scan.
+ * These are checked before `updateSession()` so a caller with no cookies is
+ * never redirected to /login. A cron job cannot follow a redirect to a login
+ * form, so without this the queue silently stops draining.
  */
-const DEVICE_ROUTES = ["/kiosk", "/api/access/"];
+const MACHINE_ROUTES = ["/kiosk", "/api/access/", "/api/notifications/"];
 
 // Student-facing route prefixes (OSA System).
 const STUDENT_ROUTES = [
@@ -36,7 +39,7 @@ const STUDENT_ROUTES = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (DEVICE_ROUTES.some((route) => pathname.startsWith(route))) {
+  if (MACHINE_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 

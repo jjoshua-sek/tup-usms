@@ -327,7 +327,7 @@ export async function rejectAcademicDocument(formData: FormData): Promise<Result
   if (document.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: document.students.user_id,
-      p_type: "academic_document",
+      p_type: "document_rejected",
       p_title: "Your uploaded document needs attention",
       p_body: `The OSA could not accept it: ${parsed.data.reason}`,
       p_priority: "normal",

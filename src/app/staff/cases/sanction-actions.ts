@@ -244,7 +244,7 @@ export async function assignCommunityService(formData: FormData): Promise<Result
   if (violationCase.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: violationCase.students.user_id,
-      p_type: "community_service",
+      p_type: "sanction_applied",
       p_title: `${parsed.data.hours_required} hours of community service assigned`,
       p_body: `For case ${violationCase.case_number}.${parsed.data.deadline ? ` To be completed by ${parsed.data.deadline}.` : ""} Clearance and Good Moral requests are held until the hours are served.`,
       p_priority: "high",
@@ -382,7 +382,7 @@ export async function recordServiceProgress(formData: FormData): Promise<Result>
   if (closedCase && assignment.violation_cases?.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: assignment.violation_cases.students.user_id,
-      p_type: "case_status",
+      p_type: "case_resolved",
       p_title: "Your case is closed",
       p_body: `Your community service for case ${assignment.violation_cases.case_number} is recorded as complete. Nothing further is required.`,
       p_priority: "normal",
@@ -652,7 +652,7 @@ export async function openAppealWindow(formData: FormData): Promise<Result> {
   if (violationCase.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: violationCase.students.user_id,
-      p_type: "appeal_window",
+      p_type: "appeal_window_opened",
       p_title: "You may appeal this decision until " + deadline,
       p_body: `For case ${violationCase.case_number}: an appeal is filed with the ${route.bodyLabel} within ${route.days} days of your receipt of the Notice of Decision (${route.handbookReference}). The OSA does not decide the appeal.${route.furtherRecourse ? ` ${route.furtherRecourse}` : ""}`,
       p_priority: "urgent",

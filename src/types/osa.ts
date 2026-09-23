@@ -716,6 +716,11 @@ export interface NotificationRow {
   email_sent_at: string | null;
   email_error: string | null;
   email_recipient: string | null;
+  /** Delivery bookkeeping added in migration 00019. */
+  email_attempts?: number;
+  email_next_attempt_at?: string | null;
+  email_provider_id?: string | null;
+  email_skip_reason?: string | null;
   related_entity_type: string | null;
   related_entity_id: string | null;
   expires_at: string | null;

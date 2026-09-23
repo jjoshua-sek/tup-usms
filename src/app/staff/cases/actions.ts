@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import type { NotificationType } from "@/lib/notifications/policy";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import {
@@ -613,7 +614,7 @@ export async function notifyStudentOfHearing(hearingId: string): Promise<Result>
   if (studentUserId) {
     await db.rpc("create_notification", {
       p_user_id: studentUserId,
-      p_type: "hearing_summons",
+      p_type: "hearing_scheduled",
       p_title: "You have a meeting with the Office of Student Affairs",
       p_body: `${when} at ${hearing.venue}, regarding case ${hearing.violation_cases?.case_number}. Please open the portal and confirm you've seen this.`,
       p_priority: "high",
@@ -759,7 +760,7 @@ export async function reviewApologyLetter(formData: FormData): Promise<Result> {
   if (letter.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: letter.students.user_id,
-      p_type: "apology_review",
+      p_type: "apology_reviewed",
       p_title:
         parsed.data.decision === "accept"
           ? "Your apology letter was accepted"
@@ -915,7 +916,7 @@ export async function draftSettlement(formData: FormData): Promise<Result> {
   if (violationCase.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: violationCase.students.user_id,
-      p_type: "settlement",
+      p_type: "settlement_ready",
       p_title: "A settlement is waiting for your agreement",
       p_body: `Read the terms agreed for case ${violationCase.case_number} and confirm whether you accept them.`,
       p_priority: "high",
@@ -1091,7 +1092,7 @@ export async function recordSettlementCompliance(formData: FormData): Promise<Re
   if (complied && settlement.violation_cases?.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: settlement.violation_cases.students.user_id,
-      p_type: "case_status",
+      p_type: "case_resolved",
       p_title: "Your case is closed",
       p_body: `You completed what was agreed in case ${settlement.violation_cases.case_number}. Nothing further is required.`,
       p_priority: "normal",
@@ -1203,7 +1204,7 @@ export async function escalateCase(formData: FormData): Promise<Result> {
   if (!toCodi && violationCase.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: violationCase.students.user_id,
-      p_type: "case_status",
+      p_type: "case_escalated",
       p_title: `Your case was referred to the ${parsed.data.escalated_to}`,
       p_body: `Case ${violationCase.case_number} now goes before the ${parsed.data.escalated_to === "PIC" ? "Preliminary Investigation Committee" : "Student Disciplinary Board"}. You will be told when a hearing is scheduled.`,
       p_priority: "high",
@@ -1342,7 +1343,7 @@ export async function recordEscalationOutcome(formData: FormData): Promise<Resul
   if (toStatus && escalation.violation_cases?.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: escalation.violation_cases.students.user_id,
-      p_type: "case_status",
+      p_type: toStatus === "dismissed" ? "case_resolved" : "sanction_applied",
       p_title:
         toStatus === "dismissed"
           ? "Your case was dismissed"
@@ -1428,20 +1429,29 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
   // Only the transitions that ask something of the student, or end the
   // matter, are worth a notification. Telling them about every internal
   // status change would train them to ignore the ones that matter.
-  const STUDENT_FACING: Partial<Record<CaseStatus, { title: string; body: string }>> = {
+  // Each entry carries its own notification_type: the delivery policy treats
+  // these differently, and collapsing them into one generic type would let a
+  // student mute the apology deadline along with the routine updates.
+  const STUDENT_FACING: Partial<
+    Record<CaseStatus, { type: NotificationType; title: string; body: string }>
+  > = {
     awaiting_apology: {
+      type: "apology_required",
       title: "Write your apology letter",
       body: `Case ${current?.case_number ?? ""} closes once you submit a written apology and the OSA accepts it.`,
     },
     sanctioned: {
+      type: "sanction_applied",
       title: "A sanction has been recorded",
       body: `A sanction was applied in case ${current?.case_number ?? ""}. Open your violations page for the details.`,
     },
     closed: {
+      type: "case_resolved",
       title: "Your case is closed",
       body: `Case ${current?.case_number ?? ""} has been closed. Nothing further is required from you.`,
     },
     dismissed: {
+      type: "case_resolved",
       title: "Your case was dismissed",
       body: `Case ${current?.case_number ?? ""} was dismissed. No sanction was applied.`,
     },
@@ -1451,7 +1461,7 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
   if (announcement && current?.students?.user_id && fromStatus !== parsed.data.status) {
     await db.rpc("create_notification", {
       p_user_id: current.students.user_id,
-      p_type: "case_status",
+      p_type: announcement.type,
       p_title: announcement.title,
       p_body: announcement.body,
       p_priority: parsed.data.status === "awaiting_apology" ? "high" : "normal",

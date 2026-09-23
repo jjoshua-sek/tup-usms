@@ -147,6 +147,11 @@ export default async function NotificationsPage({
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   )}
+
+                  <DeliveryNote
+                    status={notification.email_status}
+                    sentAt={notification.email_sent_at}
+                  />
                 </div>
 
                 {!notification.is_read && <MarkReadButton notificationId={notification.id} />}
@@ -157,10 +162,53 @@ export default async function NotificationsPage({
       )}
 
       <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-        Notifications marked for email are also sent to your institutional address. You can
-        change delivery preferences in Settings.
+        Anything that asks something of you &mdash; a meeting, an apology letter, a deadline
+        to appeal &mdash; is also emailed to your institutional address, and each notice above
+        says whether that email went out. Routine updates can be switched off; notices that
+        start a deadline cannot.
       </p>
     </div>
+  );
+}
+
+/**
+ * What happened to the email copy of this notification.
+ *
+ * Shown to the student rather than kept in a staff console on purpose: the
+ * portal is the only place a student can find out whether the university
+ * believes it has served them notice. "Emailed to you on the 23rd" is also
+ * the first thing worth checking when somebody says they never heard about a
+ * hearing.
+ */
+function DeliveryNote({
+  status,
+  sentAt,
+}: {
+  status: string | null;
+  sentAt: string | null;
+}) {
+  if (!status || status === "not_applicable" || status === "skipped") return null;
+
+  const text =
+    status === "sent"
+      ? `Emailed to your institutional address${sentAt ? ` on ${new Date(sentAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}` : ""}`
+      : status === "queued" || status === "sending"
+        ? "Email is on its way to your institutional address"
+        : status === "undeliverable" || status === "bounced"
+          ? "The email could not be delivered — the OSA has been told, and this notice still stands"
+          : "The email has not gone out yet; it will be retried";
+
+  const failed = status === "undeliverable" || status === "bounced";
+
+  return (
+    <p
+      className={cn(
+        "mt-1.5 text-[11px]",
+        failed ? "text-red-700" : "text-muted-foreground",
+      )}
+    >
+      {text}
+    </p>
   );
 }
 

@@ -138,7 +138,7 @@ export async function reviewIdValidation(formData: FormData): Promise<Result> {
   if (row.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: row.students.user_id,
-      p_type: "id_validation",
+      p_type: "id_validation_status",
       p_title: decision.title,
       p_body: parsed.data.reason ? `${decision.body} Reason: ${parsed.data.reason}` : decision.body,
       p_priority: decision.status === "validated" ? "normal" : "high",

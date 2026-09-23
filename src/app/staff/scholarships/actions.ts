@@ -85,7 +85,7 @@ export async function updateScholarshipApplication(formData: FormData): Promise<
   if (application?.students?.user_id) {
     await db.rpc("create_notification", {
       p_user_id: application.students.user_id,
-      p_type: "scholarship_update",
+      p_type: "scholarship_status",
       p_title: `Scholarship update: ${parsed.data.status.replace(/_/g, " ")}`,
       p_body: `${application.scholarships?.name ?? "Your scholarship application"} is now ${parsed.data.status.replace(/_/g, " ")}.${parsed.data.note ? ` ${parsed.data.note}` : ""}`,
       p_priority: "normal",

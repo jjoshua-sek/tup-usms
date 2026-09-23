@@ -27,6 +27,7 @@ import {
   type RelayConfig,
   type RelayMode,
 } from "@/lib/access/relay";
+import { formatManila } from "@/lib/utils/time";
 
 /** Where the paired device key lives. Never leaves this browser. */
 const STORAGE_KEY = "usms.gate.deviceKey";
@@ -322,11 +323,12 @@ export function GateKiosk() {
     return () => clearInterval(interval);
   }, [phase, heartbeat]);
 
-  // Clock, mounted-only so the server render doesn't disagree.
+  // Clock, mounted-only so the server render doesn't disagree. Campus time,
+  // whatever zone the kiosk device happens to be set to.
   useEffect(() => {
     const tick = () =>
       setClock(
-        new Date().toLocaleTimeString("en-PH", {
+        formatManila(new Date(), {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { verifyAtDesk, type DeskScanResult } from "@/app/staff/scanner/actions";
 import { CameraScanner } from "@/components/access/camera-scanner";
 import { Button } from "@/components/ui/button";
+import { formatManilaDate, formatManilaTime } from "@/lib/utils/time";
 
 interface DeskScannerProps {
   /** Guards get the verdict without the discipline context. */
@@ -69,10 +70,7 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
             label: scan.staffDetail?.studentNumber ?? trimmed,
             decision: scan.decision,
             detail: scan.hint,
-            at: new Date().toLocaleTimeString("en-PH", {
-              hour: "numeric",
-              minute: "2-digit",
-            }),
+            at: formatManilaTime(new Date()),
           },
           ...current,
         ].slice(0, 10),
@@ -196,18 +194,7 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
               <Row label="Student number" value={result.staffDetail?.studentNumber ?? "—"} mono />
               <Row label="Validation" value={result.staffDetail?.validationStatus ?? "none"} />
               <Row label="Term" value={result.staffDetail?.validationTerm ?? result.termLabel} />
-              <Row
-                label="Expires"
-                value={
-                  result.staffDetail?.expiresAt
-                    ? new Date(result.staffDetail.expiresAt).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "—"
-                }
-              />
+              <Row label="Expires" value={formatManilaDate(result.staffDetail?.expiresAt)} />
               {canSeeCases && (
                 <Row
                   label="Open cases"

@@ -222,11 +222,7 @@ export function ProfileEdit({ student }: ProfileEditProps) {
           <Field label="Full Name" value={fullName} />
           <Field
             label="Birth Date"
-            value={new Date(student.birth_date).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            value={formatManilaLongDate(student.birth_date)}
           />
           {student.birth_place && (
             <Field label="Birth Place" value={student.birth_place} />

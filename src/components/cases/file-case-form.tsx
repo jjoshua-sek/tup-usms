@@ -21,6 +21,7 @@ import {
   type TrackRecord,
 } from "@/app/staff/cases/actions";
 import { Button } from "@/components/ui/button";
+import { formatManilaDate } from "@/lib/utils/time";
 
 export interface ViolationTypeOption {
   id: string;
@@ -196,12 +197,7 @@ export function FileCaseForm({
                 </span>
                 {record.lastIncidentDate && (
                   <span className="text-muted-foreground">
-                    last incident{" "}
-                    {new Date(record.lastIncidentDate).toLocaleDateString("en-PH", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    last incident {formatManilaDate(record.lastIncidentDate)}
                   </span>
                 )}
                 {record.minor + record.major === 0 && (

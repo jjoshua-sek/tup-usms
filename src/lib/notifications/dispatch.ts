@@ -154,6 +154,27 @@ export async function dispatchQueuedEmails(
         text: message.text,
       });
 
+      // A provider that only writes to a log has not delivered anything, and
+      // recording it as 'sent' would make the portal tell a student their
+      // summons was emailed when it was not. That is the precise failure
+      // this whole feature exists to remove, so it is recorded as skipped —
+      // the queue still drains, but nothing claims delivery that did not
+      // happen. In production this branch means EMAIL_PROVIDER is unset.
+      if (!provider.deliversExternally) {
+        report.skipped += 1;
+        await db
+          .from("notifications")
+          .update({
+            email_status: "skipped",
+            email_skip_reason: `logged only — no mail provider configured (${provider.name})`,
+            email_recipient: row.recipient,
+            email_provider_id: `${provider.name}:${sent.id}`,
+            email_next_attempt_at: null,
+          })
+          .eq("id", row.id);
+        continue;
+      }
+
       report.sent += 1;
       await db
         .from("notifications")

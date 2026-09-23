@@ -49,6 +49,19 @@ export function resolveProvider(env: NodeJS.ProcessEnv = process.env): EmailProv
     return createResendProvider({ apiKey, from });
   }
 
+  // Reaching the console provider in production means nobody is being
+  // notified of anything. Nothing breaks, no run fails, and the report still
+  // looks plausible — which is why it has to say so on every single run
+  // rather than waiting to be noticed.
+  if (env.VERCEL_ENV === "production" || env.NODE_ENV === "production") {
+    console.error(
+      "[notifications] running in production with no mail provider: " +
+        `EMAIL_PROVIDER is "${choice}". No student is receiving email. ` +
+        "Set EMAIL_PROVIDER=gmail (with GMAIL_USER and GMAIL_APP_PASSWORD) or " +
+        "EMAIL_PROVIDER=resend (with RESEND_API_KEY and EMAIL_FROM).",
+    );
+  }
+
   return createConsoleProvider();
 }
 

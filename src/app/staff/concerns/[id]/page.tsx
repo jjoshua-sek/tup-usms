@@ -14,7 +14,7 @@ import { StatusUpdater } from "@/components/concerns/status-updater";
 import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
-import { formatManila } from "@/lib/utils/time";
+import { formatManila, manilaWallClock } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Concern Review",
@@ -88,7 +88,8 @@ function shortId(id: string): string {
   // Convert UUID to mockup-style ID: #C-2026-0148
   // For demo purposes, take last 4 chars and prefix
   const tail = id.replace(/-/g, "").slice(-4).toUpperCase();
-  return `#C-${new Date().getFullYear()}-${tail}`;
+  // The Manila year: the server's is UTC, still last year until 8 AM on Jan 1.
+  return `#C-${manilaWallClock(new Date()).year}-${tail}`;
 }
 
 // Word count for the "87 words" indicator

@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import { getCurrentTerm } from "@/lib/access/term";
 import { createClient } from "@/lib/supabase/server";
 import { formatManilaMonthDay, manilaWallClock } from "@/lib/utils/time";
 import { PageHeader } from "@/components/shared/page-header";
@@ -44,22 +45,6 @@ function getGreeting(): string {
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
-}
-
-function getCurrentAcademicTerm(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  // Aug-Dec → 1st sem AY (year)-(year+1)
-  // Jan-May → 2nd sem AY (year-1)-(year)
-  // Jun-Jul → Summer AY (year-1)-(year)
-  if (month >= 8) {
-    return `AY ${year}–${year + 1} · 1st Semester`;
-  } else if (month >= 6) {
-    return `AY ${year - 1}–${year} · Summer`;
-  } else {
-    return `AY ${year - 1}–${year} · 2nd Semester`;
-  }
 }
 
 export default async function DashboardPage() {
@@ -138,6 +123,11 @@ export default async function DashboardPage() {
   const activeViolations = violationsActiveResult.count ?? 0;
   const documentsCount = documentsResult.count ?? 0;
 
+  // The term the rest of the portal files things under, in the dashboard's
+  // own order: "AY 2026–2027 · 1st Semester".
+  const term = getCurrentTerm();
+  const termLabel = `${term.schoolYearLabel} · ${term.semester}`;
+
   const lastUploadedRow = documentsResult.data?.[0] as
     | { uploaded_at: string }
     | undefined;
@@ -150,7 +140,7 @@ export default async function DashboardPage() {
       <PageHeader
         breadcrumbs={[{ label: "Home", href: "/dashboard" }, { label: "Dashboard" }]}
         title={`${getGreeting()}, ${student.first_name}.`}
-        description={`Here's an overview of your student profile for ${getCurrentAcademicTerm()}.`}
+        description={`Here's an overview of your student profile for ${termLabel}.`}
       >
         <Link
           href="/concerns/new"

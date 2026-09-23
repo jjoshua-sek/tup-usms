@@ -14,6 +14,8 @@
  *   Jun – Jul  → Summer (belongs to the same school year as the 2nd Semester)
  */
 
+import { manilaWallClock } from "@/lib/utils/time";
+
 export const SEMESTERS = ["1st Semester", "2nd Semester", "Summer"] as const;
 export type Semester = (typeof SEMESTERS)[number];
 
@@ -27,9 +29,16 @@ export interface AcademicTerm {
   label: string;
 }
 
+/**
+ * The term `now` falls in on the Manila calendar. The server's own calendar
+ * is UTC on Vercel, which from midnight to 8 AM on Jan 1, Jun 1 and Aug 1
+ * is still in the previous term: an ID validated at 7 AM on Aug 1 would be
+ * stored under Summer, and from 8 AM the turnstile would look for it under
+ * 1st Semester and turn the student away.
+ */
 export function getCurrentTerm(now: Date = new Date()): AcademicTerm {
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1; // 1-indexed
+  const { year, month: monthIndex } = manilaWallClock(now);
+  const month = monthIndex + 1; // 1-indexed
 
   let startYear: number;
   let semester: Semester;

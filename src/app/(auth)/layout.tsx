@@ -1,3 +1,5 @@
+import { manilaWallClock } from "@/lib/utils/time";
+
 /**
  * Auth Layout — Two-column institutional gateway matching Screen 01 of
  * the USMS mockups.
@@ -96,7 +98,7 @@ export default function AuthLayout({
 
           {/* Footer note */}
           <div className="relative z-10 text-[11px] opacity-60 border-t border-white/15 pt-4">
-            © {new Date().getFullYear()} TUP — Manila · College of Science · Capstone Project
+            © {manilaWallClock(new Date()).year} TUP — Manila · College of Science · Capstone Project
             <br />
             Protected under RA 10173 (Data Privacy Act of 2012)
           </div>

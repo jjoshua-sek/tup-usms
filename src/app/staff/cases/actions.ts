@@ -18,6 +18,7 @@ import { loose } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 import { sanitizeText } from "@/lib/utils/sanitize";
+import { formatManila, formatManilaDateTime, parseManilaDateTime } from "@/lib/utils/time";
 import { CASE_STATUSES, type CaseStatus } from "@/types/osa";
 
 interface Result {
@@ -178,8 +179,10 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     return { error: parsed.error.issues[0]?.message ?? "Check the form." };
   }
 
-  // An incident cannot have happened tomorrow.
-  const incidentDate = new Date(`${parsed.data.incident_date}T00:00:00`);
+  // An incident cannot have happened tomorrow. Midnight is Manila midnight:
+  // read in the server's UTC, today's date stays "in the future" until 8 AM.
+  const incidentDate = parseManilaDateTime(`${parsed.data.incident_date}T00:00`);
+  if (!incidentDate) return { error: "That incident date does not exist." };
   if (incidentDate.getTime() > Date.now()) {
     return { error: "The incident date is in the future." };
   }
@@ -478,7 +481,7 @@ export async function scheduleHearingFromProposal(formData: FormData): Promise<R
     actorId: staff.userId,
     actorLabel: staff.fullName,
     eventType: "status_changed",
-    summary: `Meeting pencilled in for ${new Date(proposal.proposed_start).toLocaleString("en-PH")}, awaiting the complainant's approval.`,
+    summary: `Meeting pencilled in for ${formatManilaDateTime(proposal.proposed_start)}, awaiting the complainant's approval.`,
     details: { rationale: proposal.rationale },
   });
 
@@ -590,7 +593,9 @@ export async function notifyStudentOfHearing(hearingId: string): Promise<Result>
     };
   }
 
-  const when = new Date(hearing.scheduled_start).toLocaleString("en-PH", {
+  // This string is emailed as the summons, so the hour must be the campus
+  // hour, not the server's.
+  const when = formatManila(hearing.scheduled_start, {
     weekday: "long",
     month: "long",
     day: "numeric",

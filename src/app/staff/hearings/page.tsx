@@ -11,7 +11,7 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
-import { isUpcoming } from "@/lib/utils/time";
+import { formatManila, isUpcoming } from "@/lib/utils/time";
 import { HEARING_STATUS_LABELS, type HearingStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -48,16 +48,6 @@ interface HearingRow {
     complainant_name: string | null;
     students: { first_name: string; last_name: string; student_number: string } | null;
   } | null;
-}
-
-function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString("en-PH", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 /**
@@ -220,7 +210,13 @@ function Group({
 
               <p className="mt-0.5 text-[12px] text-muted-foreground">
                 <CalendarClock className="mr-1 inline h-3 w-3" />
-                {formatWhen(hearing.scheduled_start)}
+                {formatManila(hearing.scheduled_start, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
                 <MapPin className="ml-3 mr-1 inline h-3 w-3" />
                 {hearing.venue}
                 {hearing.violation_cases?.complainant_name

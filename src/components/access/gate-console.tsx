@@ -22,6 +22,7 @@ import {
   updateGate,
 } from "@/app/staff/gates/actions";
 import { Button } from "@/components/ui/button";
+import { formatManilaTime } from "@/lib/utils/time";
 
 export interface GateRow {
   id: string;
@@ -211,12 +212,7 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
                 <Meta label="Relay">{gate.relay_mode}</Meta>
                 <Meta label="Key">{gate.device_key_prefix ?? "not issued"}</Meta>
                 <Meta label="Last seen">
-                  {gate.last_seen_at
-                    ? new Date(gate.last_seen_at).toLocaleTimeString("en-PH", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })
-                    : "never"}
+                  {gate.last_seen_at ? formatManilaTime(gate.last_seen_at) : "never"}
                 </Meta>
               </dl>
 

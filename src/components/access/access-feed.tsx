@@ -5,6 +5,7 @@ import { ArrowDownLeft, ArrowUpRight, CheckCircle2, Radio, XCircle } from "lucid
 
 import { createClient } from "@/lib/supabase/client";
 import { ACCESS_REASON_META, type AccessReason } from "@/lib/access/decide";
+import { formatManila } from "@/lib/utils/time";
 
 export interface AccessEventRow {
   id: string;
@@ -111,7 +112,7 @@ export function AccessFeed({ initialEvents }: AccessFeedProps) {
                   ) : (
                     <ArrowUpRight className="h-3 w-3" />
                   )}
-                  {new Date(event.occurred_at).toLocaleTimeString("en-PH", {
+                  {formatManila(event.occurred_at, {
                     hour: "numeric",
                     minute: "2-digit",
                     second: "2-digit",

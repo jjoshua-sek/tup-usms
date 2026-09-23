@@ -27,6 +27,7 @@ import {
 } from "@/lib/scholarships/evaluate-eligibility";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaLongDate } from "@/lib/utils/time";
 import type { Scholarship } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -245,10 +246,7 @@ export default async function ScholarshipsPage() {
                       {scholarship.application_closes && (
                         <p>
                           <strong>Deadline:</strong>{" "}
-                          {new Date(scholarship.application_closes).toLocaleDateString(
-                            "en-PH",
-                            { month: "long", day: "numeric", year: "numeric" },
-                          )}
+                          {formatManilaLongDate(scholarship.application_closes)}
                         </p>
                       )}
                       {scholarship.contact_person && (

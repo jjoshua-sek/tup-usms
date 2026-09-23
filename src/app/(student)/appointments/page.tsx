@@ -8,7 +8,7 @@ import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
-import { isUpcoming } from "@/lib/utils/time";
+import { formatManila, formatManilaTime, isUpcoming } from "@/lib/utils/time";
 import { HEARING_STATUS_LABELS, type HearingStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -56,17 +56,13 @@ interface GuidanceRow {
 }
 
 function formatWhen(startIso: string, endIso: string): string {
-  const start = new Date(startIso);
-  const end = new Date(endIso);
-  const date = start.toLocaleDateString("en-PH", {
+  const date = formatManila(startIso, {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
-  const time = (value: Date) =>
-    value.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" });
-  return `${date} · ${time(start)} – ${time(end)}`;
+  return `${date} · ${formatManilaTime(startIso)} – ${formatManilaTime(endIso)}`;
 }
 
 /**
@@ -207,7 +203,7 @@ export default async function AppointmentsPage() {
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {session.scheduled_at
-                          ? new Date(session.scheduled_at).toLocaleString("en-PH", {
+                          ? formatManila(session.scheduled_at, {
                               month: "long",
                               day: "numeric",
                               hour: "numeric",

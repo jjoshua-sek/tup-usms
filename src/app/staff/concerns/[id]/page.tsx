@@ -14,6 +14,7 @@ import { StatusUpdater } from "@/components/concerns/status-updater";
 import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
+import { formatManila } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Concern Review",
@@ -73,16 +74,15 @@ function timeAgo(dateString: string): string {
   return `${days}d ago`;
 }
 
-function formatTimestamp(date: string): string {
-  return new Date(date).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
+/** The review console reads times on a 24-hour clock. */
+const TIMESTAMP: Intl.DateTimeFormatOptions = {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+};
 
 function shortId(id: string): string {
   // Convert UUID to mockup-style ID: #C-2026-0148
@@ -263,7 +263,7 @@ export default async function StaffConcernDetailPage({
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-5 pb-5 border-b border-border">
             <div className="min-w-0">
               <div className="font-mono text-[11px] text-muted-foreground mb-1">
-                {shortId(concern.id)} · Submitted {formatTimestamp(concern.created_at)}
+                {shortId(concern.id)} · Submitted {formatManila(concern.created_at, TIMESTAMP)}
               </div>
               <h2 className="text-[18px] font-semibold tracking-tight mb-2 text-balance">
                 {concern.subject_line}
@@ -448,7 +448,7 @@ export default async function StaffConcernDetailPage({
                           {isStaff ? "Staff" : "Student"}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          {formatTimestamp(response.created_at)}
+                          {formatManila(response.created_at, TIMESTAMP)}
                         </span>
                       </div>
                       <p className="text-[13px] whitespace-pre-wrap leading-relaxed">

@@ -9,6 +9,7 @@ import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { formatManila } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Audit Log",
@@ -35,16 +36,6 @@ const FILTERS = [
   { key: "case", label: "Cases" },
   { key: "login", label: "Sign-ins" },
 ] as const;
-
-function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString("en-PH", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
 
 /**
  * The audit trail.
@@ -166,7 +157,13 @@ export default async function StaffAuditPage({
               {logs.map((log) => (
                 <tr key={log.id} className="align-top">
                   <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">
-                    {formatWhen(log.created_at)}
+                    {formatManila(log.created_at, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
                   </td>
                   <td className="px-4 py-2">{actors.get(log.user_id) ?? "—"}</td>
                   <td className="px-4 py-2 font-mono text-[11px]">{log.action}</td>

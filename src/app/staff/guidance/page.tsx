@@ -11,6 +11,7 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaDate } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Guidance",
@@ -45,15 +46,6 @@ interface SessionRow {
     last_name: string;
     student_number: string;
   } | null;
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 /**
@@ -178,10 +170,10 @@ export default async function StaffGuidancePage() {
                 </div>
 
                 <div className="shrink-0 text-right text-[11px] text-muted-foreground">
-                  <p>{formatDate(session.started_at ?? session.scheduled_at)}</p>
+                  <p>{formatManilaDate(session.started_at ?? session.scheduled_at)}</p>
                   {session.follow_up_required && (
                     <p className="mt-0.5 text-amber-700">
-                      Follow up {formatDate(session.follow_up_date)}
+                      Follow up {formatManilaDate(session.follow_up_date)}
                     </p>
                   )}
                 </div>

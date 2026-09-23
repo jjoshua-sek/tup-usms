@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { cn } from "@/lib/utils";
+import { formatManilaLongDate } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Overview",
@@ -69,11 +70,7 @@ export default async function StaffDashboardPage() {
     : { data: null };
   const staff = staffRaw as StaffRow | null;
 
-  const dateString = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const dateString = formatManilaLongDate(new Date());
 
   // Compute today's window for "Concerns Today"
   const todayStart = new Date();

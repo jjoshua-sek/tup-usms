@@ -12,6 +12,7 @@ import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { formatManilaDate } from "@/lib/utils/time";
 import { CASE_STATUS_META, type ViolationCaseWithRelations } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -45,14 +46,6 @@ function hasPendingLetter(row: CaseRow): boolean {
 
 const SCHEDULING_STATUSES = ["filed", "under_review", "counselling_scheduled"];
 const ESCALATED_STATUSES = ["escalated_pic", "escalated_sdb", "referred_codi"];
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 /**
  * The OSA case queue (requirement #4).
@@ -212,7 +205,7 @@ export default async function StaffCasesPage({
                       {violationCase.violation_types?.name ?? "Unclassified"}
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
-                      {formatDate(violationCase.incident_date)}
+                      {formatManilaDate(violationCase.incident_date)}
                     </td>
                     <td className="px-4 py-2.5">
                       <ToneBadge

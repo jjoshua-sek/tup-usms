@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatManilaDateTime } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Concern Detail",
@@ -61,17 +62,6 @@ interface ResponderInfo {
   id: string;
   name: string;
   isStaff: boolean;
-}
-
-function formatTimestamp(date: string): string {
-  const d = new Date(date);
-  return d.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 function getInitials(name: string): string {
@@ -213,9 +203,9 @@ export default async function ConcernDetailPage({
             </h1>
             <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              Submitted {formatTimestamp(concern.created_at)}
+              Submitted {formatManilaDateTime(concern.created_at)}
               {concern.updated_at !== concern.created_at && (
-                <span> · Updated {formatTimestamp(concern.updated_at)}</span>
+                <span> · Updated {formatManilaDateTime(concern.updated_at)}</span>
               )}
             </p>
           </div>
@@ -331,7 +321,7 @@ export default async function ConcernDetailPage({
                           </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">
-                          {formatTimestamp(response.created_at)}
+                          {formatManilaDateTime(response.created_at)}
                         </span>
                       </div>
                       <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">

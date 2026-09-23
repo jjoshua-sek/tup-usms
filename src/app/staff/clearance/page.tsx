@@ -15,6 +15,7 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaDate } from "@/lib/utils/time";
 import { CLEARANCE_STATUS_META, type ClearanceHold, type ClearanceStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -64,14 +65,6 @@ interface RequestRow {
     year_level: string | null;
   } | null;
   clearance_holds: ClearanceHold[] | null;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 /**
@@ -215,9 +208,9 @@ function Queue({
                   </p>
 
                   <p className="mt-0.5 text-[12px] text-muted-foreground">
-                    Purpose: {request.purpose ?? "—"} · filed {formatDate(request.created_at)}
+                    Purpose: {request.purpose ?? "—"} · filed {formatManilaDate(request.created_at)}
                     {request.auto_checked_at
-                      ? ` · checked ${formatDate(request.auto_checked_at)} (${request.auto_check_result})`
+                      ? ` · checked ${formatManilaDate(request.auto_checked_at)} (${request.auto_check_result})`
                       : ""}
                   </p>
                 </div>

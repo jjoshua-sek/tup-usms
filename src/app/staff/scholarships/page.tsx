@@ -11,6 +11,7 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaMonthDay } from "@/lib/utils/time";
 import type { Scholarship } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -175,12 +176,7 @@ export default async function StaffScholarshipsPage() {
                       {(scholarship.scholarship_requirements ?? []).length}
                     </Meta>
                     <Meta label="Closes">
-                      {scholarship.application_closes
-                        ? new Date(scholarship.application_closes).toLocaleDateString("en-PH", {
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "—"}
+                      {formatManilaMonthDay(scholarship.application_closes)}
                     </Meta>
                   </dl>
 

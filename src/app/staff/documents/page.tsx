@@ -15,6 +15,7 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaMonthDayTime } from "@/lib/utils/time";
 import type { AcademicDocument } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -46,15 +47,6 @@ interface DocumentRow extends AcademicDocument {
     student_number: string;
     program: string | null;
   } | null;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 /**
@@ -187,7 +179,7 @@ function Group({
 
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
                   {document.file_name} · {Math.round(document.file_size / 1024)} KB · uploaded{" "}
-                  {formatDate(document.uploaded_at)}
+                  {formatManilaMonthDayTime(document.uploaded_at)}
                 </p>
 
                 {document.rejection_reason && (

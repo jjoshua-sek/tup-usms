@@ -15,6 +15,7 @@ import {
 } from "@/lib/osa/sanctions";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaLongDate } from "@/lib/utils/time";
 import { CASE_STATUS_META, type ViolationCaseWithRelations } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -125,14 +126,6 @@ const CLASSIFICATION_META = {
   confidential: { label: "Confidential", tone: "danger" as const },
 };
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-PH", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 /**
  * The student's own disciplinary record (requirement #5).
  *
@@ -241,7 +234,7 @@ export default async function ViolationsPage() {
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
                     <CalendarDays className="h-3 w-3" />
-                    {formatDate(violationCase.incident_date)}
+                    {formatManilaLongDate(violationCase.incident_date)}
                   </span>
                   {violationCase.incident_location && (
                     <span className="inline-flex items-center gap-1">
@@ -359,7 +352,7 @@ export default async function ViolationsPage() {
 
                       <p className="mt-1.5 text-[11px] text-muted-foreground">
                         {service.deadline
-                          ? `Complete by ${formatDate(service.deadline)}.`
+                          ? `Complete by ${formatManilaLongDate(service.deadline)}.`
                           : "No deadline set."}{" "}
                         Clearance and Good Moral requests are held until the hours are served.
                         Ask the office where you served to sign off, then the OSA records it.
@@ -402,14 +395,14 @@ export default async function ViolationsPage() {
                           <>
                             You may appeal this decision to the{" "}
                             <strong>{route.bodyLabel}</strong> until{" "}
-                            <strong>{formatDate(appeal.appeal_deadline)}</strong> &mdash;{" "}
+                            <strong>{formatManilaLongDate(appeal.appeal_deadline)}</strong> &mdash;{" "}
                             {route.days} days from when you received the Notice of Decision.
                             File it with that office; the OSA does not decide appeals.
                             {route.furtherRecourse ? ` ${route.furtherRecourse}` : ""}
                           </>
                         ) : appeal.status === "lapsed" ? (
                           <>
-                            The appeal period closed on {formatDate(appeal.appeal_deadline)}{" "}
+                            The appeal period closed on {formatManilaLongDate(appeal.appeal_deadline)}{" "}
                             without an appeal, so the decision stands.
                           </>
                         ) : appeal.outcome ? (
@@ -468,7 +461,7 @@ export default async function ViolationsPage() {
                           {settlement.compliance_deadline && (
                             <span className="block text-[11px] text-muted-foreground">
                               Complete by{" "}
-                              {formatDate(settlement.compliance_deadline)}. The OSA closes the
+                              {formatManilaLongDate(settlement.compliance_deadline)}. The OSA closes the
                               case once you have.
                             </span>
                           )}

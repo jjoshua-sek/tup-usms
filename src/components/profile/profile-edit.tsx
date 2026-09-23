@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { formatManilaLongDate } from "@/lib/utils/time";
 
 import { ProvisionalPhotoBanner } from "./provisional-photo-banner";
 import { Step4Photo } from "./step-4-photo";
@@ -311,12 +312,7 @@ export function ProfileEdit({ student }: ProfileEditProps) {
             <p className="text-sm font-medium">Data Privacy Act consent on file</p>
             {student.dpa_consent_date && (
               <p className="text-xs text-muted-foreground">
-                Consented on{" "}
-                {new Date(student.dpa_consent_date).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                Consented on {formatManilaLongDate(student.dpa_consent_date)}
               </p>
             )}
           </div>

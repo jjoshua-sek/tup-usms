@@ -19,7 +19,19 @@
  * the scale involved — two calendars over a two-week horizon — an exact
  * sweep is both feasible and preferable to anything approximate, because
  * a missed valid slot means a case sits idle.
+ *
+ * Every wall-clock notion here — business hours, weekdays, class blocks,
+ * "two days from now" — is Manila time, whatever zone the server runs in.
+ * On Vercel that zone is UTC, and reading it as local put an 8 AM slot at
+ * 4 PM on campus.
  */
+
+import {
+  formatManila,
+  formatManilaTime,
+  manilaInstant,
+  manilaWallClock,
+} from "@/lib/utils/time";
 
 export interface AvailabilityBlock {
   id: string;
@@ -98,25 +110,16 @@ function parseTimeToMinutes(time: string): number {
   return h * 60 + (m || 0);
 }
 
-function minutesToTimeLabel(minutes: number): string {
-  const h24 = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  const period = h24 >= 12 ? "PM" : "AM";
-  const h12 = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
-  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
-}
-
+/** `minutes` past Manila midnight, on the Manila calendar date of `day`. */
 function atMinutes(day: Date, minutes: number): Date {
-  const d = new Date(day);
-  d.setHours(0, 0, 0, 0);
-  d.setMinutes(minutes);
-  return d;
+  const { year, month, day: date } = manilaWallClock(day);
+  return manilaInstant(year, month, date, minutes);
 }
 
+/** The Manila calendar date, as a `date` column stores it. */
 function toDateOnlyString(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
+  const { year, month, day } = manilaWallClock(d);
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 // ============================================================
@@ -160,7 +163,7 @@ function busyIntervalsForDay(
   blocks: AvailabilityBlock[],
   day: Date
 ): Interval[] {
-  const dayName = DAY_NAMES[day.getDay()];
+  const dayName = DAY_NAMES[manilaWallClock(day).weekday];
   const dateStr = toDateOnlyString(day);
   const result: Interval[] = [];
 
@@ -250,7 +253,7 @@ function scoreSlot(
   }
 
   // ---- Preferred time window: up to 20% ----
-  const slotMinutes = slotStart.getHours() * 60 + slotStart.getMinutes();
+  const { minutes: slotMinutes, weekday: dow } = manilaWallClock(slotStart);
   let inPreferred = false;
   let windowBonus = 0;
 
@@ -279,7 +282,6 @@ function scoreSlot(
   }
 
   // ---- Day-of-week adjustment: up to 15% ----
-  const dow = slotStart.getDay();
   const dayName = DAY_NAMES[dow];
   const isFriday = dow === 5;
   const isAfternoon = slotMinutes >= 13 * 60;
@@ -350,17 +352,19 @@ export function findAvailableSlots({
 
   const candidates: SlotProposal[] = [];
 
-  // Earliest permissible day, honoring the minimum notice period.
-  const searchStart = new Date(now);
-  searchStart.setDate(searchStart.getDate() + config.minNoticeDays);
-  searchStart.setHours(0, 0, 0, 0);
+  // Earliest permissible day, honoring the minimum notice period. Counted
+  // in Manila calendar days: at 7 AM in Manila it is still yesterday in UTC.
+  const today = manilaWallClock(now);
 
   for (let offset = 0; offset <= config.maxHorizonDays; offset++) {
-    const day = new Date(searchStart);
-    day.setDate(day.getDate() + offset);
+    const day = manilaInstant(
+      today.year,
+      today.month,
+      today.day + config.minNoticeDays + offset
+    );
 
     // Skip weekends — OSA does not hold conferences outside working days.
-    const dow = day.getDay();
+    const dow = manilaWallClock(day).weekday;
     if (dow === 0 || dow === 6) continue;
 
     const complainantBusy = busyIntervalsForDay(complainantBlocks, day);
@@ -434,14 +438,12 @@ export function findAvailableSlots({
  * "Tuesday, May 12 · 9:00 AM – 9:45 AM"
  */
 export function formatSlot(slot: SlotProposal): string {
-  const dateLabel = slot.start.toLocaleDateString("en-US", {
+  const dateLabel = formatManila(slot.start, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
-  const startMin = slot.start.getHours() * 60 + slot.start.getMinutes();
-  const endMin = slot.end.getHours() * 60 + slot.end.getMinutes();
-  return `${dateLabel} · ${minutesToTimeLabel(startMin)} – ${minutesToTimeLabel(endMin)}`;
+  return `${dateLabel} · ${formatManilaTime(slot.start)} – ${formatManilaTime(slot.end)}`;
 }
 
 /**

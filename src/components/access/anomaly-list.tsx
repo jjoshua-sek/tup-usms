@@ -5,6 +5,7 @@ import { Check, ShieldAlert, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { reviewAnomaly } from "@/app/staff/gates/actions";
+import { formatManilaMonthDayTime } from "@/lib/utils/time";
 
 export interface AnomalyRow {
   id: string;
@@ -113,12 +114,7 @@ export function AnomalyList({ anomalies, canManage }: AnomalyListProps) {
 
               <p className="mt-1.5 text-[11px] opacity-70">
                 Last seen{" "}
-                {new Date(anomaly.last_detected_at).toLocaleString("en-PH", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+                {formatManilaMonthDayTime(anomaly.last_detected_at)}
                 {anomaly.details?.gate_label ? ` · ${String(anomaly.details.gate_label)}` : ""}
               </p>
             </div>

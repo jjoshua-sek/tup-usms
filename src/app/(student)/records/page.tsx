@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { getCurrentTerm } from "@/lib/access/term";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaDate } from "@/lib/utils/time";
 import type { AcademicDocument, AcademicSnapshot } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -49,14 +50,6 @@ const PROCESSING_META: Record<string, { label: string; tone: Tone; hint: string 
     hint: "See the reason below and upload a replacement.",
   },
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 /**
  * Academic records the student contributes themselves.
@@ -217,7 +210,7 @@ export default async function RecordsPage() {
                       </span>
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      {document.file_name} · uploaded {formatDate(document.uploaded_at)}
+                      {document.file_name} · uploaded {formatManilaDate(document.uploaded_at)}
                     </p>
                     <p className="mt-0.5 text-[12px] text-muted-foreground">
                       {document.rejection_reason ?? meta.hint}

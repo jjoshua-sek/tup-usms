@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatManilaDate } from "@/lib/utils/time";
 import {
   CONCERN_CATEGORIES,
   CONCERN_STATUSES,
@@ -54,7 +55,7 @@ function timeAgo(dateString: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d ago`;
-  return date.toLocaleDateString();
+  return formatManilaDate(date);
 }
 
 interface SearchParams {

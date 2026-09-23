@@ -11,6 +11,7 @@ import { getCurrentTerm } from "@/lib/access/term";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaMonthDayTime } from "@/lib/utils/time";
 import { ID_STATUS_META, type IdValidationStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -54,15 +55,6 @@ const DECISIONS: Record<IdValidationStatus, Decision[]> = {
   // starts a fresh validation for the new term.
   surrendered: [],
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 /**
  * ID validation queue (requirement #5, and the switch behind the turnstiles).
@@ -231,8 +223,8 @@ function ValidationCard({ row }: { row: ValidationRow }) {
           {student?.year_level ? ` · ${student.year_level}` : ""}
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          Requested {formatDate(row.submitted_at)}
-          {row.validated_at ? ` · validated ${formatDate(row.validated_at)}` : ""}
+          Requested {formatManilaMonthDayTime(row.submitted_at)}
+          {row.validated_at ? ` · validated ${formatManilaMonthDayTime(row.validated_at)}` : ""}
           {row.validation_sticker_number ? ` · sticker ${row.validation_sticker_number}` : ""}
         </p>
         {row.rejection_reason && (

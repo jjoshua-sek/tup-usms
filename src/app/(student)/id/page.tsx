@@ -17,6 +17,7 @@ import { formatInstitutionalQrPayload } from "@/lib/access/payload";
 import { getCurrentTerm, hasExpired } from "@/lib/access/term";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaMonthDayTime } from "@/lib/utils/time";
 import { ID_STATUS_META, type IdValidationStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -90,17 +91,6 @@ const TONE_CLASSES: Record<string, string> = {
   danger: "border-red-200 bg-red-50 text-red-900",
   neutral: "border-border bg-muted text-foreground",
 };
-
-function formatManilaTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-PH", {
-    timeZone: "Asia/Manila",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
 
 export default async function DigitalIdPage() {
   const supabase = await createClient();
@@ -282,7 +272,7 @@ export default async function DigitalIdPage() {
 
             {validation?.expires_at && scannable && (
               <p className="mt-2 text-[12px] opacity-80">
-                Expires {formatManilaTime(validation.expires_at)}
+                Expires {formatManilaMonthDayTime(validation.expires_at)}
               </p>
             )}
 
@@ -347,7 +337,7 @@ export default async function DigitalIdPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{event.gate_label}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {formatManilaTime(event.occurred_at)}
+                      {formatManilaMonthDayTime(event.occurred_at)}
                     </p>
                   </div>
                   <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">

@@ -11,6 +11,7 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaDate } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "Interventions",
@@ -54,14 +55,6 @@ interface InterventionRow {
     program: string | null;
   } | null;
   risk_assessments: { risk_tier: string; risk_score: number } | null;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 /**
@@ -182,8 +175,8 @@ export default async function StaffInterventionsPage() {
                   )}
 
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    Opened {formatDate(item.created_at)}
-                    {item.completed_at ? ` · closed ${formatDate(item.completed_at)}` : ""}
+                    Opened {formatManilaDate(item.created_at)}
+                    {item.completed_at ? ` · closed ${formatManilaDate(item.completed_at)}` : ""}
                   </p>
 
                   {item.outcome && (

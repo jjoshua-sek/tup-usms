@@ -10,6 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { sanitizeText } from "@/lib/utils/sanitize";
+import { formatManilaDateTime, parseManilaDateTime } from "@/lib/utils/time";
 import type { CaseStatus } from "@/types/osa";
 
 /**
@@ -531,8 +532,10 @@ export async function scheduleHearingManually(formData: FormData): Promise<Resul
     return { error: parsed.error.issues[0]?.message ?? "Check the date and venue." };
   }
 
-  const start = new Date(parsed.data.scheduled_start);
-  if (Number.isNaN(start.getTime())) return { error: "That date could not be read." };
+  // The form sends a wall-clock time with no zone. It means Manila time;
+  // `new Date` on the server would read it as UTC, eight hours late.
+  const start = parseManilaDateTime(parsed.data.scheduled_start);
+  if (!start) return { error: "That date could not be read." };
   if (start.getTime() < Date.now()) return { error: "That date is in the past." };
 
   const end = new Date(start.getTime() + parsed.data.duration_minutes * 60_000);
@@ -555,7 +558,7 @@ export async function scheduleHearingManually(formData: FormData): Promise<Resul
     actorId: staff.userId,
     actorLabel: staff.fullName,
     eventType: "status_changed",
-    summary: `Meeting booked by hand for ${start.toLocaleString("en-PH")} at ${parsed.data.venue}.${parsed.data.reason ? ` Reason: ${parsed.data.reason}` : ""}`,
+    summary: `Meeting booked by hand for ${formatManilaDateTime(start)} at ${parsed.data.venue}.${parsed.data.reason ? ` Reason: ${parsed.data.reason}` : ""}`,
     details: { proposed_by: "staff" },
   });
 

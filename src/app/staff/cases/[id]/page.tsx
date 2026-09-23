@@ -55,6 +55,11 @@ import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import {
+  formatManilaDateTime,
+  formatManilaLongDate,
+  formatManilaMonthDay,
+} from "@/lib/utils/time";
+import {
   CASE_STATUS_META,
   HEARING_STATUS_LABELS,
   type CaseEscalation,
@@ -180,16 +185,6 @@ interface CaseDetail {
   violation_types: { code: string; name: string; handbook_reference: string | null } | null;
 }
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 /**
  * One case, end to end: the facts, the schedule cross-check, the approval
  * chain, and the append-only history that makes the process auditable.
@@ -302,7 +297,7 @@ export default async function StaffCaseDetailPage({
           { label: violationCase.case_number },
         ]}
         title={violationCase.violation_types?.name ?? "Case"}
-        description={`${violationCase.case_number} · filed ${formatDateTime(violationCase.created_at)}`}
+        description={`${violationCase.case_number} · filed ${formatManilaDateTime(violationCase.created_at)}`}
       >
         <ToneBadge
           label={statusMeta?.label ?? violationCase.status}
@@ -333,11 +328,7 @@ export default async function StaffCaseDetailPage({
               </Detail>
               <Detail label="Complainant">{violationCase.complainant_name ?? "OSA-initiated"}</Detail>
               <Detail label="Incident date">
-                {new Date(violationCase.incident_date).toLocaleDateString("en-PH", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {formatManilaLongDate(violationCase.incident_date)}
                 {violationCase.incident_time ? ` · ${violationCase.incident_time}` : ""}
               </Detail>
               <Detail label="Location">{violationCase.incident_location ?? "—"}</Detail>
@@ -374,7 +365,7 @@ export default async function StaffCaseDetailPage({
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium">
                           <CalendarClock className="mr-1.5 inline h-3.5 w-3.5 text-muted-foreground" />
-                          {formatDateTime(hearing.scheduled_start)}
+                          {formatManilaDateTime(hearing.scheduled_start)}
                         </p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
                           <MapPin className="mr-1 inline h-3 w-3" />
@@ -457,7 +448,7 @@ export default async function StaffCaseDetailPage({
                             tone={APOLOGY_TONE[letter.review_status]}
                           />
                           <span className="text-[11px] text-muted-foreground">
-                            submitted {formatDateTime(letter.submitted_at)}
+                            submitted {formatManilaDateTime(letter.submitted_at)}
                             {index > 0 ? " · earlier version" : ""}
                           </span>
                         </div>
@@ -550,10 +541,10 @@ export default async function StaffCaseDetailPage({
 
                         <p className="mt-1.5 text-[11px] text-muted-foreground">
                           {assignment.deadline
-                            ? `Due ${new Date(assignment.deadline).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}`
+                            ? `Due ${formatManilaLongDate(assignment.deadline)}`
                             : "No deadline set"}
                           {assignment.verified_at
-                            ? ` · verified ${formatDateTime(assignment.verified_at)}${assignment.verifier_role ? ` by ${assignment.verifier_role}` : ""}`
+                            ? ` · verified ${formatManilaDateTime(assignment.verified_at)}${assignment.verifier_role ? ` by ${assignment.verifier_role}` : ""}`
                             : ""}
                         </p>
 
@@ -636,19 +627,10 @@ export default async function StaffCaseDetailPage({
                           {resolveAppealRoute(appeal.penalty_basis as PenaltyBasis).bodyLabel}
                           <span className="block text-[11px] text-muted-foreground">
                             Notice received{" "}
-                            {new Date(appeal.notice_received_on).toLocaleDateString("en-PH", {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}{" "}
-                            &middot; deadline{" "}
-                            {new Date(appeal.appeal_deadline).toLocaleDateString("en-PH", {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {formatManilaLongDate(appeal.notice_received_on)}{" "}
+                            &middot; deadline {formatManilaLongDate(appeal.appeal_deadline)}
                             {appeal.filed_on
-                              ? ` · filed ${new Date(appeal.filed_on).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}`
+                              ? ` · filed ${formatManilaMonthDay(appeal.filed_on)}`
                               : ""}
                           </span>
                         </p>
@@ -657,7 +639,7 @@ export default async function StaffCaseDetailPage({
                           <p className="mt-2 rounded-md bg-muted p-2 text-[12px]">
                             <strong>{appeal.outcome}</strong>
                             {appeal.decided_on
-                              ? ` on ${new Date(appeal.decided_on).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}`
+                              ? ` on ${formatManilaLongDate(appeal.decided_on)}`
                               : ""}
                             {appeal.outcome_notes ? `. ${appeal.outcome_notes}` : ""}
                           </p>
@@ -687,7 +669,7 @@ export default async function StaffCaseDetailPage({
                     caseId={violationCase.id}
                     hearings={hearings.map((hearing) => ({
                       id: hearing.id,
-                      label: `${hearing.hearing_type.replace(/_/g, " ")} · ${formatDateTime(hearing.scheduled_start)}`,
+                      label: `${hearing.hearing_type.replace(/_/g, " ")} · ${formatManilaDateTime(hearing.scheduled_start)}`,
                     }))}
                   />
                 )}
@@ -717,11 +699,7 @@ export default async function StaffCaseDetailPage({
                             <strong>Student must:</strong> {settlement.student_obligations}
                             {settlement.compliance_deadline && (
                               <span className="block text-[11px] text-muted-foreground">
-                                by{" "}
-                                {new Date(settlement.compliance_deadline).toLocaleDateString(
-                                  "en-PH",
-                                  { month: "long", day: "numeric", year: "numeric" },
-                                )}
+                                by {formatManilaLongDate(settlement.compliance_deadline)}
                               </span>
                             )}
                           </p>
@@ -827,7 +805,7 @@ export default async function StaffCaseDetailPage({
                           }
                         />
                         <span className="text-[11px] text-muted-foreground">
-                          referred {formatDateTime(escalation.escalated_at)}
+                          referred {formatManilaDateTime(escalation.escalated_at)}
                           {escalation.external_reference
                             ? ` · ${escalation.external_reference}`
                             : ""}
@@ -876,7 +854,7 @@ export default async function StaffCaseDetailPage({
                     />
                     <p className="text-[13px]">{entry.summary}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {entry.actor_label ?? "System"} · {formatDateTime(entry.occurred_at)}
+                      {entry.actor_label ?? "System"} · {formatManilaDateTime(entry.occurred_at)}
                       {entry.to_status ? ` · → ${entry.to_status}` : ""}
                     </p>
                   </li>
@@ -945,7 +923,7 @@ function SignatureChip({
       }`}
     >
       {label}
-      {signedAt ? ` ✓ ${formatDateTime(signedAt)}` : " — pending"}
+      {signedAt ? ` ✓ ${formatManilaDateTime(signedAt)}` : " — pending"}
     </span>
   );
 }

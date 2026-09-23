@@ -25,6 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatManilaDate } from "@/lib/utils/time";
 
 export const metadata: Metadata = {
   title: "My Concerns",
@@ -55,7 +56,7 @@ function timeAgo(dateString: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d ago`;
-  return date.toLocaleDateString();
+  return formatManilaDate(date);
 }
 
 export default async function ConcernsPage() {

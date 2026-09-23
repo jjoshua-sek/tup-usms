@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { formatManilaMonthDay } from "@/lib/utils/time";
 import type { NotificationRow } from "@/types/osa";
 
 export const metadata: Metadata = {
@@ -35,7 +36,7 @@ function relativeTime(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric" });
+  return formatManilaMonthDay(iso);
 }
 
 export default async function NotificationsPage({
@@ -191,7 +192,7 @@ function DeliveryNote({
 
   const text =
     status === "sent"
-      ? `Emailed to your institutional address${sentAt ? ` on ${new Date(sentAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}` : ""}`
+      ? `Emailed to your institutional address${sentAt ? ` on ${formatManilaMonthDay(sentAt)}` : ""}`
       : status === "queued" || status === "sending"
         ? "Email is on its way to your institutional address"
         : status === "undeliverable" || status === "bounced"

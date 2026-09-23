@@ -12,6 +12,7 @@ import {
   updateCaseStatus,
 } from "@/app/staff/cases/actions";
 import { Button } from "@/components/ui/button";
+import { formatManila, formatManilaTime } from "@/lib/utils/time";
 import { CASE_STATUSES, CASE_STATUS_META } from "@/types/osa";
 
 export interface ProposalView {
@@ -67,24 +68,24 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
   return (
     <ul className="space-y-2">
       {proposals.map((proposal) => {
-        const start = new Date(proposal.proposed_start);
-        const end = new Date(proposal.proposed_end);
         const isSelected = selected === proposal.id;
 
         return (
           <li key={proposal.id} className="rounded-lg border border-border p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
+                {/* Campus time, not the viewer's: the meeting happens in Manila,
+                    and the server prerender has to print the same thing. */}
                 <p className="text-[13px] font-medium">
-                  {start.toLocaleDateString("en-PH", {
+                  {formatManila(proposal.proposed_start, {
                     weekday: "long",
                     month: "long",
                     day: "numeric",
                   })}
                   {" · "}
-                  {start.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}
+                  {formatManilaTime(proposal.proposed_start)}
                   {" – "}
-                  {end.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}
+                  {formatManilaTime(proposal.proposed_end)}
                 </p>
                 {proposal.rationale && (
                   <p className="mt-0.5 flex items-start gap-1 text-[11px] text-ai-accent">

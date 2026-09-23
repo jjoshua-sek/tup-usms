@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { formatManilaMonthDay } from "@/lib/utils/time";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { ModuleCard } from "@/components/shared/module-card";
@@ -139,10 +140,7 @@ export default async function DashboardPage() {
     | { uploaded_at: string }
     | undefined;
   const lastUpload = lastUploadedRow
-    ? new Date(lastUploadedRow.uploaded_at).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })
+    ? formatManilaMonthDay(lastUploadedRow.uploaded_at)
     : "No uploads yet";
 
   return (

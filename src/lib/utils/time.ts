@@ -17,3 +17,36 @@ export function isUpcoming(iso: string | null | undefined, now: number = nowMs()
   if (!iso) return false;
   return new Date(iso).getTime() >= now;
 }
+
+/**
+ * Formatting pinned to Philippine time.
+ *
+ * Server Components render on Vercel, whose clock is UTC, so a bare
+ * `toLocaleString("en-PH")` prints UTC: a summons emailed at 9:04 AM in
+ * Manila reads "1:04 AM", and anything before 8 AM lands on the previous
+ * day. For most screens that is cosmetic. For a proof-of-service record,
+ * the time *is* the fact being shown, so these pin the zone explicitly.
+ */
+const MANILA = "Asia/Manila";
+
+export function formatManilaDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-PH", {
+    timeZone: MANILA,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function formatManilaDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-PH", {
+    timeZone: MANILA,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}

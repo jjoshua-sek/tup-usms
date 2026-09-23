@@ -84,12 +84,14 @@ const TIMESTAMP: Intl.DateTimeFormatOptions = {
   hour12: false,
 };
 
-function shortId(id: string): string {
+function shortId(concern: Pick<QueueRow, "id" | "created_at">): string {
   // Convert UUID to mockup-style ID: #C-2026-0148
   // For demo purposes, take last 4 chars and prefix
-  const tail = id.replace(/-/g, "").slice(-4).toUpperCase();
-  // The Manila year: the server's is UTC, still last year until 8 AM on Jan 1.
-  return `#C-${manilaWallClock(new Date()).year}-${tail}`;
+  const tail = concern.id.replace(/-/g, "").slice(-4).toUpperCase();
+  // The year it was filed, not this year: a concern still open in January
+  // would otherwise be renumbered overnight. Read on the Manila calendar,
+  // since one filed before 8 AM on Jan 1 is still last year in UTC.
+  return `#C-${manilaWallClock(new Date(concern.created_at)).year}-${tail}`;
 }
 
 // Word count for the "87 words" indicator
@@ -184,7 +186,7 @@ export default async function StaffConcernDetailPage({
           { label: "Console", href: "/staff/dashboard" },
           { label: "Concerns", href: "/staff/concerns" },
           { label: "Queue", href: "/staff/concerns" },
-          { label: shortId(id) },
+          { label: shortId(concern) },
         ]}
         title="Concern Review"
       >
@@ -227,7 +229,7 @@ export default async function StaffConcernDetailPage({
                 >
                   <div className="flex justify-between items-center mb-1.5">
                     <span className="font-mono text-[10px] text-muted-foreground">
-                      {shortId(q.id)}
+                      {shortId(q)}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
                       {timeAgo(q.created_at)}
@@ -264,7 +266,7 @@ export default async function StaffConcernDetailPage({
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-5 pb-5 border-b border-border">
             <div className="min-w-0">
               <div className="font-mono text-[11px] text-muted-foreground mb-1">
-                {shortId(concern.id)} · Submitted {formatManila(concern.created_at, TIMESTAMP)}
+                {shortId(concern)} · Submitted {formatManila(concern.created_at, TIMESTAMP)}
               </div>
               <h2 className="text-[18px] font-semibold tracking-tight mb-2 text-balance">
                 {concern.subject_line}

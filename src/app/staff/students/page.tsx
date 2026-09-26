@@ -7,6 +7,7 @@ import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { PageHeader } from "@/components/shared/page-header";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { recordAccess } from "@/lib/students/access";
+import { DIRECTORY_COLUMNS } from "@/lib/students/columns";
 import { YEAR_LEVELS, parsePage, parseYearLevel, searchTokens, tokenFilter } from "@/lib/students/search";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -25,7 +26,6 @@ interface DirectoryRow {
   last_name: string;
   program: string;
   year_level: string;
-  section: string | null;
   scholastic_status: string;
 }
 
@@ -62,10 +62,7 @@ export default async function StaffStudentsPage({
   const supabase = await createClient();
   let request = loose(supabase)
     .from("students")
-    .select(
-      "id, student_number, first_name, last_name, program, year_level, section, scholastic_status",
-      { count: "exact" },
-    );
+    .select(DIRECTORY_COLUMNS, { count: "exact" });
 
   for (const token of tokens) request = request.or(tokenFilter(token));
   if (year) request = request.eq("year_level", year);
@@ -195,7 +192,7 @@ export default async function StaffStudentsPage({
                     Program
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">
-                    Year &amp; section
+                    Year level
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">
                     Status
@@ -217,10 +214,7 @@ export default async function StaffStudentsPage({
                       {student.student_number}
                     </td>
                     <td className="px-4 py-2.5">{student.program}</td>
-                    <td className="px-4 py-2.5">
-                      {student.year_level}
-                      {student.section ? ` · ${student.section}` : ""}
-                    </td>
+                    <td className="px-4 py-2.5">{student.year_level}</td>
                     <td
                       className={cn(
                         "px-4 py-2.5",

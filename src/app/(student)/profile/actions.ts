@@ -236,15 +236,16 @@ export async function saveProfileStep1(formData: FormData): Promise<ActionResult
     // the enrollment list, the registrar's values are already on record in
     // the student's own invitation, read here on the server, so a student
     // cannot choose their own program by editing the form.
+    // Section is not carried over: 00006 dropped students.section with the
+    // enrollment module. It stays on the invitation as the registrar's record.
     const { data: invitationRaw } = await db
       .from("account_invitations")
-      .select("program, year_level, section")
+      .select("program, year_level")
       .eq("user_id", user.id)
       .maybeSingle();
     const enrolled = invitationRaw as {
       program: string | null;
       year_level: string | null;
-      section: string | null;
     } | null;
 
     const { error } = await db.from("students").insert({
@@ -256,7 +257,6 @@ export async function saveProfileStep1(formData: FormData): Promise<ActionResult
       department: "TBD",
       program: enrolled?.program ?? "TBD",
       year_level: enrolled?.year_level ?? "1st Year",
-      ...(enrolled?.section ? { section: enrolled.section } : {}),
       ...sanitized,
     });
     writeError = error;

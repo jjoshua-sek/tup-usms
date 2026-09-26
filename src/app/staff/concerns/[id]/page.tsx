@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { CONCERN_STUDENT_COLUMNS } from "@/lib/students/columns";
 import { ResponseForm } from "@/components/concerns/response-form";
 import { StatusUpdater } from "@/components/concerns/status-updater";
 import { ConcernRealtime } from "@/components/concerns/concern-realtime";
@@ -43,7 +44,6 @@ interface ConcernDetail {
     cellphone: string | null;
     program: string;
     year_level: string;
-    section: string | null;
   } | null;
 }
 
@@ -135,10 +135,7 @@ export default async function StaffConcernDetailPage({
       `
       id, category, subject_line, body_text, ai_summary, urgency_level,
       suggested_dept, status, created_at, updated_at, assigned_to,
-      students (
-        id, first_name, last_name, student_number, email_address,
-        cellphone, program, year_level, section
-      )
+      students ( ${CONCERN_STUDENT_COLUMNS} )
     `
     )
     .eq("id", id)

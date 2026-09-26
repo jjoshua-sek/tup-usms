@@ -31,6 +31,7 @@ import { featuresToInputs, loadActiveRiskModel, loadRiskFeatures } from "@/lib/r
 import { RISK_TIER_META, scoreStudent } from "@/lib/risk/score";
 import type { RiskAssessmentResult, RiskTier } from "@/lib/risk/types";
 import { recordAccess } from "@/lib/students/access";
+import { RECORD_PROFILE_COLUMNS } from "@/lib/students/columns";
 import { summarizeRecord, type GlanceItem } from "@/lib/students/record-summary";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -55,10 +56,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * Data minimisation (RA 10173): the profile is limited to what an officer
  * acts on. Birth date, home address, religion, physical measurements and
  * family details are on the students row but are not selected here — every
- * column rendered is a column disclosed on every view of this page.
+ * column rendered is a column disclosed on every view of this page. The
+ * list lives in lib/students/columns.ts, where a test checks it against
+ * the schema the migrations actually produce.
  */
-const PROFILE_COLUMNS =
-  "id, user_id, student_number, first_name, middle_name, last_name, name_extension, program, department, year_level, section, campus, scholastic_status, cellphone, email_address, is_pwd, is_indigenous, is_listahan";
+const PROFILE_COLUMNS = RECORD_PROFILE_COLUMNS;
 
 // ============================================================
 // ROW SHAPES
@@ -75,7 +77,6 @@ interface StudentProfile {
   program: string;
   department: string;
   year_level: string;
-  section: string | null;
   campus: string;
   scholastic_status: string;
   cellphone: string | null;
@@ -474,7 +475,7 @@ export default async function StaffStudentRecordPage({
           { label: name },
         ]}
         title={name}
-        description={`${student.student_number} · ${student.program} · ${student.year_level}${student.section ? `-${student.section}` : ""}`}
+        description={`${student.student_number} · ${student.program} · ${student.year_level}`}
       />
 
       <div className="space-y-6">
@@ -761,7 +762,7 @@ function IdentityCard({
     ["Student number", student.student_number],
     ["Program", student.program],
     ["Department", student.department],
-    ["Year & section", `${student.year_level}${student.section ? ` · ${student.section}` : ""}`],
+    ["Year level", student.year_level],
     ["Campus", student.campus],
     ["Scholastic status", student.scholastic_status],
     ["Mobile", student.cellphone ?? "—"],

@@ -53,6 +53,18 @@ export function nextAttempt(attempts: number, now: Date = new Date()): FailureOu
  * refusal from the provider goes straight to undeliverable — that surfaces
  * the problem to staff in minutes rather than half a day.
  */
+/**
+ * A provider's sending quota, as opposed to a problem with one message.
+ * Gmail says "550 5.4.5 Daily user sending limit exceeded" (a 5xx that means
+ * "not today"); Resend answers HTTP 429. Every further send in the same run
+ * would fail identically, so the caller should stop and try again later
+ * rather than burn each remaining message's retries on the same refusal.
+ */
+export function isQuotaFailure(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /5\.4\.5|sending limit|quota exceeded|rate limit|too many messages|\b429\b/i.test(message);
+}
+
 export function isPermanentFailure(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? "");
   return /invalid (recipient|address)|no such user|mailbox unavailable|blocked|5\.1\.[13]/i.test(

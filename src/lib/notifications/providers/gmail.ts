@@ -20,6 +20,8 @@
 
 import nodemailer, { type Transporter } from "nodemailer";
 
+import { isQuotaFailure } from "../backoff";
+
 import { PermanentDeliveryError, type EmailProvider, type OutgoingEmail } from "./types";
 
 let transporter: Transporter | null = null;
@@ -60,15 +62,26 @@ function isAuthFailure(code: number | undefined, message: string): boolean {
   return /invalid login|username and password not accepted|badcredentials/i.test(message);
 }
 
-/** Gmail's permanent rejections, which should not be retried. */
-function isPermanent(error: unknown): boolean {
+export type GmailFailure = "auth" | "quota" | "recipient" | "transient";
+
+/** Exported for tests: what kind of failure Gmail just reported. */
+export function classifyGmailFailure(error: unknown): GmailFailure {
   const code = (error as { responseCode?: number } | null)?.responseCode;
   const message = error instanceof Error ? error.message : String(error ?? "");
 
-  if (isAuthFailure(code, message)) return false;
+  if (isAuthFailure(code, message)) return "auth";
+  // Gmail's daily limit (~500 on a personal account) arrives as a 5xx, but
+  // it means "not today", not "never". Read as permanent, it would make a
+  // 600-student enrollment import fail its last hundred invitations for good.
+  if (isQuotaFailure(error)) return "quota";
+  if (typeof code === "number" && code >= 500 && code < 600) return "recipient";
+  if (/invalid (recipient|address)|no such user|address rejected/i.test(message)) return "recipient";
+  return "transient";
+}
 
-  if (typeof code === "number" && code >= 500 && code < 600) return true;
-  return /invalid (recipient|address)|no such user|address rejected/i.test(message);
+/** Only a rejected recipient is final; everything else is worth retrying. */
+function isPermanent(error: unknown): boolean {
+  return classifyGmailFailure(error) === "recipient";
 }
 
 export function createGmailProvider(config: {

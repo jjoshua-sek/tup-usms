@@ -30,6 +30,9 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
+  // Set by /auth/confirm when a one-time sign-in link was used, expired or
+  // tampered with. The remedy is the same in every case, so say it.
+  const linkExpired = searchParams.get("notice") === "link-expired";
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -177,6 +180,19 @@ export function LoginForm() {
           Sign in with your TUP institutional account to continue.
         </p>
       </div>
+
+      {linkExpired && (
+        <div
+          role="alert"
+          className="mb-5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3 text-[13px] leading-relaxed text-amber-950"
+        >
+          <p className="font-semibold">That sign-in link no longer works.</p>
+          <p className="mt-0.5">
+            Links work once and expire after a short time. If you haven&apos;t set up your
+            password yet, ask the Office of Student Affairs to send you a new one.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Student Number */}

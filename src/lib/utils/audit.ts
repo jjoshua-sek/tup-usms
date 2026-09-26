@@ -37,7 +37,12 @@ type AuditAction =
   // Reads of a student's consolidated record. RA 10173 cares who *looked*
   // as much as who changed something; this page aggregates discipline, risk
   // and clearance in one view, so opening it is logged.
-  | "student_record_viewed";
+  | "student_record_viewed"
+  // Account provisioning (migration 00021)
+  | "account_created"
+  | "enrollment_imported"
+  | "invitation_resent"
+  | "account_activated";
 
 /**
  * Logs an audit event to the audit_logs table.

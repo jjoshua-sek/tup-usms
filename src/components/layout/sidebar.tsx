@@ -27,6 +27,7 @@ import {
   HeartPulse,
   ScrollText,
   DoorOpen,
+  UserCog,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -128,6 +129,15 @@ const staffSections: NavSection[] = [
   },
 ];
 
+/**
+ * Administrators only. The Accounts page enforces this itself; hiding the
+ * link just keeps staff from being offered a screen that will refuse them.
+ */
+const adminSection: NavSection = {
+  label: "Administration",
+  items: [{ label: "Accounts", href: "/staff/accounts", icon: UserCog }],
+};
+
 interface SidebarProps {
   role: "student" | "staff" | "admin";
   /** Optional per-route badge counts for sidebar items (e.g. { "/concerns": 3 }) */
@@ -139,7 +149,12 @@ interface SidebarProps {
 export function Sidebar({ role, badges, open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const sections = role === "student" ? studentSections : staffSections;
+  const sections =
+    role === "student"
+      ? studentSections
+      : role === "admin"
+        ? [...staffSections, adminSection]
+        : staffSections;
 
   const handleSignOut = async () => {
     const supabase = createClient();

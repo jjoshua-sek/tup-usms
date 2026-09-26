@@ -15,6 +15,7 @@ import { timingSafeEqual } from "crypto";
 
 import { NextResponse } from "next/server";
 
+import { dispatchInvitations } from "@/lib/accounts/invitations";
 import { dispatchQueuedEmails } from "@/lib/notifications/dispatch";
 
 export const runtime = "nodejs";
@@ -52,15 +53,24 @@ export async function POST(request: Request) {
   }
 
   const started = Date.now();
+
+  // Notices first, every tick: a summons must never wait behind a batch of
+  // enrollment invitations for the same sending quota.
   const report = await dispatchQueuedEmails();
+  const invitations = await dispatchInvitations();
 
   // Logged on every run so cron.job_run_details is not the only record of
   // whether the queue is moving.
   console.info(
     `[notifications] dispatch via ${report.provider}: ${report.sent} sent, ` +
       `${report.skipped} skipped, ${report.failed} retrying, ` +
-      `${report.undeliverable} gave up (${Date.now() - started}ms)`,
+      `${report.undeliverable} gave up; invitations: ${invitations.sent} sent, ` +
+      `${invitations.deferred} deferred${invitations.held ? ` (${invitations.held})` : ""} ` +
+      `(${Date.now() - started}ms)`,
   );
 
-  return NextResponse.json({ ...report, ms: Date.now() - started }, { headers: NO_STORE });
+  return NextResponse.json(
+    { ...report, invitations, ms: Date.now() - started },
+    { headers: NO_STORE },
+  );
 }

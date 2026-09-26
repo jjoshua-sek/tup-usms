@@ -76,7 +76,10 @@ export default async function StaffLayout({
     <StaffShell
       userName={userName}
       userSubtitle={userSubtitle}
-      role={role as "staff" | "admin"}
+      // The shell's idea of "admin" comes from the staff record, the same
+      // place every page's permission check reads — not from the login
+      // role, which only decides entry to /staff.
+      role={staffData?.role_type === "admin" ? "admin" : "staff"}
       notificationCount={unreadCount || 0}
       sidebarBadges={sidebarBadges}
     >

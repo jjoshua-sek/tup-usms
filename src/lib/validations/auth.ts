@@ -40,19 +40,26 @@ export type LoginInput = z.infer<typeof loginSchema>;
  * - At least 1 number
  * - At least 1 special character
  */
+/**
+ * The password rules on their own, shared by password change, account
+ * activation and admin-created accounts so all three enforce the same
+ * policy.
+ */
+export const newPasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(72, "Password must be at most 72 characters")
+  .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+  .regex(/[0-9]/, "Must contain at least one number")
+  .regex(
+    /[^a-zA-Z0-9]/,
+    "Must contain at least one special character (!@#$%^&*)"
+  );
+
 export const passwordChangeSchema = z
   .object({
     old_password: z.string().min(8, "Current password is required"),
-    new_password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(72, "Password must be at most 72 characters")
-      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Must contain at least one number")
-      .regex(
-        /[^a-zA-Z0-9]/,
-        "Must contain at least one special character (!@#$%^&*)"
-      ),
+    new_password: newPasswordSchema,
     confirm_password: z.string(),
   })
   .refine((data) => data.new_password === data.confirm_password, {

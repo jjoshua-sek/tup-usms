@@ -231,16 +231,32 @@ export async function saveProfileStep1(formData: FormData): Promise<ActionResult
       .eq("user_id", user.id);
     writeError = error;
   } else {
+    // Academic placement is registrar-set, never student-supplied (step 3
+    // passes it through without writing it). For an account created from
+    // the enrollment list, the registrar's values are already on record in
+    // the student's own invitation, read here on the server, so a student
+    // cannot choose their own program by editing the form.
+    const { data: invitationRaw } = await db
+      .from("account_invitations")
+      .select("program, year_level, section")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const enrolled = invitationRaw as {
+      program: string | null;
+      year_level: string | null;
+      section: string | null;
+    } | null;
+
     const { error } = await db.from("students").insert({
       user_id: user.id,
       student_number: studentNumber,
-      // Placeholders for NOT NULL academic columns the student has not
-      // reached yet. The Registrar corrects these later; see the column
-      // comments added in migration 00014.
+      // Placeholders for NOT NULL academic columns when there is no
+      // enrollment record to take them from (accounts made by hand).
       campus: "Manila",
       department: "TBD",
-      program: "TBD",
-      year_level: "1st Year",
+      program: enrolled?.program ?? "TBD",
+      year_level: enrolled?.year_level ?? "1st Year",
+      ...(enrolled?.section ? { section: enrolled.section } : {}),
       ...sanitized,
     });
     writeError = error;

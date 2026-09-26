@@ -83,6 +83,14 @@ describe("renderNotificationEmail", () => {
     ).not.toContain("needs your attention");
   });
 
+  it("states truthfully which address the copy was sent to", () => {
+    expect(renderNotificationEmail(summons).text).toMatch(/your institutional address/);
+
+    const invitation = renderNotificationEmail({ ...summons, sentTo: "personal" });
+    expect(invitation.text).toMatch(/personal address on your enrollment record/);
+    expect(invitation.html).not.toMatch(/institutional address/);
+  });
+
   it("names the institution and the privacy contact", () => {
     const email = renderNotificationEmail(summons);
 

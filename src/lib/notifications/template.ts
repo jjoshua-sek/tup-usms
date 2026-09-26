@@ -30,6 +30,13 @@ export interface EmailTemplateInput {
   priority?: string | null;
   /** Absolute origin of the portal, e.g. https://tup-usms.vercel.app */
   appUrl: string;
+  /**
+   * Where this copy was sent, as the footer states it. Notifications go to
+   * the institutional address; account invitations go to the personal
+   * address on the enrollment record, and a footer saying otherwise would
+   * be false.
+   */
+  sentTo?: "institutional" | "personal";
 }
 
 export interface RenderedEmail {
@@ -78,6 +85,10 @@ export function renderNotificationEmail(input: EmailTemplateInput): RenderedEmai
 
   const title = escapeHtml(input.title);
   const body = escapeHtml(input.body).replace(/\n/g, "<br />");
+  const sentTo =
+    input.sentTo === "personal"
+      ? "the personal address on your enrollment record"
+      : "your institutional address";
 
   // Table layout and inline styles throughout: Outlook ignores <style>
   // blocks and most layout CSS, and institutional accounts run Outlook.
@@ -136,7 +147,7 @@ export function renderNotificationEmail(input: EmailTemplateInput): RenderedEmai
           <td style="border-top:1px solid ${RULE};padding:18px 28px;">
             <p style="margin:0 0 8px;font-size:11px;line-height:1.6;color:${MUTED};">
               This is an official notice from the TUP-Manila Office of Student Affairs, sent to
-              your institutional address. Replies to this message are not read &mdash; use the
+              ${sentTo}. Replies to this message are not read &mdash; use the
               portal, or visit the OSA window, if you need to respond.
             </p>
             <p style="margin:0;font-size:11px;line-height:1.6;color:${MUTED};">
@@ -166,7 +177,7 @@ export function renderNotificationEmail(input: EmailTemplateInput): RenderedEmai
     ...(href ? ["", `${label}: ${href}`] : []),
     "",
     "---",
-    "This is an official notice sent to your institutional address.",
+    `This is an official notice sent to ${sentTo}.`,
     "Replies are not read - use the portal or visit the OSA window.",
     "Personal data is processed under RA 10173. Queries: dpo@tup.edu.ph",
   ].join("\n");

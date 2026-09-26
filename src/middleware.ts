@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
-// Routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/reset-password", "/auth/callback"];
+// Routes that don't require authentication. /auth/confirm is where a
+// one-time sign-in link lands — by definition before the person has a
+// session.
+const PUBLIC_ROUTES = ["/login", "/reset-password", "/auth/callback", "/auth/confirm"];
 
 /**
  * Routes called by machines rather than people. Each carries its own

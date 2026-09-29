@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { loose } from "@/lib/supabase/loose";
 import { UrgencyBadge } from "@/components/concerns/urgency-badge";
 import { StatusBadge } from "@/components/concerns/status-badge";
 import { ResponseForm } from "@/components/concerns/response-form";
@@ -124,11 +125,11 @@ export default async function ConcernDetailPage({
       new Set(responses.map((r) => r.responder_id))
     );
 
-    // Try staff first
-    const { data: staffRaw } = await supabase
-      .from("staff")
-      .select("user_id, full_name")
-      .in("user_id", responderIds);
+    // Try staff first. Students cannot read the staff table, which also
+    // holds roles and CODI clearance; staff_names() returns names only (00024).
+    const { data: staffRaw } = await loose(supabase).rpc("staff_names", {
+      p_user_ids: responderIds,
+    });
 
     const staffEntries =
       (staffRaw as unknown as { user_id: string; full_name: string }[]) ?? [];

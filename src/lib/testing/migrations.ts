@@ -109,6 +109,56 @@ export function finalColumns(table: string): Set<string> {
   return columns;
 }
 
+export interface Policy {
+  name: string;
+  /** SELECT, INSERT, UPDATE, DELETE, or ALL when FOR is omitted. */
+  command: string;
+  /** The USING expression with whitespace collapsed; "" when there is none. */
+  using: string;
+}
+
+/**
+ * RLS policies on `table` once every migration has run in order. CREATE
+ * POLICY adds or replaces one by name and DROP POLICY removes it, which is
+ * how every migration here changes a policy.
+ */
+export function finalPolicies(table: string): Map<string, Policy> {
+  const name = table.replace(/^public\./, "");
+  const reference = `(?:public\\.)?${name}(?![\\w])`;
+  const policies = new Map<string, Policy>();
+
+  for (const sql of migrationsInOrder()) {
+    const events: Array<{ at: number; apply: () => void }> = [];
+
+    for (const match of sql.matchAll(new RegExp(`CREATE POLICY\\s+"([^"]+)"\\s+ON\\s+${reference}([^;]*);`, "gi"))) {
+      const [, policyName, clauses] = match;
+      // FOR comes before USING / WITH CHECK; only look for it there.
+      const head = clauses.split(/\b(?:USING|WITH\s+CHECK)\b/i)[0];
+      const using = clauses.match(/\bUSING\s*\(/i);
+      events.push({
+        at: match.index!,
+        apply: () => {
+          policies.set(policyName, {
+            name: policyName,
+            command: (head.match(/\bFOR\s+(\w+)/i)?.[1] ?? "ALL").toUpperCase(),
+            using: using
+              ? bodyFrom(clauses, using.index! + using[0].length - 1).replace(/\s+/g, " ").trim()
+              : "",
+          });
+        },
+      });
+    }
+
+    for (const match of sql.matchAll(new RegExp(`DROP POLICY(?:\\s+IF EXISTS)?\\s+"([^"]+)"\\s+ON\\s+${reference}`, "gi"))) {
+      events.push({ at: match.index!, apply: () => policies.delete(match[1]) });
+    }
+
+    events.sort((a, b) => a.at - b.at).forEach((event) => event.apply());
+  }
+
+  return policies;
+}
+
 /** Column names in a PostgREST select string, ignoring embedded resources. */
 export function selectedColumns(select: string): string[] {
   return topLevelParts(select)

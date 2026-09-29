@@ -64,14 +64,20 @@ CREATE POLICY "Staff can view all staff" ON public.staff
 --   -- Admin can manage staff / Staff can view all staff / Staff can view own record
 --
 --   -- Signed in as a student: no staff rows, but every name resolves.
+--   -- The student must not also have a staff row (a test admin may have
+--   -- both), or is_staff() is true and every staff row is visible.
 --   BEGIN;
 --   SELECT set_config('request.jwt.claims', json_build_object(
---            'sub', (SELECT user_id FROM public.students LIMIT 1),
+--            'sub', (SELECT s.user_id FROM public.students s
+--                    WHERE NOT EXISTS (SELECT 1 FROM public.staff t WHERE t.user_id = s.user_id)
+--                    LIMIT 1),
 --            'role', 'authenticated')::text, true);
 --   SELECT set_config('verify.staff_ids',
 --            (SELECT string_agg(user_id::text, ',') FROM public.staff), true);
 --   SET LOCAL ROLE authenticated;
---   SELECT (SELECT count(*) FROM public.staff) AS staff_rows_visible,   -- 0
+--   SELECT auth.uid() AS acting_as,                                     -- not null
+--          public.is_staff() AS acting_as_staff,                        -- false
+--          (SELECT count(*) FROM public.staff) AS staff_rows_visible,   -- 0
 --          (SELECT count(*) FROM public.staff_names(
 --             string_to_array(current_setting('verify.staff_ids'), ',')::uuid[])) AS names_resolved;
 --   ROLLBACK;

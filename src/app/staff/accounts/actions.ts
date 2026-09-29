@@ -310,3 +310,64 @@ export async function resendInvitation(invitationId: string): Promise<Result> {
 
   return { ok: true, message: `A new link goes to ${updated[0].delivery_email} within a minute.` };
 }
+
+// ============================================================
+// PASSWORD RESET
+// ============================================================
+
+/**
+ * Emails a student who has already set up their account a one-time link to
+ * choose a new password — the way back in for someone who forgot it.
+ *
+ * It reopens the same invitation with purpose "reset": the dispatcher mints
+ * a fresh token when it sends, and the student chooses a password on the
+ * same /activate page, which is open only while an invitation is. Their
+ * current password keeps working until the link is used, so sending one
+ * locks nobody out. Using it signs the account out of every other device.
+ *
+ * The link goes to the personal address on the enrollment record — the
+ * one the account was set up from — never to an address typed here.
+ */
+export async function sendPasswordReset(invitationId: string): Promise<Result> {
+  const staff = await requireAdmin();
+  if (!staff) return { error: NOT_ADMIN };
+  if (!z.string().uuid().safeParse(invitationId).success) return { error: "Account not found." };
+
+  const { data, error } = await loose(await createClient())
+    .from("account_invitations")
+    .update({
+      status: "queued",
+      link_purpose: "reset",
+      attempts: 0,
+      next_attempt_at: null,
+      last_error: null,
+    })
+    .eq("id", invitationId)
+    .in("status", ["activated", "password_issued"])
+    .select("student_number, delivery_email");
+
+  if (error) {
+    console.error("[accounts] password reset failed", error);
+    return {
+      error: /link_purpose/.test(String((error as { message?: string }).message))
+        ? "Run migration 00022 in Supabase first — password reset needs it."
+        : "Could not queue the reset link.",
+    };
+  }
+
+  const updated = (data as Array<{ student_number: string; delivery_email: string }> | null) ?? [];
+  if (updated.length === 0) {
+    return { error: "That account hasn't been set up yet — use Resend link instead." };
+  }
+
+  await logAuditEvent(staff.userId, "password_reset_sent", "account_invitations", {
+    invitation_id: invitationId,
+    student_number: updated[0].student_number,
+  });
+  revalidatePath("/staff/accounts");
+
+  return {
+    ok: true,
+    message: `A password reset link goes to ${updated[0].delivery_email} within a minute.`,
+  };
+}

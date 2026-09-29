@@ -42,7 +42,11 @@ interface ClaimedInvitation {
   delivery_email: string;
   login_email: string;
   attempts: number;
+  /** Added in 00022; absent if that migration has not been run yet. */
+  link_purpose?: LinkPurpose;
 }
+
+export type LinkPurpose = "setup" | "reset";
 
 export interface InvitationReport {
   claimed: number;
@@ -72,8 +76,28 @@ export function invitationEmail(input: {
   studentNumber: string;
   confirmPath: string;
   appUrl: string;
+  purpose?: LinkPurpose;
 }) {
   const origin = input.appUrl.replace(/\/+$/, "");
+
+  if (input.purpose === "reset") {
+    return renderNotificationEmail({
+      title: "Reset your TUP-Manila USMS password",
+      body:
+        `Hi ${input.firstName},\n\n` +
+        `The Office of Student Affairs sent you a link to choose a new password.\n\n` +
+        `Student number: ${input.studentNumber}\n\n` +
+        `Your current password keeps working until you use this link. The link works once and expires ` +
+        `after a short time — if it has expired, ask the OSA to send another.\n\n` +
+        `If you didn't ask the OSA for this, you can ignore this email; nothing changes unless the link is used.`,
+      actionUrl: input.confirmPath,
+      actionLabel: "Choose a new password",
+      priority: "normal",
+      appUrl: input.appUrl,
+      sentTo: "personal",
+    });
+  }
+
   return renderNotificationEmail({
     title: "Set up your TUP-Manila student account",
     body:
@@ -172,6 +196,7 @@ export async function dispatchInvitations(
         studentNumber: row.student_number,
         confirmPath,
         appUrl,
+        purpose: row.link_purpose ?? "setup",
       });
 
       const sent = await provider.send({

@@ -28,6 +28,21 @@ describe("invitationEmail", () => {
     expect(email.text).not.toMatch(/institutional address/);
   });
 
+  it("words a reset as a reset, and says the old password still works until used", () => {
+    const reset = invitationEmail({
+      firstName: "Juan",
+      studentNumber: "TUPM-99-0001",
+      confirmPath: "/auth/confirm?token_hash=abc&type=magiclink",
+      appUrl: "https://tup-usms.vercel.app",
+      purpose: "reset",
+    });
+
+    expect(reset.subject).toMatch(/Reset your/);
+    expect(reset.text).toMatch(/current password keeps working until you use this link/);
+    expect(reset.html).toContain("Choose a new password");
+    expect(reset.text).not.toMatch(/has created your/);
+  });
+
   it("never points the button off-site, whatever path it is handed", () => {
     const hostile = invitationEmail({
       firstName: "Juan",

@@ -22,25 +22,35 @@ const RULES = [
 export function ActivateForm({
   firstName,
   studentNumber,
+  purpose = "setup",
 }: {
   firstName: string;
   studentNumber: string;
+  /** "reset" when an administrator sent a password reset link. */
+  purpose?: "setup" | "reset";
 }) {
+  const reset = purpose === "reset";
   const [isPending, startTransition] = useTransition();
   const [visible, setVisible] = useState(false);
 
   // The sign-in link opened this tab onto a fresh session; mark it open so
-  // the profile page it continues to isn't mistaken for a reopened site.
+  // the profile page it continues to isn't mistaken for a reopened site, and
+  // tell any other open tab that this browser is now a different account.
   useEffect(() => {
     markTabOpen();
+    announceSignIn();
   }, []);
 
   return (
     <div className="mx-auto w-full max-w-sm">
       <div className="mb-8">
-        <h3 className="mb-1.5 text-2xl font-semibold tracking-tight">Welcome, {firstName}</h3>
+        <h3 className="mb-1.5 text-2xl font-semibold tracking-tight">
+          {reset ? "Choose a new password" : `Welcome, ${firstName}`}
+        </h3>
         <p className="text-sm text-muted-foreground">
-          Choose a password for your account. You&apos;ll sign in with it and your student number.
+          {reset
+            ? "Your old password stops working once you save this one. You'll be signed out on every other device."
+            : "Choose a password for your account. You'll sign in with it and your student number."}
         </p>
       </div>
 
@@ -113,7 +123,7 @@ export function ActivateForm({
           ) : (
             <KeyRound className="mr-1.5 h-4 w-4" />
           )}
-          Save password and continue
+          {reset ? "Save new password" : "Save password and continue"}
         </Button>
       </form>
     </div>

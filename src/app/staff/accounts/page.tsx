@@ -4,6 +4,7 @@ import { FileSpreadsheet, MailCheck, UserPlus } from "lucide-react";
 import { CreateAccountForm } from "@/components/accounts/create-account-form";
 import { EnrollmentImport } from "@/components/accounts/enrollment-import";
 import { ResendInvitationButton } from "@/components/accounts/resend-invitation-button";
+import { ResetPasswordButton } from "@/components/accounts/reset-password-button";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
@@ -29,6 +30,7 @@ interface InvitationRow {
   sent_at: string | null;
   activated_at: string | null;
   created_at: string;
+  link_purpose?: "setup" | "reset";
 }
 
 const STATUS: Record<string, { label: string; tone: Tone }> = {
@@ -43,6 +45,18 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
 
 /** A link can be sent again until the student has used one. */
 const RESENDABLE = new Set(["queued", "sent", "failed", "undeliverable"]);
+
+/** Accounts that are set up, whose owner may need a way back in. */
+const RESETTABLE = new Set(["activated", "password_issued"]);
+
+/** A reset in flight reads differently from a first-time invitation. */
+const RESET_STATUS: Record<string, { label: string; tone: Tone }> = {
+  queued: { label: "Reset link waiting", tone: "info" },
+  sending: { label: "Sending reset link", tone: "info" },
+  sent: { label: "Reset link sent", tone: "info" },
+  failed: { label: "Retrying reset link", tone: "warning" },
+  undeliverable: { label: "Reset link could not send", tone: "danger" },
+};
 
 /**
  * Account administration: bulk enrollment import, one-off account creation,
@@ -63,13 +77,17 @@ export default async function AccountsPage() {
     );
   }
 
-  const { data, error } = await loose(await createClient())
-    .from("account_invitations")
-    .select(
-      "id, student_number, first_name, last_name, program, delivery_email, status, attempts, last_error, sent_at, activated_at, created_at",
-    )
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const db = loose(await createClient());
+  const baseColumns =
+    "id, student_number, first_name, last_name, program, delivery_email, status, attempts, last_error, sent_at, activated_at, created_at";
+  const listInvitations = (columns: string) =>
+    db.from("account_invitations").select(columns).order("created_at", { ascending: false }).limit(200);
+
+  let { data, error } = await listInvitations(`${baseColumns}, link_purpose`);
+  // Until migration 00022 runs, link_purpose does not exist and naming it
+  // fails the whole query. Fall back rather than show an empty list.
+  const needsMigration = Boolean(error && /link_purpose/.test(String((error as { message?: string }).message)));
+  if (needsMigration) ({ data, error } = await listInvitations(baseColumns));
   if (error) console.error("[accounts] invitations query failed", error);
 
   const invitations = (data as InvitationRow[] | null) ?? [];
@@ -154,7 +172,8 @@ export default async function AccountsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {invitations.map((row) => {
-                  const status = STATUS[row.status] ?? { label: row.status, tone: "neutral" as Tone };
+                  const status = (row.link_purpose === "reset" ? RESET_STATUS[row.status] : undefined) ??
+                    STATUS[row.status] ?? { label: row.status, tone: "neutral" as Tone };
                   return (
                     <tr key={row.id} className="align-top">
                       <td className="px-4 py-2.5">
@@ -181,6 +200,9 @@ export default async function AccountsPage() {
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         {RESENDABLE.has(row.status) && <ResendInvitationButton invitationId={row.id} />}
+                        {RESETTABLE.has(row.status) && !needsMigration && (
+                          <ResetPasswordButton invitationId={row.id} />
+                        )}
                       </td>
                     </tr>
                   );

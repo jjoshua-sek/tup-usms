@@ -27,17 +27,30 @@ export default async function ActivatePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?notice=link-expired");
 
+  // "*" rather than naming link_purpose: until migration 00022 runs the
+  // column does not exist, and naming it would break first-time setup too.
   const { data } = await loose(supabase)
     .from("account_invitations")
-    .select("student_number, first_name, status")
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
-  const invitation = data as { student_number: string; first_name: string; status: string } | null;
+  const invitation = data as {
+    student_number: string;
+    first_name: string;
+    status: string;
+    link_purpose?: "setup" | "reset";
+  } | null;
 
   if (!invitation || !AWAITING.has(invitation.status)) {
     const role = user.app_metadata?.role;
     redirect(role === "staff" || role === "admin" ? "/staff/dashboard" : "/dashboard");
   }
 
-  return <ActivateForm firstName={invitation.first_name} studentNumber={invitation.student_number} />;
+  return (
+    <ActivateForm
+      firstName={invitation.first_name}
+      studentNumber={invitation.student_number}
+      purpose={invitation.link_purpose ?? "setup"}
+    />
+  );
 }

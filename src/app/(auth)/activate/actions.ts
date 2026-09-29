@@ -31,12 +31,13 @@ export async function activateAccount(formData: FormData): Promise<Result> {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your sign-in link has expired. Ask the OSA to send a new one." };
 
+  // "*" so this keeps working before migration 00022 adds link_purpose.
   const { data } = await loose(supabase)
     .from("account_invitations")
-    .select("id, status")
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
-  const invitation = data as { id: string; status: string } | null;
+  const invitation = data as { id: string; status: string; link_purpose?: "setup" | "reset" } | null;
 
   if (!invitation || !AWAITING.has(invitation.status)) {
     return { error: "This account is already set up. Sign in with your student number and password." };
@@ -67,11 +68,20 @@ export async function activateAccount(formData: FormData): Promise<Result> {
     .eq("id", invitation.id);
   if (closeError) console.error("[activate] could not close invitation", invitation.id, closeError);
 
+  // A new password should end every other sign-in of this account. For a
+  // reset that is the point — whoever was using the old password is out —
+  // and for first-time setup there are no other sessions to end.
+  const { error: othersError } = await supabase.auth.signOut({ scope: "others" });
+  if (othersError) console.error("[activate] could not end other sessions", othersError);
+
+  const reset = invitation.link_purpose === "reset";
   await logAuditEvent(user.id, "account_activated", "account_invitations", {
     invitation_id: invitation.id,
+    purpose: reset ? "reset" : "setup",
   });
 
-  // First sign-in continues straight into the profile, which is prefilled
-  // from the enrollment list.
-  redirect("/profile");
+  // First sign-in continues into the profile, prefilled from the enrollment
+  // list. After a reset the profile already exists; the dashboard's own
+  // gate still sends anyone with an unfinished profile to finish it.
+  redirect(reset ? "/dashboard" : "/profile");
 }

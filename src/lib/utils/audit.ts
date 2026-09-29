@@ -42,6 +42,7 @@ type AuditAction =
   | "account_created"
   | "enrollment_imported"
   | "invitation_resent"
+  | "password_reset_sent"
   | "account_activated";
 
 /**

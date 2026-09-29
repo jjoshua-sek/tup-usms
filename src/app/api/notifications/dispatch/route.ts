@@ -13,9 +13,10 @@
 
 import { timingSafeEqual } from "crypto";
 
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 import { dispatchInvitations } from "@/lib/accounts/invitations";
+import { summarizeConcerns } from "@/lib/concerns/summarize";
 import { dispatchQueuedEmails } from "@/lib/notifications/dispatch";
 
 export const runtime = "nodejs";
@@ -58,6 +59,19 @@ export async function POST(request: Request) {
   // enrollment invitations for the same sending quota.
   const report = await dispatchQueuedEmails();
   const invitations = await dispatchInvitations();
+
+  // Concern summaries the submit-time attempt missed or failed. Run after
+  // the response, so a slow AI call can never hold pg_net past its 20-second
+  // timeout and make the whole tick look failed.
+  after(async () => {
+    const concerns = await summarizeConcerns({ limit: 3 });
+    if (concerns.claimed > 0 || concerns.held) {
+      console.info(
+        `[concerns] summaries: ${concerns.done} done, ${concerns.retrying} retrying, ${concerns.failed} failed` +
+          (concerns.held ? ` (${concerns.held})` : ""),
+      );
+    }
+  });
 
   // Logged on every run so cron.job_run_details is not the only record of
   // whether the queue is moving.

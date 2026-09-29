@@ -44,6 +44,8 @@ interface ConcernRow {
   suggested_dept: string | null;
   status: string;
   created_at: string;
+  /** Migration 00023; absent until it runs. */
+  ai_summary_status?: "pending" | "done" | "failed";
 }
 
 function timeAgo(dateString: string): string {
@@ -108,9 +110,9 @@ export default async function ConcernsPage() {
   // Fetch student's concerns (RLS auto-filters to this student)
   const { data: concernsRaw } = await supabase
     .from("concerns")
-    .select(
-      "id, category, subject_line, body_text, ai_summary, urgency_level, suggested_dept, status, created_at"
-    )
+    // "*" so ai_summary_status is included once migration 00023 exists,
+    // without naming a column that would fail the query before it does.
+    .select("*")
     .eq("student_id", student.id)
     .order("created_at", { ascending: false });
 
@@ -172,7 +174,11 @@ export default async function ConcernsPage() {
         <Card className="overflow-hidden">
           <ul className="divide-y">
             {concerns.map((concern) => {
-              const isProcessing = !concern.ai_summary;
+              // A summary that could not be made is not "processing": the
+              // student's concern is with staff either way, so say nothing
+              // rather than promise an analysis that is not coming.
+              const summaryFailed = concern.ai_summary_status === "failed";
+              const isProcessing = !concern.ai_summary && !summaryFailed;
               return (
                 <li key={concern.id}>
                   <Link
@@ -204,14 +210,14 @@ export default async function ConcernsPage() {
                           <Sparkles className="h-3 w-3 animate-pulse" />
                           AI is analyzing your concern...
                         </p>
-                      ) : (
+                      ) : concern.ai_summary ? (
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           <span className="font-medium text-foreground/80">
                             AI summary:
                           </span>{" "}
                           {concern.ai_summary}
                         </p>
-                      )}
+                      ) : null}
 
                       {concern.suggested_dept && (
                         <p className="text-xs text-muted-foreground">

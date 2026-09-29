@@ -38,6 +38,8 @@ interface ConcernRow {
   suggested_dept: string | null;
   status: string;
   created_at: string;
+  /** Migration 00023; absent until it runs. */
+  ai_summary_status?: "pending" | "done" | "failed";
   students: {
     first_name: string;
     last_name: string;
@@ -78,16 +80,11 @@ export default async function StaffConcernsPage({
 
   let query = supabase
     .from("concerns")
+    // "*" so ai_summary_status is included once migration 00023 exists,
+    // without naming a column that would fail the query before it does.
     .select(
       `
-      id,
-      category,
-      subject_line,
-      ai_summary,
-      urgency_level,
-      suggested_dept,
-      status,
-      created_at,
+      *,
       students (
         first_name,
         last_name,
@@ -198,7 +195,8 @@ export default async function StaffConcernsPage({
               const studentName = concern.students
                 ? `${concern.students.first_name} ${concern.students.last_name}`
                 : "Unknown";
-              const isProcessing = !concern.ai_summary;
+              const summaryFailed = concern.ai_summary_status === "failed";
+              const isProcessing = !concern.ai_summary && !summaryFailed;
 
               return (
                 <li key={concern.id}>
@@ -235,6 +233,10 @@ export default async function StaffConcernsPage({
                         <p className="flex items-center gap-1 text-xs italic text-muted-foreground/70">
                           <Sparkles className="h-3 w-3 animate-pulse" />
                           AI summary processing...
+                        </p>
+                      ) : summaryFailed ? (
+                        <p className="text-xs text-amber-800">
+                          No AI summary — open the concern to read it or re-run the analysis.
                         </p>
                       ) : (
                         <p className="text-sm text-muted-foreground line-clamp-2">

@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { summarizeConcerns } from "@/lib/concerns/summarize";
+import { getStaffContext } from "@/lib/osa/staff-context";
 import { createClient } from "@/lib/supabase/server";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { CONCERN_STATUSES } from "@/lib/validations/concern";
-import { sanitizeText } from "@/lib/utils/sanitize";
 
 interface ActionResult {
   success?: boolean;
@@ -81,114 +82,38 @@ export async function updateConcernStatus(
 }
 
 /**
- * Manually trigger AI re-summarization. Useful if the database webhook missed
- * the original event, or if staff wants the AI to re-evaluate after edits.
+ * Re-runs the AI summary for one concern — after a failure, or when staff
+ * want the AI to take another look. Staff wait for the result, so it runs
+ * now rather than after the response.
  *
- * Calls Anthropic Claude directly server-side — no API route round-trip.
+ * Restricted to staff. It used to check only that someone was signed in,
+ * so any student could call it with any concern id and spend the AI budget.
  */
-export async function resummarizeConcern(
-  concernId: string
-): Promise<ActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function resummarizeConcern(concernId: string): Promise<ActionResult> {
+  const staff = await getStaffContext();
+  if (!staff) return { error: "Only staff can re-run the AI summary." };
+  if (!/^[0-9a-f-]{36}$/i.test(concernId)) return { error: "Concern not found." };
 
-  if (!user) {
-    return { error: "Not authenticated." };
+  const report = await summarizeConcerns({ concernId, force: true, limit: 1 });
+  if (report.held) {
+    return {
+      error:
+        report.held === "migration 00023 has not been run"
+          ? "Run migration 00023 in Supabase first — AI summaries need it."
+          : "Could not start the AI summary. Try again.",
+    };
   }
 
-  // Fetch the concern (RLS allows staff to read all concerns)
-  const { data: concernRaw, error: fetchErr } = await supabase
-    .from("concerns")
-    .select("id, category, subject_line, body_text")
-    .eq("id", concernId)
-    .maybeSingle();
+  const outcome = report.outcomes[0];
+  if (!outcome) return { error: "Concern not found." };
+  if (!outcome.ok) return { error: outcome.error ?? "The AI summary failed." };
 
-  const concern = concernRaw as {
-    id: string;
-    category: string;
-    subject_line: string;
-    body_text: string;
-  } | null;
+  await logAuditEvent(staff.userId, "concern_respond", `concerns/${concernId}`, {
+    action: "manual_resummarize",
+  });
 
-  if (fetchErr || !concern) {
-    return { error: "Concern not found." };
-  }
-
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return { error: "Anthropic API key not configured." };
-  }
-
-  try {
-    const sanitizedSubject = sanitizeText(concern.subject_line, 200);
-    const sanitizedBody = sanitizeText(concern.body_text, 10000);
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 500,
-        system: `You are a student affairs AI assistant for TUP-Manila. Analyze the student concern and respond with a JSON object containing:
-- "summary": 2-3 sentence summary for staff
-- "urgency": "low" | "medium" | "high" | "critical"
-- "suggested_department": appropriate TUP department
-- "key_issues": array of 2-4 key themes
-Respond ONLY with the JSON object, no other text.`,
-        messages: [
-          {
-            role: "user",
-            content: `Category: ${concern.category}\nSubject: ${sanitizedSubject}\n\nConcern:\n${sanitizedBody}`,
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Anthropic API error:", await response.text());
-      return { error: "AI service unavailable." };
-    }
-
-    const aiResult = await response.json();
-    const aiText = aiResult.content?.[0]?.text || "";
-    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-
-    if (!jsonMatch) {
-      return { error: "Could not parse AI response." };
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase types regenerated separately
-    const { error: updateErr } = await (supabase as any)
-      .from("concerns")
-      .update({
-        ai_summary: parsed.summary,
-        urgency_level: parsed.urgency,
-        suggested_dept: parsed.suggested_department,
-      })
-      .eq("id", concernId);
-
-    if (updateErr) {
-      console.error("Update after re-summarize failed:", updateErr);
-      return { error: "Failed to save AI summary." };
-    }
-
-    await logAuditEvent(user.id, "concern_respond", `concerns/${concernId}`, {
-      action: "manual_resummarize",
-      urgency: parsed.urgency,
-    });
-
-    revalidatePath(`/staff/concerns/${concernId}`);
-    revalidatePath(`/concerns/${concernId}`);
-    return { success: true };
-  } catch (e) {
-    console.error("Resummarize error:", e);
-    return { error: "Failed to call AI service." };
-  }
+  revalidatePath(`/staff/concerns/${concernId}`);
+  revalidatePath("/staff/concerns");
+  revalidatePath(`/concerns/${concernId}`);
+  return { success: true };
 }

@@ -8,6 +8,7 @@ import {
   Building2,
 } from "lucide-react";
 
+import { modelLabel } from "@/lib/ai/concern-summary";
 import { createClient } from "@/lib/supabase/server";
 import { CONCERN_STUDENT_COLUMNS } from "@/lib/students/columns";
 import { ResponseForm } from "@/components/concerns/response-form";
@@ -35,6 +36,11 @@ interface ConcernDetail {
   created_at: string;
   updated_at: string;
   assigned_to: string | null;
+  /** Migration 00023; absent until it runs. */
+  ai_summary_status?: "pending" | "done" | "failed";
+  ai_summary_error?: string | null;
+  ai_summary_model?: string | null;
+  ai_key_issues?: string[] | null;
   students: {
     id: string;
     first_name: string;
@@ -131,13 +137,9 @@ export default async function StaffConcernDetailPage({
   // Fetch concern + student
   const { data: concernRaw } = await supabase
     .from("concerns")
-    .select(
-      `
-      id, category, subject_line, body_text, ai_summary, urgency_level,
-      suggested_dept, status, created_at, updated_at, assigned_to,
-      students ( ${CONCERN_STUDENT_COLUMNS} )
-    `
-    )
+    // "*" so the summary state from migration 00023 is included once it
+    // exists, without naming columns that would fail the query before then.
+    .select(`*, students ( ${CONCERN_STUDENT_COLUMNS} )`)
     .eq("id", id)
     .maybeSingle();
 
@@ -330,8 +332,10 @@ export default async function StaffConcernDetailPage({
                   <Zap className="h-3 w-3" />
                   AI-Generated Summary
                 </span>
+                {/* The model that actually wrote this summary — a fallback
+                    may have answered in place of the one requested. */}
                 <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-ai-accent-soft text-ai-accent border border-ai-accent">
-                  Claude Sonnet 4
+                  {modelLabel(concern.ai_summary_model)}
                 </span>
               </div>
               <div className="p-4">
@@ -362,6 +366,13 @@ export default async function StaffConcernDetailPage({
                           </span>
                         </AiField>
                       )}
+                      {concern.ai_key_issues && concern.ai_key_issues.length > 0 && (
+                        <AiField label="key_issues">
+                          <span className="text-[12px] font-medium">
+                            {concern.ai_key_issues.join(" · ")}
+                          </span>
+                        </AiField>
+                      )}
                       <AiField label="detected_language">
                         <span className="text-[12px] font-medium">
                           {lang.label}
@@ -373,16 +384,29 @@ export default async function StaffConcernDetailPage({
                       Generated · Reviewable · See audit log
                     </div>
                   </>
+                ) : concern.ai_summary_status === "failed" ? (
+                  <div className="text-center py-8">
+                    <p className="text-[13px] font-medium mb-2">No AI summary for this concern</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {concern.ai_summary_error ?? "The AI could not summarize it."} Read the
+                      concern in full, or use &ldquo;Re-analyze&rdquo; in the status row to try
+                      again.
+                    </p>
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-[13px] text-muted-foreground italic mb-2">
                       AI analysis pending...
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      The summary will appear here when the AI completes
-                      processing. Use the &ldquo;Re-analyze&rdquo; button in
-                      the status row to manually trigger it.
-                    </p>
+                    {/* A held queue (no credit, bad key) says why it is waiting. */}
+                    {concern.ai_summary_error ? (
+                      <p className="text-[11px] text-amber-800">{concern.ai_summary_error}</p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">
+                        It usually appears within a minute of the concern being filed. Use
+                        &ldquo;Re-analyze&rdquo; in the status row to run it now.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

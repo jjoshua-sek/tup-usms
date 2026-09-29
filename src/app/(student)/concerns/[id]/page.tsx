@@ -44,6 +44,8 @@ interface ConcernDetail {
   status: string;
   created_at: string;
   updated_at: string;
+  /** Migration 00023; absent until it runs. */
+  ai_summary_status?: "pending" | "done" | "failed";
   students: {
     first_name: string;
     last_name: string;
@@ -88,18 +90,11 @@ export default async function ConcernDetailPage({
   // Fetch concern with student info (RLS auto-restricts to owner or staff)
   const { data: concernRaw } = await supabase
     .from("concerns")
+    // "*" so ai_summary_status is included once migration 00023 exists,
+    // without naming a column that would fail the query before it does.
     .select(
       `
-      id,
-      category,
-      subject_line,
-      body_text,
-      ai_summary,
-      urgency_level,
-      suggested_dept,
-      status,
-      created_at,
-      updated_at,
+      *,
       students (
         first_name,
         last_name,
@@ -236,12 +231,12 @@ export default async function ConcernDetailPage({
                 </div>
               </div>
             </div>
-          ) : (
+          ) : concern.ai_summary_status === "failed" ? null : (
             <div className="rounded-xl border border-dashed p-4">
               <p className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 animate-pulse" />
                 AI is still analyzing your concern. The summary should appear
-                in a few seconds — refresh to check.
+                within a minute — refresh to check.
               </p>
             </div>
           )}

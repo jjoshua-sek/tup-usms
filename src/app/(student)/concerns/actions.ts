@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { summarizeConcerns } from "@/lib/concerns/summarize";
 import { createClient } from "@/lib/supabase/server";
 import { concernSchema } from "@/lib/validations/concern";
 import { logAuditEvent } from "@/lib/utils/audit";
@@ -22,8 +24,8 @@ interface ActionResult {
  * 2. Validate form data with Zod
  * 3. Sanitize text inputs (strip null bytes, enforce length)
  * 4. Look up the student's id from the students table
- * 5. INSERT into concerns — this triggers the Supabase webhook → Edge Function
- *    → Anthropic Claude API → updates the row with ai_summary/urgency/dept
+ * 5. INSERT into concerns, then summarize it with Claude once this request
+ *    has finished (lib/concerns/summarize.ts) — ai_summary/urgency/dept
  * 6. Audit log the submission
  * 7. revalidatePath() so the list refreshes immediately
  */
@@ -93,6 +95,12 @@ export async function submitConcern(formData: FormData): Promise<ActionResult> {
   }
 
   const concernId = (insertedRaw as { id: string }).id;
+
+  // Summarize once the student's request has finished, so they never wait
+  // on the AI. (The Edge Function + webhook this used to rely on was never
+  // deployed; see lib/concerns/summarize.ts.) If this fails or is cut
+  // short, the once-a-minute dispatch job picks the concern up.
+  after(() => summarizeConcerns({ concernId, limit: 1 }));
 
   // Audit log
   await logAuditEvent(user.id, "concern_submit", `concerns/${concernId}`, {

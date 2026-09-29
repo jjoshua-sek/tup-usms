@@ -10,15 +10,25 @@ import { migrationsInOrder } from "@/lib/testing/migrations";
  * and mark it taken, so whoever calls them first gets the batch and the
  * real dispatcher never sees it.
  *
+ * create_notification is the other end of the email queue. It is SECURITY
+ * DEFINER too and checks nothing about its caller: it writes whatever
+ * recipient, title, body and link it is given, and with 'email' in the
+ * channels it queues the row for the dispatcher to send from the
+ * institutional account. Only staff server actions call it, and they do so
+ * through the service-role client.
+ *
  * Supabase's default privileges grant EXECUTE on every new public function
  * to anon, authenticated and service_role directly, not through PUBLIC. A
  * migration that only says "REVOKE ... FROM PUBLIC" leaves anon's own grant
  * in place, and the function is callable with the public anon key. 00019,
- * 00021, 00022 and 00023 all did that; 00025 corrects them.
+ * 00021, 00022 and 00023 all did that; 00025 corrects them. 00012 never
+ * revoked anything from create_notification and granted it TO authenticated
+ * as well; 00026 corrects it.
  *
  * This replays every CREATE FUNCTION, GRANT and REVOKE in migration order,
  * starting each definition from those defaults, and fails if a claim_ or
- * reap_ function ends up callable by anyone but service_role.
+ * reap_ function, or create_notification, ends up callable by anyone but
+ * service_role.
  */
 
 const sql = migrationsInOrder().join("\n");
@@ -97,7 +107,10 @@ function finalFunctionGrants(): Map<string, FunctionGrants> {
 }
 
 const functions = finalFunctionGrants();
-const queue = [...functions].filter(([key, grants]) => grants.definer && /^(claim|reap)_/.test(key));
+/** claim_* and reap_* drain the queues; create_notification fills the email one. */
+const queue = [...functions].filter(
+  ([key, grants]) => grants.definer && /^(claim_|reap_|create_notification\()/.test(key),
+);
 
 /** "claim_email_batch(INT,INT): anon, service_role" for each function that grants `role`. */
 function callableBy(...roles: string[]): string[] {
@@ -125,12 +138,13 @@ describe("function grants, as the migrations leave them", () => {
         "reap_stuck_email_sends(INT)",
         "claim_invitation_batch(INT)",
         "claim_concern_summaries(INT,UUID,BOOLEAN)",
+        "create_notification(UUID,TEXT,TEXT,TEXT,TEXT,TEXT[],TEXT,TEXT,TEXT,UUID)",
       ]),
     );
   });
 });
 
-describe("claim_ and reap_ functions", () => {
+describe("claim_, reap_ and create_notification", () => {
   it("cannot be called with the anon key", () => {
     expect(callableBy("anon", "public"), "REVOKE ALL ... FROM PUBLIC, anon, authenticated").toEqual([]);
   });
@@ -139,7 +153,7 @@ describe("claim_ and reap_ functions", () => {
     expect(callableBy("authenticated"), "REVOKE ALL ... FROM PUBLIC, anon, authenticated").toEqual([]);
   });
 
-  it("can still be called by the dispatchers, which use the service-role client", () => {
+  it("can still be called by the dispatchers and staff actions, which use the service-role client", () => {
     const missing = queue.filter(([, grants]) => !grants.grantees.has("service_role")).map(([key]) => key);
     expect(missing, "GRANT EXECUTE ... TO service_role").toEqual([]);
   });

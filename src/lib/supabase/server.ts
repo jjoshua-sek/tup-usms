@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+
+import { asSessionCookie } from "@/lib/auth/session-cookies";
 import type { Database } from "@/types/database";
 
 /**
@@ -21,8 +23,10 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
+            // Session cookies, so the sign-in ends when the browser closes
+            // (see lib/auth/session-cookies.ts).
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, asSessionCookie(options))
             );
           } catch {
             // The `setAll` method is called from a Server Component where

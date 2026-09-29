@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { idleLimitMinutes } from "@/lib/auth/session-policy";
 import { createClient } from "@/lib/supabase/server";
 import { StudentShell } from "./student-shell";
 import { isProfileComplete } from "@/lib/utils/profile-completeness";
@@ -114,6 +115,7 @@ export default async function StudentLayout({
       photoIsProvisional={studentData?.photo_is_provisional ?? false}
       notificationCount={unreadCount || 0}
       sidebarBadges={sidebarBadges}
+      idleMinutes={idleLimitMinutes("student")}
     >
       {children}
     </StudentShell>

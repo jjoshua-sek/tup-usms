@@ -9,6 +9,7 @@ interface StaffShellProps {
   role: "staff" | "admin";
   notificationCount: number;
   sidebarBadges?: Record<string, number>;
+  idleMinutes: number;
 }
 
 export function StaffShell({
@@ -18,10 +19,12 @@ export function StaffShell({
   role,
   notificationCount,
   sidebarBadges,
+  idleMinutes,
 }: StaffShellProps) {
   return (
     <AppShell
       role={role}
+      idleMinutes={idleMinutes}
       userName={userName}
       userSubtitle={userSubtitle}
       notificationCount={notificationCount}

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
+import { SessionGuard } from "@/components/auth/session-guard";
+
 import { Sidebar } from "./sidebar";
 import { TupHeader } from "./tup-header";
 
@@ -15,6 +18,12 @@ interface AppShellProps {
   notificationCount?: number;
   /** Per-route badge counts for the sidebar (e.g. { "/concerns": 3 }) */
   sidebarBadges?: Record<string, number>;
+  /**
+   * Minutes of inactivity before sign-out, decided on the server from the
+   * account's role (lib/auth/session-policy). Every signed-in screen passes
+   * it; the proxy enforces the same limit independently.
+   */
+  idleMinutes: number;
 }
 
 /**
@@ -40,6 +49,7 @@ export function AppShell({
   photoIsProvisional,
   notificationCount,
   sidebarBadges,
+  idleMinutes,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -71,6 +81,8 @@ export function AppShell({
           {children}
         </main>
       </div>
+
+      <SessionGuard idleMinutes={idleMinutes} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { createClient } from "@/lib/supabase/client";
+import { markTabOpen } from "@/components/auth/session-guard";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -30,9 +31,18 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
-  // Set by /auth/confirm when a one-time sign-in link was used, expired or
-  // tampered with. The remedy is the same in every case, so say it.
-  const linkExpired = searchParams.get("notice") === "link-expired";
+  // Why the user is looking at this page, when something sent them here:
+  //   link-expired    /auth/confirm — a one-time link was used or expired
+  //   session-expired the proxy or SessionGuard — idle past the limit
+  //   site-closed     SessionGuard — every tab was closed, then reopened
+  const notice = searchParams.get("notice");
+  const linkExpired = notice === "link-expired";
+  const signedOut =
+    notice === "session-expired"
+      ? "You were signed out because there was no activity for a while. Sign in again to continue."
+      : notice === "site-closed"
+        ? "You were signed out because the site was closed. Sign in again to continue."
+        : null;
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -145,10 +155,21 @@ export function LoginForm() {
       // Successful login — pick destination and navigate ONCE.
       setFailedAttempts(0);
       toast.success("Signed in successfully!");
+      // This tab is now open on a signed-in session, so the page it lands on
+      // must not mistake itself for the site being reopened after closing.
+      markTabOpen();
+
+      // Only ever a path on this site. Following ?redirect= as given made
+      // /login?redirect=https://… an open redirect, sending someone to
+      // another site straight after they typed their password here.
+      const safeRedirect =
+        redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+          ? redirectTo
+          : null;
 
       let destination: string;
-      if (redirectTo) {
-        destination = redirectTo;
+      if (safeRedirect) {
+        destination = safeRedirect;
       } else if (role === "staff" || role === "admin") {
         destination = "/staff/dashboard";
       } else if (studentNeedsOnboarding) {
@@ -180,6 +201,16 @@ export function LoginForm() {
           Sign in with your TUP institutional account to continue.
         </p>
       </div>
+
+      {signedOut && (
+        <div
+          role="status"
+          className="mb-5 rounded-lg border border-border bg-muted/50 px-3.5 py-3 text-[13px] leading-relaxed"
+        >
+          <p className="font-semibold">Signed out for your security</p>
+          <p className="mt-0.5 text-muted-foreground">{signedOut}</p>
+        </div>
+      )}
 
       {linkExpired && (
         <div

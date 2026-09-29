@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { activateAccount } from "@/app/(auth)/activate/actions";
+import { markTabOpen } from "@/components/auth/session-guard";
 import { Button } from "@/components/ui/button";
 
 const RULES = [
@@ -27,6 +28,12 @@ export function ActivateForm({
 }) {
   const [isPending, startTransition] = useTransition();
   const [visible, setVisible] = useState(false);
+
+  // The sign-in link opened this tab onto a fresh session; mark it open so
+  // the profile page it continues to isn't mistaken for a reopened site.
+  useEffect(() => {
+    markTabOpen();
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-sm">

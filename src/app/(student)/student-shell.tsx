@@ -10,6 +10,7 @@ interface StudentShellProps {
   photoIsProvisional?: boolean;
   notificationCount: number;
   sidebarBadges?: Record<string, number>;
+  idleMinutes: number;
 }
 
 export function StudentShell({
@@ -20,10 +21,12 @@ export function StudentShell({
   photoIsProvisional,
   notificationCount,
   sidebarBadges,
+  idleMinutes,
 }: StudentShellProps) {
   return (
     <AppShell
       role="student"
+      idleMinutes={idleMinutes}
       userName={userName}
       userAvatar={userAvatar}
       userSubtitle={userSubtitle}

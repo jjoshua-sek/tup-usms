@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { idleLimitMinutes } from "@/lib/auth/session-policy";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { STAFF_ROLE_LABELS, type StaffRole } from "@/types/osa";
@@ -82,6 +83,7 @@ export default async function StaffLayout({
       role={staffData?.role_type === "admin" ? "admin" : "staff"}
       notificationCount={unreadCount || 0}
       sidebarBadges={sidebarBadges}
+      idleMinutes={idleLimitMinutes("staff")}
     >
       {!staffData && (
         <div

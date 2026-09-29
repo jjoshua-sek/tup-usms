@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
+import { announceSignOut } from "@/components/auth/session-guard";
 import { useRouter } from "next/navigation";
 
 interface TupHeaderProps {
@@ -51,6 +52,7 @@ export function TupHeader({
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    announceSignOut();
     router.push("/login");
   };
 

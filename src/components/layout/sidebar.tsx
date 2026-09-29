@@ -30,6 +30,7 @@ import {
   UserCog,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { announceSignOut } from "@/components/auth/session-guard";
 import { useRouter } from "next/navigation";
 
 interface NavItem {
@@ -159,6 +160,9 @@ export function Sidebar({ role, badges, open, onClose }: SidebarProps) {
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    // Other open tabs follow, rather than keep showing the signed-out
+    // account's records until someone clicks in them.
+    announceSignOut();
     router.push("/login");
   };
 

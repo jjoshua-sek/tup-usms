@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import Link from "next/link";
 import { ArrowRight, Loader2, LogOut } from "lucide-react";
 
+import { announceSignOut } from "@/components/auth/session-guard";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -40,6 +41,7 @@ export function AlreadySignedIn({ loginId, destination }: { loginId: string; des
           onClick={() =>
             startTransition(async () => {
               await createClient().auth.signOut({ scope: "local" });
+              announceSignOut();
               window.location.replace("/login");
             })
           }

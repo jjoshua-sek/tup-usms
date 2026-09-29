@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { createClient } from "@/lib/supabase/client";
-import { markTabOpen } from "@/components/auth/session-guard";
+import { announceSignIn, markTabOpen } from "@/components/auth/session-guard";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -140,7 +140,11 @@ export function LoginForm() {
             studentData.birth_date
           );
           if (!matches) {
-            await supabase.auth.signOut();
+            // "local": end only the session this attempt just created. The
+            // default ("global") ended every session the account had on
+            // every device, so anyone who knew a student's password but not
+            // their birth date could sign them out everywhere at will.
+            await supabase.auth.signOut({ scope: "local" });
             handleFailedAttempt("Birth date does not match our records.");
             return;
           }
@@ -158,6 +162,7 @@ export function LoginForm() {
       // This tab is now open on a signed-in session, so the page it lands on
       // must not mistake itself for the site being reopened after closing.
       markTabOpen();
+      announceSignIn();
 
       // Only ever a path on this site. Following ?redirect= as given made
       // /login?redirect=https://… an open redirect, sending someone to

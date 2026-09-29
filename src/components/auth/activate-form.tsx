@@ -5,7 +5,7 @@ import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { activateAccount } from "@/app/(auth)/activate/actions";
-import { markTabOpen } from "@/components/auth/session-guard";
+import { announceSignIn, markTabOpen } from "@/components/auth/session-guard";
 import { Button } from "@/components/ui/button";
 
 const RULES = [

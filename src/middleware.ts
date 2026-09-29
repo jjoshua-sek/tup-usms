@@ -79,6 +79,19 @@ function unavailable(): NextResponse {
   );
 }
 
+/**
+ * A form submission (server action) cannot follow a redirect to a page: the
+ * browser receives HTML where it expected an action result, and Next.js can
+ * only say "An unexpected response was received from the server". The one
+ * refusal it can show is plain text with a 4xx/5xx status — so every reason
+ * the proxy turns a submission away is said in words, including that
+ * nothing was saved.
+ */
+function refuseAction(status: number, message: string): NextResponse {
+  // Exactly "text/plain": Next.js compares the header by equality.
+  return new NextResponse(message, { status, headers: { "content-type": "text/plain" } });
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -90,6 +103,7 @@ export async function middleware(request: NextRequest) {
   const { user } = session;
   const isApi = pathname.startsWith("/api/");
   const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  const isAction = request.method === "POST" && request.headers.has("next-action");
 
   // ---- Supabase unreachable ------------------------------------------
   // "Couldn't check" is not "not signed in". Treating it as signed out
@@ -97,6 +111,11 @@ export async function middleware(request: NextRequest) {
   // connection to Supabase dropped for a moment.
   if (!user && session.error && isAuthRetryableFetchError(session.error) && hasSessionCookie(request)) {
     if (isPublic) return session.next();
+    if (isAction) {
+      return session.carry(
+        refuseAction(503, "Couldn't reach the sign-in service, so this wasn't saved. Check your connection and try again."),
+      );
+    }
     return isApi
       ? session.json({ error: "Could not reach the sign-in service. Try again." }, { status: 503 })
       : session.carry(unavailable());
@@ -129,12 +148,19 @@ export async function middleware(request: NextRequest) {
         // can never be used again — without touching the user's sessions on
         // other devices. The cookie deletions it issues ride on the response.
         await session.supabase.auth.signOut({ scope: "local" });
-        const ended = isApi
-          ? session.json(
-              { error: "Your session ended after a period of inactivity. Sign in again." },
-              { status: 401 },
+        const ended = isAction
+          ? session.carry(
+              refuseAction(
+                401,
+                "You were signed out after a period of inactivity, so this wasn't saved. Sign in again to continue.",
+              ),
             )
-          : session.redirect(loginUrl(request, { notice: "session-expired" }));
+          : isApi
+            ? session.json(
+                { error: "Your session ended after a period of inactivity. Sign in again." },
+                { status: 401 },
+              )
+            : session.redirect(loginUrl(request, { notice: "session-expired" }));
         ended.cookies.delete(ACTIVITY_COOKIE);
         return ended;
       }
@@ -167,6 +193,11 @@ export async function middleware(request: NextRequest) {
 
   // ---- Not signed in -------------------------------------------------
   if (!user) {
+    if (isAction) {
+      return session.carry(
+        refuseAction(401, "You're signed out, so this wasn't saved. Sign in again to continue."),
+      );
+    }
     // A fetch() to an API gets a status it can act on, not a login page.
     if (isApi) return session.json({ error: "Sign in required." }, { status: 401 });
     return session.redirect(loginUrl(request, { redirect: pathname }));
@@ -179,6 +210,29 @@ export async function middleware(request: NextRequest) {
   const role = user.app_metadata?.role || "student";
   const isStaff = role === "staff" || role === "admin";
   const isStaffArea = pathname === "/staff" || pathname.startsWith("/staff/");
+  const wrongArea =
+    (!isStaff && isStaffArea) ||
+    (isStaff &&
+      !isStaffArea &&
+      STUDENT_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/")));
+
+  // A submission from the wrong kind of account almost always means another
+  // tab signed in as someone else: cookies are shared by every tab, so a
+  // student's half-filled form was about to be sent as the admin. Letting it
+  // through would, for example, create a student profile for the admin
+  // account. Refuse it, and say why.
+  if (wrongArea && isAction) {
+    const loginId = user.email?.split("@")[0]?.toUpperCase() ?? "a different account";
+    return respond(
+      session.carry(
+        refuseAction(
+          403,
+          `This browser is now signed in as ${loginId} — probably from another tab — so this wasn't saved. ` +
+            `Reload the page to continue as ${loginId}, or sign out and sign back in as the account you meant to use.`,
+        ),
+      ),
+    );
+  }
 
   // Prevent students from accessing staff routes
   if (!isStaff && isStaffArea) {
@@ -186,11 +240,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Prevent staff from accessing student-specific routes (they have their own)
-  if (
-    isStaff &&
-    !isStaffArea &&
-    STUDENT_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"))
-  ) {
+  if (wrongArea) {
     return respond(session.redirect(new URL("/staff/dashboard", request.url)));
   }
 

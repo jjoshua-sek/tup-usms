@@ -71,7 +71,38 @@ export function markTabOpen() {
   writeActivity(nowMs());
 }
 
-type EndReason = "idle" | "closed";
+function broadcast(message: { type: string; reason?: EndReason }) {
+  try {
+    const channel = new BroadcastChannel(CHANNEL_NAME);
+    channel.postMessage(message);
+    channel.close();
+  } catch {
+    // No BroadcastChannel: other tabs catch up on their next request.
+  }
+}
+
+/**
+ * Tells the site's other tabs that this browser just signed in — possibly
+ * as a different account. Cookies are shared by every tab, so an open tab
+ * still showing the previous account would otherwise submit its forms as
+ * the new one. Those tabs reload and show whoever is signed in now.
+ */
+export function announceSignIn() {
+  broadcast({ type: "signed-in" });
+}
+
+/** Tells the site's other tabs that this browser signed out. */
+export function announceSignOut() {
+  broadcast({ type: "ended", reason: "signed-out" });
+}
+
+type EndReason = "idle" | "closed" | "signed-out";
+
+const NOTICE: Record<EndReason, string> = {
+  idle: "/login?notice=session-expired",
+  closed: "/login?notice=site-closed",
+  "signed-out": "/login",
+};
 
 export function SessionGuard({ idleMinutes }: { idleMinutes: number }) {
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
@@ -97,7 +128,7 @@ export function SessionGuard({ idleMinutes }: { idleMinutes: number }) {
     }
     // A full navigation, not a router push: nothing from the signed-in
     // session should survive in memory.
-    window.location.replace(`/login?notice=${reason === "idle" ? "session-expired" : "site-closed"}`);
+    window.location.replace(NOTICE[reason]);
   }, []);
 
   const heartbeat = useCallback(() => {
@@ -189,9 +220,13 @@ export function SessionGuard({ idleMinutes }: { idleMinutes: number }) {
       // records to whoever looks at this one.
       if (message?.type === "ended" && !ending.current) {
         ending.current = true;
-        window.location.replace(
-          `/login?notice=${message.reason === "closed" ? "site-closed" : "session-expired"}`,
-        );
+        window.location.replace(NOTICE[message.reason ?? "idle"] ?? "/login");
+      }
+      // Another tab signed in, perhaps as someone else. Reload so this tab
+      // shows — and submits as — the account actually signed in now.
+      if (message?.type === "signed-in" && !ending.current) {
+        ending.current = true;
+        window.location.reload();
       }
     };
 

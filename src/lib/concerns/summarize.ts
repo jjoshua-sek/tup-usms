@@ -1,6 +1,7 @@
 import "server-only";
 
 import { summarizeConcernText } from "@/lib/ai/summarize-concern";
+import { isMissingFunction } from "@/lib/supabase/errors";
 import { loose } from "@/lib/supabase/loose";
 import { sanitizeText } from "@/lib/utils/sanitize";
 
@@ -58,7 +59,7 @@ export async function summarizeConcerns(
     p_force: options.force ?? false,
   });
   if (error) {
-    const missing = /claim_concern_summaries/.test(String((error as { message?: string }).message));
+    const missing = isMissingFunction(error);
     report.held = missing ? "migration 00023 has not been run" : "could not claim concerns";
     if (!missing) console.error("[concern summary] claim failed", error);
     return report;

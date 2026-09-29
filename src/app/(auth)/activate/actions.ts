@@ -82,6 +82,9 @@ export async function activateAccount(formData: FormData): Promise<Result> {
 
   // First sign-in continues into the profile, prefilled from the enrollment
   // list. After a reset the profile already exists; the dashboard's own
-  // gate still sends anyone with an unfinished profile to finish it.
+  // gate still sends anyone with an unfinished profile to finish it. Staff
+  // arrive here only by reset, and go to their own console.
+  const role = user.app_metadata?.role;
+  if (role === "staff" || role === "admin") redirect("/staff/dashboard");
   redirect(reset ? "/dashboard" : "/profile");
 }

@@ -14,6 +14,7 @@ import {
 } from "@/lib/accounts/enrollment";
 import { provisionStaff, provisionStudent } from "@/lib/accounts/provision";
 import { getStaffContext } from "@/lib/osa/staff-context";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { logAuditEvent } from "@/lib/utils/audit";
@@ -370,4 +371,99 @@ export async function sendPasswordReset(invitationId: string): Promise<Result> {
     ok: true,
     message: `A password reset link goes to ${updated[0].delivery_email} within a minute.`,
   };
+}
+
+const staffResetSchema = z.object({
+  staff_id: z.string().uuid(),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address.").max(254),
+});
+
+/**
+ * Emails a staff member a one-time link to choose a new password.
+ *
+ * Staff accounts are created with a password handed over in person, so
+ * there is no address on record to send to: the administrator gives one
+ * here, and it is remembered for next time. A link rather than a new
+ * password set by the administrator, because staff have no screen to change
+ * their own password yet — whatever an administrator typed would stay known
+ * to them indefinitely. With a link, the staff member chooses it and no one
+ * else ever sees it.
+ *
+ * Uses the same machinery as a student reset: an invitation row with
+ * purpose "reset", a token minted when the email is sent, the /activate
+ * page, and every other session ended when the new password is saved.
+ */
+export async function sendStaffPasswordReset(formData: FormData): Promise<Result> {
+  const admin = await requireAdmin();
+  if (!admin) return { error: NOT_ADMIN };
+
+  const parsed = staffResetSchema.safeParse({
+    staff_id: formData.get("staff_id"),
+    email: formData.get("email"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the email address." };
+
+  const service = createAdminClient();
+  const db = loose(service);
+
+  const { data: staffRow } = await db
+    .from("staff")
+    .select("id, user_id, full_name")
+    .eq("id", parsed.data.staff_id)
+    .maybeSingle();
+  const member = staffRow as { id: string; user_id: string; full_name: string } | null;
+  if (!member) return { error: "Staff record not found." };
+
+  // The login ID is the login email's local part — the same derivation the
+  // login form uses — not employee_id, which is free text on older records.
+  const { data: authUser, error: authError } = await service.auth.admin.getUserById(member.user_id);
+  const loginId = authUser?.user?.email?.split("@")[0]?.toUpperCase() ?? "";
+  if (authError || !STUDENT_NUMBER.test(loginId)) {
+    return { error: "This staff account's login ID isn't in TUPM-XX-XXXX form, so a link can't be addressed to it." };
+  }
+
+  const [firstName, ...rest] = sanitizeText(member.full_name, 120).split(/\s+/).filter(Boolean);
+  const reset = {
+    delivery_email: parsed.data.email,
+    status: "queued",
+    link_purpose: "reset",
+    attempts: 0,
+    next_attempt_at: null,
+    last_error: null,
+  };
+
+  const { data: existing } = await db
+    .from("account_invitations")
+    .select("id")
+    .eq("user_id", member.user_id)
+    .maybeSingle();
+
+  const { error } = existing
+    ? await db.from("account_invitations").update(reset).eq("id", (existing as { id: string }).id)
+    : await db.from("account_invitations").insert({
+        ...reset,
+        user_id: member.user_id,
+        student_number: loginId,
+        first_name: firstName ?? "Staff",
+        last_name: rest.join(" ") || "—",
+        created_by: admin.staffId,
+      });
+
+  if (error) {
+    console.error("[accounts] staff reset failed", error);
+    return {
+      error: /link_purpose/.test(String((error as { message?: string }).message))
+        ? "Run migration 00022 in Supabase first — password reset needs it."
+        : "Could not queue the reset link.",
+    };
+  }
+
+  await logAuditEvent(admin.userId, "password_reset_sent", "account_invitations", {
+    kind: "staff",
+    staff_id: member.id,
+    login_id: loginId,
+  });
+  revalidatePath("/staff/accounts");
+
+  return { ok: true, message: `A password reset link for ${loginId} goes to ${parsed.data.email} within a minute.` };
 }

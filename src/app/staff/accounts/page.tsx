@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { FileSpreadsheet, MailCheck, UserPlus } from "lucide-react";
+import { FileSpreadsheet, MailCheck, ShieldCheck, UserPlus } from "lucide-react";
 
 import { CreateAccountForm } from "@/components/accounts/create-account-form";
 import { EnrollmentImport } from "@/components/accounts/enrollment-import";
 import { ResendInvitationButton } from "@/components/accounts/resend-invitation-button";
 import { ResetPasswordButton } from "@/components/accounts/reset-password-button";
+import { StaffResetForm } from "@/components/accounts/staff-reset-form";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
@@ -12,13 +13,23 @@ import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { formatManilaDateTime } from "@/lib/utils/time";
+import { STAFF_ROLE_LABELS, type StaffRole } from "@/types/osa";
 
 export const metadata: Metadata = {
   title: "Accounts",
 };
 
+interface StaffMemberRow {
+  id: string;
+  user_id: string;
+  full_name: string;
+  role_type: StaffRole;
+  position: string | null;
+}
+
 interface InvitationRow {
   id: string;
+  user_id: string;
   student_number: string;
   first_name: string;
   last_name: string;
@@ -79,7 +90,7 @@ export default async function AccountsPage() {
 
   const db = loose(await createClient());
   const baseColumns =
-    "id, student_number, first_name, last_name, program, delivery_email, status, attempts, last_error, sent_at, activated_at, created_at";
+    "id, user_id, student_number, first_name, last_name, program, delivery_email, status, attempts, last_error, sent_at, activated_at, created_at";
   const listInvitations = (columns: string) =>
     db.from("account_invitations").select(columns).order("created_at", { ascending: false }).limit(200);
 
@@ -91,6 +102,19 @@ export default async function AccountsPage() {
   if (error) console.error("[accounts] invitations query failed", error);
 
   const invitations = (data as InvitationRow[] | null) ?? [];
+
+  const { data: staffData, error: staffError } = await db
+    .from("staff")
+    .select("id, user_id, full_name, role_type, position")
+    .order("full_name", { ascending: true });
+  if (staffError) console.error("[accounts] staff query failed", staffError);
+  const staffMembers = (staffData as StaffMemberRow[] | null) ?? [];
+
+  // Staff appear in the invitations list only through a password reset;
+  // tag them so they aren't read as students.
+  const staffUserIds = new Set(staffMembers.map((member) => member.user_id));
+  const invitationByUser = new Map(invitations.map((row) => [row.user_id, row]));
+
   const counts = invitations.reduce<Record<string, number>>((tally, row) => {
     tally[row.status] = (tally[row.status] ?? 0) + 1;
     return tally;
@@ -178,6 +202,11 @@ export default async function AccountsPage() {
                     <tr key={row.id} className="align-top">
                       <td className="px-4 py-2.5">
                         <span className="font-mono text-[12px]">{row.student_number}</span>
+                        {staffUserIds.has(row.user_id) && (
+                          <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Staff
+                          </span>
+                        )}
                         <span className="block">
                           {row.last_name}, {row.first_name}
                         </span>
@@ -202,6 +231,74 @@ export default async function AccountsPage() {
                         {RESENDABLE.has(row.status) && <ResendInvitationButton invitationId={row.id} />}
                         {RESETTABLE.has(row.status) && !needsMigration && (
                           <ResetPasswordButton invitationId={row.id} />
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-6 rounded-xl border border-border bg-card">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3">
+          <h2 className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight">
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            Staff accounts
+            <span className="text-[12px] font-normal tabular-nums text-muted-foreground">{staffMembers.length}</span>
+          </h2>
+          <p className="text-[12px] text-muted-foreground">
+            A reset link lets them choose a new password that no one else sees. Their current one
+            works until they use it.
+          </p>
+        </header>
+
+        {staffMembers.length === 0 ? (
+          <p className="px-5 py-6 text-[13px] text-muted-foreground">No staff accounts yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-[13px]">
+              <thead className="border-b border-border bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Staff member</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Role</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Last reset</th>
+                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Password reset</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {staffMembers.map((member) => {
+                  const lastReset = invitationByUser.get(member.user_id);
+                  const resetStatus = !lastReset
+                    ? null
+                    : lastReset.status === "activated"
+                      ? { label: "Reset done", tone: "success" as Tone }
+                      : (RESET_STATUS[lastReset.status] ?? STATUS[lastReset.status]);
+                  return (
+                    <tr key={member.id} className="align-middle">
+                      <td className="px-4 py-2.5">
+                        {member.full_name}
+                        {member.position && (
+                          <span className="block text-[11px] text-muted-foreground">{member.position}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-[12px]">{STAFF_ROLE_LABELS[member.role_type] ?? member.role_type}</td>
+                      <td className="px-4 py-2.5">
+                        {resetStatus ? (
+                          <ToneBadge label={resetStatus.label} tone={resetStatus.tone} />
+                        ) : (
+                          <span className="text-[12px] text-muted-foreground">Never</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {needsMigration ? (
+                          <span className="block text-right text-[11px] text-muted-foreground">
+                            Run migration 00022 to enable
+                          </span>
+                        ) : (
+                          <StaffResetForm staffId={member.id} defaultEmail={lastReset?.delivery_email} />
                         )}
                       </td>
                     </tr>

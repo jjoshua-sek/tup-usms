@@ -17,18 +17,23 @@ import { migrationsInOrder } from "@/lib/testing/migrations";
  * institutional account. Only staff server actions call it, and they do so
  * through the service-role client.
  *
+ * check_student_clearance is SECURITY DEFINER as well, and answers for any
+ * student id it is given: open case numbers, classifications, incident
+ * dates, and a pending-case count that includes CODI cases. Only the OSA's
+ * clearance check calls it, through the service-role client.
+ *
  * Supabase's default privileges grant EXECUTE on every new public function
  * to anon, authenticated and service_role directly, not through PUBLIC. A
  * migration that only says "REVOKE ... FROM PUBLIC" leaves anon's own grant
  * in place, and the function is callable with the public anon key. 00019,
  * 00021, 00022 and 00023 all did that; 00025 corrects them. 00012 never
  * revoked anything from create_notification and granted it TO authenticated
- * as well; 00026 corrects it.
+ * as well; 00026 corrects it. 00010 and 00018 did the same to
+ * check_student_clearance; 00027 corrects it.
  *
  * This replays every CREATE FUNCTION, GRANT and REVOKE in migration order,
- * starting each definition from those defaults, and fails if a claim_ or
- * reap_ function, or create_notification, ends up callable by anyone but
- * service_role.
+ * starting each definition from those defaults, and fails if any of these
+ * server-only functions ends up callable by anyone but service_role.
  */
 
 const sql = migrationsInOrder().join("\n");
@@ -107,9 +112,13 @@ function finalFunctionGrants(): Map<string, FunctionGrants> {
 }
 
 const functions = finalFunctionGrants();
-/** claim_* and reap_* drain the queues; create_notification fills the email one. */
+/**
+ * claim_* and reap_* drain the queues; create_notification fills the email
+ * one; check_student_clearance reads any student's disciplinary standing.
+ */
 const queue = [...functions].filter(
-  ([key, grants]) => grants.definer && /^(claim_|reap_|create_notification\()/.test(key),
+  ([key, grants]) =>
+    grants.definer && /^(claim_|reap_|create_notification\(|check_student_clearance\()/.test(key),
 );
 
 /** "claim_email_batch(INT,INT): anon, service_role" for each function that grants `role`. */
@@ -139,12 +148,13 @@ describe("function grants, as the migrations leave them", () => {
         "claim_invitation_batch(INT)",
         "claim_concern_summaries(INT,UUID,BOOLEAN)",
         "create_notification(UUID,TEXT,TEXT,TEXT,TEXT,TEXT[],TEXT,TEXT,TEXT,UUID)",
+        "check_student_clearance(UUID)",
       ]),
     );
   });
 });
 
-describe("claim_, reap_ and create_notification", () => {
+describe("claim_, reap_, create_notification and check_student_clearance", () => {
   it("cannot be called with the anon key", () => {
     expect(callableBy("anon", "public"), "REVOKE ALL ... FROM PUBLIC, anon, authenticated").toEqual([]);
   });

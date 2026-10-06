@@ -17,6 +17,7 @@ import {
   ScanLine,
   Users,
   CalendarDays,
+  CalendarClock,
   X,
   IdCard,
   FolderOpen,
@@ -94,6 +95,7 @@ const staffSections: NavSection[] = [
     label: "Console",
     items: [
       { label: "Overview", href: "/staff/dashboard", icon: LayoutDashboard },
+      { label: "Calendar", href: "/staff/calendar", icon: CalendarClock },
       { label: "Cases", href: "/staff/cases", icon: AlertTriangle },
       { label: "Hearings", href: "/staff/hearings", icon: CalendarDays },
       { label: "Students", href: "/staff/students", icon: Users },

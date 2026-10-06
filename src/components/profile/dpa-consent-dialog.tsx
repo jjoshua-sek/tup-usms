@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { APP_NAME } from "@/lib/brand";
 
 interface DpaConsentDialogProps {
   /**
@@ -139,7 +140,7 @@ export function DpaConsentDialog({
             title="Your rights under RA 10173"
             items={[
               "Access, correct, or delete your personal data at any time",
-              "Withdraw your consent (terminates your USMS account)",
+              `Withdraw your consent (terminates your ${APP_NAME} account)`,
               "File complaints with the National Privacy Commission",
               "Be informed of any data breach affecting your information",
             ]}

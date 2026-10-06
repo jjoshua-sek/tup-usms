@@ -27,6 +27,7 @@ import {
   type RelayConfig,
   type RelayMode,
 } from "@/lib/access/relay";
+import { APP_NAME } from "@/lib/brand";
 import { formatManila } from "@/lib/utils/time";
 
 /** Where the paired device key lives. Never leaves this browser. */
@@ -123,7 +124,7 @@ export function GateKiosk() {
         applyHeartbeat((await response.json()) as { gate: GateConfig; term?: { label?: string } });
         return { ok: true };
       } catch {
-        return { ok: false, message: "Cannot reach the USMS server." };
+        return { ok: false, message: `Cannot reach the ${APP_NAME} server.` };
       }
     },
     [applyHeartbeat],

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
 import { GateKiosk } from "@/components/access/kiosk";
+import { APP_SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "Gate Terminal · TUP USMS",
+  title: { absolute: `Gate Terminal · ${APP_SITE_NAME}` },
   description: "Campus access verification terminal.",
   robots: { index: false, follow: false },
 };

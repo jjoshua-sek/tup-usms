@@ -8,6 +8,8 @@
  * queue that has quietly stopped moving.
  */
 
+import { APP_SITE_NAME } from "@/lib/brand";
+
 import { createConsoleProvider } from "./console";
 import { createGmailProvider } from "./gmail";
 import { createResendProvider } from "./resend";
@@ -40,7 +42,7 @@ export function resolveProvider(env: NodeJS.ProcessEnv = process.env): EmailProv
     return createGmailProvider({
       user,
       password,
-      from: from || `TUP-Manila USMS <${user}>`,
+      from: from || `${APP_SITE_NAME} <${user}>`,
     });
   }
 

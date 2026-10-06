@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { APP_FULL_NAME, APP_NAME, APP_SITE_NAME } from "@/lib/brand";
 import "./globals.css";
 
 /**
@@ -32,12 +33,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "TUP-Manila USMS",
-    template: "%s | TUP-Manila USMS",
+    default: APP_SITE_NAME,
+    template: `%s | ${APP_SITE_NAME}`,
   },
-  description:
-    "Unified Student Management System for Technological University of the Philippines - Manila",
-  keywords: ["TUP", "Manila", "Student Portal", "Registration", "University"],
+  description: `${APP_NAME}: ${APP_FULL_NAME} with Integrated OSA Services — Technological University of the Philippines - Manila`,
+  keywords: ["TUP", "Manila", "Office of Student Affairs", "Student Portal", "Early Warning"],
 };
 
 export default function RootLayout({

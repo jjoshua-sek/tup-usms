@@ -16,7 +16,7 @@ interface Result {
 /**
  * Declare interest in a scholarship.
  *
- * Deliberately NOT an application. The USMS does not submit anything to a
+ * Deliberately NOT an application. STARS does not submit anything to a
  * sponsor on a student's behalf — most TUP scholarships are still filed at
  * the OSA window or on the sponsor's own portal, and auto-applying would put
  * the university's name on a claim the student never reviewed.

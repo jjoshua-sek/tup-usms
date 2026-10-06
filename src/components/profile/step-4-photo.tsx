@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { APP_NAME } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 import { WebcamCapture } from "./webcam-capture";
@@ -189,7 +190,7 @@ export function Step4Photo({
         toast.error(result.error);
         return;
       }
-      toast.success("Profile complete! Welcome to USMS.");
+      toast.success(`Profile complete! Welcome to ${APP_NAME}.`);
       onComplete();
     });
   };

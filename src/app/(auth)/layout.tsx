@@ -1,8 +1,9 @@
+import { APP_FULL_NAME, APP_NAME } from "@/lib/brand";
 import { manilaWallClock } from "@/lib/utils/time";
 
 /**
  * Auth Layout — Two-column institutional gateway matching Screen 01 of
- * the USMS mockups.
+ * the original mockups.
  *
  * On desktop:
  *   - Left half: TUP maroon gradient with brand seal, hero text,
@@ -56,8 +57,9 @@ export default function AuthLayout({
                 Technological University of the Philippines · Manila
               </div>
               <div className="text-[22px] font-semibold tracking-tight leading-tight">
-                Unified Student Management System
+                {APP_NAME}
               </div>
+              <div className="text-[12px] leading-snug opacity-85">{APP_FULL_NAME}</div>
             </div>
           </div>
 

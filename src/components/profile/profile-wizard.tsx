@@ -10,6 +10,7 @@ import { Step4Photo } from "./step-4-photo";
 import { ProgressStepper } from "./progress-stepper";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { APP_SITE_NAME } from "@/lib/brand";
 import { Sparkles } from "lucide-react";
 
 interface WizardStudentData {
@@ -111,7 +112,7 @@ export function ProfileWizard({
             </span>
           </div>
           <h1 className="text-2xl font-display font-bold tracking-tight text-white">
-            Welcome to TUP-Manila USMS
+            Welcome to {APP_SITE_NAME}
           </h1>
           <p className="mt-1 text-sm text-white/80">
             Let&apos;s get your profile set up. This takes about 5 minutes

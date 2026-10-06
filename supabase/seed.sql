@@ -1,5 +1,5 @@
 -- ============================================================
--- TUP-Manila USMS — Development Seed Data
+-- TUP-Manila STARS — Development Seed Data
 -- ============================================================
 -- Run this AFTER schema migration in Supabase SQL Editor.
 -- This script is idempotent — safe to re-run.

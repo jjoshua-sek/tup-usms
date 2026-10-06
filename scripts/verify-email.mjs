@@ -95,9 +95,9 @@ if (!recipient) {
 }
 
 const info = await transporter.sendMail({
-  from: env.EMAIL_FROM || `TUP-Manila USMS <${user}>`,
+  from: env.EMAIL_FROM || `TUP-Manila STARS <${user}>`,
   to: recipient,
-  subject: "USMS credential check",
+  subject: "STARS credential check",
   text: "If you are reading this, the mail credentials work. Nothing else in the system was involved.",
 });
 

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
+import { APP_NAME } from "@/lib/brand";
 import { announceSignOut } from "@/components/auth/session-guard";
 import { useRouter } from "next/navigation";
 
@@ -93,9 +94,8 @@ export function TupHeader({
             <div className="text-[11px] tracking-wide opacity-85">
               TUP — Manila{isStaffConsole && " · OSA Console"}
             </div>
-            <div className="text-base font-semibold tracking-tight">
-              {isStaffConsole ? "USMS Admin" : "USMS"}
-            </div>
+            {/* The line above already says "OSA Console" on the staff side. */}
+            <div className="text-base font-semibold tracking-tight">{APP_NAME}</div>
           </div>
         </Link>
       </div>

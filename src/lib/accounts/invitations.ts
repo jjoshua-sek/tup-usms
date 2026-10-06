@@ -24,6 +24,7 @@
  *      queue for an hour without spending its retries.
  */
 
+import { APP_SITE_NAME } from "@/lib/brand";
 import { isPermanentFailure, isQuotaFailure, nextAttempt } from "@/lib/notifications/backoff";
 import {
   PermanentDeliveryError,
@@ -82,7 +83,7 @@ export function invitationEmail(input: {
 
   if (input.purpose === "reset") {
     return renderNotificationEmail({
-      title: "Reset your TUP-Manila USMS password",
+      title: `Reset your ${APP_SITE_NAME} password`,
       body:
         `Hi ${input.firstName},\n\n` +
         `A link to choose a new password was requested for your account, either from the sign-in page ` +
@@ -103,7 +104,7 @@ export function invitationEmail(input: {
     title: "Set up your TUP-Manila student account",
     body:
       `Hi ${input.firstName},\n\n` +
-      `The Office of Student Affairs has created your TUP-Manila USMS account.\n\n` +
+      `The Office of Student Affairs has created your ${APP_SITE_NAME} account.\n\n` +
       `Student number: ${input.studentNumber}\n\n` +
       `Use the button below to choose your password. The link works once and expires after a short time — ` +
       `if it has expired, ask the OSA to send you a new one.\n\n` +

@@ -18,6 +18,7 @@ import { after, NextResponse } from "next/server";
 import { dispatchInvitations } from "@/lib/accounts/invitations";
 import { summarizeConcerns } from "@/lib/concerns/summarize";
 import { dispatchQueuedEmails } from "@/lib/notifications/dispatch";
+import { sendHearingReminders } from "@/lib/osa/hearing-reminders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,6 +56,14 @@ export async function POST(request: Request) {
 
   const started = Date.now();
 
+  // Hearing reminders before the email pass, so the notices they queue go
+  // out in this same run rather than a minute later.
+  const reminders = await sendHearingReminders().catch((error: unknown) => {
+    // Never let a reminder problem stop the summonses already queued.
+    console.error("[reminders] run failed", error);
+    return { sent: 0, held: "error" };
+  });
+
   // Notices first, every tick: a summons must never wait behind a batch of
   // enrollment invitations for the same sending quota.
   const report = await dispatchQueuedEmails();
@@ -79,12 +88,13 @@ export async function POST(request: Request) {
     `[notifications] dispatch via ${report.provider}: ${report.sent} sent, ` +
       `${report.skipped} skipped, ${report.failed} retrying, ` +
       `${report.undeliverable} gave up; invitations: ${invitations.sent} sent, ` +
-      `${invitations.deferred} deferred${invitations.held ? ` (${invitations.held})` : ""} ` +
+      `${invitations.deferred} deferred${invitations.held ? ` (${invitations.held})` : ""}; ` +
+      `reminders: ${reminders.sent} sent${reminders.held ? ` (${reminders.held})` : ""} ` +
       `(${Date.now() - started}ms)`,
   );
 
   return NextResponse.json(
-    { ...report, invitations, ms: Date.now() - started },
+    { ...report, invitations, reminders, ms: Date.now() - started },
     { headers: NO_STORE },
   );
 }

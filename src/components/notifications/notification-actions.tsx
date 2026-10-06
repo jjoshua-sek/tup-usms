@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   markAllNotificationsRead,
   markNotificationRead,
-} from "@/app/(student)/notifications/actions";
+} from "@/lib/notifications/read-actions";
 
 export function MarkReadButton({ notificationId }: { notificationId: string }) {
   const [isPending, startTransition] = useTransition();

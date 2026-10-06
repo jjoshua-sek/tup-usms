@@ -70,7 +70,6 @@ const studentSections: NavSection[] = [
       { label: "Clearance", href: "/clearance", icon: ClipboardCheck },
       { label: "Digital ID", href: "/id", icon: IdCard },
       { label: "Academic Records", href: "/records", icon: FileText },
-      { label: "Documents", href: "/documents", icon: FolderOpen },
     ],
   },
   {

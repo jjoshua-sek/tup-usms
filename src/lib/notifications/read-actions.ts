@@ -10,8 +10,14 @@ interface Result {
   error?: string;
 }
 
+/** Students and staff each have an inbox; both show the same kind of row. */
+function revalidateInboxes() {
+  revalidatePath("/notifications");
+  revalidatePath("/staff/notifications");
+}
+
 /**
- * Marking a notification read is a student-owned write: the RLS policy from
+ * Marking a notification read is an owner-only write: the RLS policy from
  * 00012/00013 scopes `notifications` to `user_id = auth.uid()`, so these
  * actions need no ownership check of their own — an id belonging to someone
  * else simply updates zero rows.
@@ -31,7 +37,7 @@ export async function markNotificationRead(notificationId: string): Promise<Resu
 
   if (error) return { error: "Could not update that notification." };
 
-  revalidatePath("/notifications");
+  revalidateInboxes();
   return { ok: true };
 }
 
@@ -50,6 +56,6 @@ export async function markAllNotificationsRead(): Promise<Result> {
 
   if (error) return { error: "Could not update your notifications." };
 
-  revalidatePath("/notifications");
+  revalidateInboxes();
   return { ok: true };
 }

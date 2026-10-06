@@ -1,49 +1,11 @@
-import type { Metadata } from "next";
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Documents",
-};
-
+/**
+ * Retired route. The documents a student uploads are their Certificate of
+ * Registration and rating slips, which Academic Records already handles,
+ * with the verification status the OSA records against each one. A second,
+ * unbuilt file screen beside it only split the same job in two.
+ */
 export default function DocumentsPage() {
-  return (
-    <div>
-      <PageHeader
-        title="Documents"
-        description="Upload and manage your academic documents."
-      />
-
-      {/* Drag-and-Drop Upload Area */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center">
-            <Upload className="mb-4 h-10 w-10 text-muted-foreground" />
-            <p className="text-sm font-medium">
-              Drag and drop files here, or click to browse
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Supported formats: PDF, JPG, PNG (max 10MB)
-            </p>
-          </div>
-          {/* TODO: Implement drag-and-drop file upload with progress indicator */}
-        </CardContent>
-      </Card>
-
-      {/* File List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Uploaded Documents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            No documents uploaded yet. Your uploaded files will appear here with
-            download and delete options.
-          </p>
-          {/* TODO: List uploaded documents with file name, size, date, and actions */}
-        </CardContent>
-      </Card>
-    </div>
-  );
+  redirect("/records");
 }

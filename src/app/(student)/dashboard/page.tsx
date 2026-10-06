@@ -7,7 +7,7 @@ import {
   AlertTriangle,
   FolderOpen,
   Plus,
-  BookOpen,
+  Award,
   IdCard,
   ShieldAlert,
   Megaphone,
@@ -204,10 +204,11 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <ModuleCard
-          title="Electronic Registration"
-          description="View enrollment, select subjects, and manage your academic profile."
-          icon={BookOpen}
-          href="/enrollment"
+          title="Scholarships"
+          description="See which scholarships you qualify for and the documents each one needs."
+          icon={Award}
+          href="/scholarships"
+          linkLabel="Check eligibility"
         />
         <ModuleCard
           title="Submit a Concern"
@@ -232,17 +233,17 @@ export default async function DashboardPage() {
           linkLabel="Show ID"
         />
         <ModuleCard
-          title="File Management"
-          description="Upload, archive, and retrieve official student documents securely."
+          title="Academic Records"
+          description="Upload your Certificate of Registration and rating slips for OSA verification."
           icon={FolderOpen}
-          href="/documents"
-          linkLabel="Browse files"
+          href="/records"
+          linkLabel="Open records"
         />
         <ModuleCard
-          title="Announcements"
-          description="Latest notices from OSA, the Guidance Office, and the Registrar."
+          title="Notifications"
+          description="Summons, schedules, clearance updates and other notices from the OSA."
           icon={Megaphone}
-          href="/messages"
+          href="/notifications"
           linkLabel="Read all"
         />
       </div>

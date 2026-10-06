@@ -111,7 +111,7 @@ export function TupHeader({
         </Link>
 
         <Link
-          href={role === "student" ? "/messages" : "/staff/messages"}
+          href={role === "student" ? "/notifications" : "/staff/notifications"}
           className="relative text-white/85 hover:text-white transition-colors"
           aria-label={`Notifications (${notificationCount})`}
         >

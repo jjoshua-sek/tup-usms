@@ -55,13 +55,14 @@ export default async function StaffLayout({
       ? `${roleLabel} · ${staffData.position}`
       : (roleLabel ?? "Staff");
 
-  // Sidebar badges + notification count
+  // Sidebar badges + notification count. The bell counts notifications,
+  // not the enrollment-era `messages` table that nothing writes to.
   const [{ count: unreadCount }, { count: pendingConcernsCount }] = await Promise.all([
-    supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("recipient_id", user.id)
-      .eq("status", "unread"),
+    loose(supabase)
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false),
     supabase
       .from("concerns")
       .select("*", { count: "exact", head: true })

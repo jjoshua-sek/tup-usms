@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { idleLimitMinutes } from "@/lib/auth/session-policy";
+import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { StudentShell } from "./student-shell";
 import { isProfileComplete } from "@/lib/utils/profile-completeness";
@@ -74,7 +75,7 @@ export default async function StudentLayout({
       ? `${studentData.program} · ${studentData.year_level}`
       : undefined;
 
-  // Sidebar badges — counts of pending concerns + unread messages
+  // Sidebar badges — counts of pending concerns + unread notifications
   const studentId = await (async () => {
     const { data } = await supabase
       .from("students")
@@ -84,12 +85,15 @@ export default async function StudentLayout({
     return (data as { id: string } | null)?.id;
   })();
 
+  // The bell counts notifications. It used to count the enrollment-era
+  // `messages` table, which nothing writes to, so it always read zero while
+  // summonses sat unread.
   const [{ count: unreadCount }, { count: pendingConcernsCount }] = await Promise.all([
-    supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("recipient_id", user.id)
-      .eq("status", "unread"),
+    loose(supabase)
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false),
     studentId
       ? supabase
           .from("concerns")
@@ -104,7 +108,7 @@ export default async function StudentLayout({
     sidebarBadges["/concerns"] = pendingConcernsCount;
   }
   if (unreadCount && unreadCount > 0) {
-    sidebarBadges["/messages"] = unreadCount;
+    sidebarBadges["/notifications"] = unreadCount;
   }
 
   return (

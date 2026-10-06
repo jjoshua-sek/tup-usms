@@ -85,11 +85,12 @@ export function invitationEmail(input: {
       title: "Reset your TUP-Manila USMS password",
       body:
         `Hi ${input.firstName},\n\n` +
-        `The Office of Student Affairs sent you a link to choose a new password.\n\n` +
+        `A link to choose a new password was requested for your account, either from the sign-in page ` +
+        `or by the Office of Student Affairs.\n\n` +
         `Student number: ${input.studentNumber}\n\n` +
         `Your current password keeps working until you use this link. The link works once and expires ` +
-        `after a short time — if it has expired, ask the OSA to send another.\n\n` +
-        `If you didn't ask the OSA for this, you can ignore this email; nothing changes unless the link is used.`,
+        `after a short time — if it has expired, use "Forgot password?" at ${origin}/login, or ask the OSA.\n\n` +
+        `If you didn't ask for this, you can ignore this email; nothing changes unless the link is used.`,
       actionUrl: input.confirmPath,
       actionLabel: "Choose a new password",
       priority: "normal",

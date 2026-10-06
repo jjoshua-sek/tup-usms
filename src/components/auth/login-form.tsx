@@ -224,8 +224,11 @@ export function LoginForm() {
         >
           <p className="font-semibold">That sign-in link no longer works.</p>
           <p className="mt-0.5">
-            Links work once and expire after a short time. If you haven&apos;t set up your
-            password yet, ask the Office of Student Affairs to send you a new one.
+            Links work once and expire after a short time. To get a new one, use{" "}
+            <Link href="/reset-password" className="font-semibold underline underline-offset-2">
+              Forgot password?
+            </Link>{" "}
+            or ask the Office of Student Affairs.
           </p>
         </div>
       )}

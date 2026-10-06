@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 type AuditAction =
@@ -43,7 +44,10 @@ type AuditAction =
   | "enrollment_imported"
   | "invitation_resent"
   | "password_reset_sent"
-  | "account_activated";
+  | "account_activated"
+  // "Forgot password?" on the sign-in page. Logged against the account asked
+  // about, by the system — the person asking is not signed in.
+  | "password_reset_requested";
 
 /**
  * Logs an audit event to the audit_logs table.
@@ -58,6 +62,33 @@ export async function logAuditEvent(
   resource: string,
   details?: Record<string, unknown>
 ) {
+  await insertAuditEvent(await createClient(), userId, action, resource, details);
+}
+
+/**
+ * The same record, written by the system rather than by a signed-in user —
+ * for events with no session behind them, such as a password reset asked
+ * for from the sign-in page. RLS only lets a user log their own actions, so
+ * this goes through the service role; `userId` is the account the event is
+ * about.
+ */
+export async function logSystemAuditEvent(
+  userId: string,
+  action: AuditAction,
+  resource: string,
+  details?: Record<string, unknown>
+) {
+  await insertAuditEvent(createAdminClient(), userId, action, resource, details);
+}
+
+async function insertAuditEvent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Types will be auto-generated from Supabase
+  supabase: any,
+  userId: string,
+  action: AuditAction,
+  resource: string,
+  details?: Record<string, unknown>
+) {
   try {
     const headersList = await headers();
     const ip =
@@ -66,10 +97,7 @@ export async function logAuditEvent(
       "unknown";
     const userAgent = headersList.get("user-agent") || "unknown";
 
-    const supabase = await createClient();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Types will be auto-generated from Supabase
-    const { error: insertError } = await (supabase as any).from("audit_logs").insert({
+    const { error: insertError } = await supabase.from("audit_logs").insert({
       user_id: userId,
       action,
       resource,

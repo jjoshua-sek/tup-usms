@@ -384,10 +384,10 @@ const staffResetSchema = z.object({
  * Staff accounts are created with a password handed over in person, so
  * there is no address on record to send to: the administrator gives one
  * here, and it is remembered for next time. A link rather than a new
- * password set by the administrator, because staff have no screen to change
- * their own password yet — whatever an administrator typed would stay known
- * to them indefinitely. With a link, the staff member chooses it and no one
- * else ever sees it.
+ * password set by the administrator, because a password the administrator
+ * typed stays known to them until the staff member thinks to change it in
+ * Settings. With a link, the staff member chooses it and no one else ever
+ * sees it.
  *
  * Uses the same machinery as a student reset: an invitation row with
  * purpose "reset", a token minted when the email is sent, the /activate

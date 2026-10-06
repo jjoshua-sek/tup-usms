@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { createClient } from "@/lib/supabase/client";
+import { recordSignIn } from "@/lib/accounts/account-actions";
 import { announceSignIn, markTabOpen } from "@/components/auth/session-guard";
 import { toast } from "sonner";
 
@@ -158,6 +159,13 @@ export function LoginForm() {
 
       // Successful login — pick destination and navigate ONCE.
       setFailedAttempts(0);
+      // For the account's own sign-in history (Settings). Recording it must
+      // never be the reason a sign-in fails.
+      try {
+        await recordSignIn();
+      } catch (recordError) {
+        console.error("Could not record the sign-in:", recordError);
+      }
       toast.success("Signed in successfully!");
       // This tab is now open on a signed-in session, so the page it lands on
       // must not mistake itself for the site being reopened after closing.

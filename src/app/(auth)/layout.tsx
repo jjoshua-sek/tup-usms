@@ -69,16 +69,18 @@ export default function AuthLayout({
               Every student service.
             </h2>
             <p className="text-sm leading-relaxed opacity-85 max-w-sm">
-              Registration, concerns, violations, ID validation, and document
-              management — unified into a single secure interface.
+              Guidance, scholarships, student violations, clearance and ID
+              validation — with early warning for students who may need support.
             </p>
 
+            {/* What the system does since the OSA pivot (migration 00006);
+                registration and file management are no longer part of it. */}
             <div className="mt-6 grid gap-2">
               {[
-                "Electronic Registration",
+                "Student Violation Management",
                 "AI-Assisted Concern Triage",
-                "QR-Based Identity Validation",
-                "Centralized File Management",
+                "Early Warning for At-Risk Students",
+                "QR-Based ID Validation",
               ].map((label) => (
                 <div
                   key={label}

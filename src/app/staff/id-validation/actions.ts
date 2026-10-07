@@ -133,21 +133,8 @@ export async function reviewIdValidation(formData: FormData): Promise<Result> {
 
   if (error) return { error: "Could not save that decision." };
 
-  // Requirement #4: tell the student through the portal (and email, where
-  // they've opted in — create_notification honours their preferences).
   if (row.students?.user_id) {
-    await db.rpc("create_notification", {
-      p_user_id: row.students.user_id,
-      p_type: "id_validation_status",
-      p_title: decision.title,
-      p_body: parsed.data.reason ? `${decision.body} Reason: ${parsed.data.reason}` : decision.body,
-      p_priority: decision.status === "validated" ? "normal" : "high",
-      p_channels: ["in_app", "email"],
-      p_action_url: "/id",
-      p_action_label: "Open my Digital ID",
-      p_entity_type: "id_validation",
-      p_entity_id: parsed.data.validation_id,
-    });
+    await notifyStudent(db, row.students.user_id, decision, parsed.data.reason, parsed.data.validation_id);
   }
 
   await logAuditEvent(staff.userId, "id_validation_reviewed", "id_validations", {
@@ -156,7 +143,165 @@ export async function reviewIdValidation(formData: FormData): Promise<Result> {
     student_number: row.students?.student_number,
   });
 
+  revalidateValidationPages();
+  return { ok: true };
+}
+
+const counterSchema = z.object({
+  student_id: z.string().uuid(),
+  sticker_number: z.string().trim().max(40).optional().or(z.literal("")),
+});
+
+/**
+ * Validates a student's ID for the current term at the OSA window, whether
+ * or not they asked online first.
+ *
+ * The counter is where validation actually happens — the student is there
+ * with the card, the officer checks the face against the photo on file and
+ * applies the term sticker — so it must not depend on the student having
+ * clicked "Request ID validation" beforehand. A request already open for
+ * the term is completed; otherwise the term's record is created validated.
+ *
+ * A suspended, revoked or surrendered ID is refused here: lifting those is a
+ * separate decision (Reinstate on the record), not a side effect of a
+ * sticker.
+ */
+export async function validateAtCounter(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can validate IDs." };
+
+  const parsed = counterSchema.safeParse({
+    student_id: formData.get("student_id"),
+    sticker_number: formData.get("sticker_number") ?? "",
+  });
+  if (!parsed.success) return { error: "Choose a student first." };
+
+  const db = loose(createAdminClient());
+  const term = getCurrentTerm();
+  const now = new Date();
+
+  const { data: studentData } = await db
+    .from("students")
+    .select("id, user_id, student_number, photo_url")
+    .eq("id", parsed.data.student_id)
+    .maybeSingle();
+  const student = studentData as
+    | { id: string; user_id: string; student_number: string; photo_url: string | null }
+    | null;
+  if (!student) return { error: "That student record no longer exists." };
+
+  // The gate shows the guard this photo to match against the face; without
+  // one, a validated card would open turnstiles for whoever holds it.
+  if (!student.photo_url) {
+    return { error: "This student has no profile photo yet. They need to add one before the ID can be validated." };
+  }
+
+  const validated = {
+    status: "validated" as const,
+    rejection_reason: null,
+    validated_by: staff.staffId,
+    validated_at: now.toISOString(),
+    expires_at: defaultTermExpiry(term).toISOString(),
+    ...(parsed.data.sticker_number ? { validation_sticker_number: parsed.data.sticker_number } : {}),
+  };
+
+  const { data: existingData } = await db
+    .from("id_validations")
+    .select("id, status")
+    .eq("student_id", student.id)
+    .eq("school_year", term.schoolYear)
+    .eq("semester", term.semester)
+    .maybeSingle();
+  const existing = existingData as { id: string; status: IdValidationStatus } | null;
+
+  let validationId: string;
+  if (existing) {
+    if (existing.status === "validated") return { error: "This ID is already validated for this term." };
+    if (!COUNTER_CAN_VALIDATE.has(existing.status)) {
+      return {
+        error: "This ID is suspended, revoked or surrendered. Lift that first with Reinstate on the record below.",
+      };
+    }
+    const { data: updated, error } = await db
+      .from("id_validations")
+      .update(validated)
+      .eq("id", existing.id)
+      .eq("status", existing.status)
+      .select("id");
+    if (error) return { error: "Could not save the validation." };
+    if (((updated as unknown[] | null) ?? []).length === 0) {
+      return { error: "This record changed a moment ago. Reload the page and try again." };
+    }
+    validationId = existing.id;
+  } else {
+    const { data: inserted, error } = await db
+      .from("id_validations")
+      .insert({
+        student_id: student.id,
+        school_year: term.schoolYear,
+        semester: term.semester,
+        submitted_at: now.toISOString(),
+        ...validated,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      // 23505: the student's own request for this term arrived meanwhile.
+      return {
+        error:
+          (error as { code?: string }).code === "23505"
+            ? "A request for this term was just created. Reload the page and validate it from the record."
+            : "Could not save the validation.",
+      };
+    }
+    validationId = (inserted as { id: string }).id;
+  }
+
+  await notifyStudent(db, student.user_id, DECISION_MAP.validate, "", validationId);
+
+  await logAuditEvent(staff.userId, "id_validation_reviewed", "id_validations", {
+    validation_id: validationId,
+    decision: "validate_at_counter",
+    student_number: student.student_number,
+    had_request: Boolean(existing),
+  });
+
+  revalidateValidationPages();
+  return { ok: true };
+}
+
+/** A request open for the term, or one that lapsed or was turned down, can be completed at the counter. */
+const COUNTER_CAN_VALIDATE = new Set<IdValidationStatus>(["pending", "under_review", "rejected", "expired"]);
+
+/**
+ * Requirement #4: tell the student through the portal and by email.
+ * id_validation_status is optional mail, so the student's email settings
+ * decide whether the copy is sent.
+ */
+async function notifyStudent(
+  db: ReturnType<typeof loose>,
+  userId: string,
+  decision: (typeof DECISION_MAP)[string],
+  reason: string | undefined,
+  validationId: string,
+) {
+  const { error } = await db.rpc("create_notification", {
+    p_user_id: userId,
+    p_type: "id_validation_status",
+    p_title: decision.title,
+    p_body: reason ? `${decision.body} Reason: ${reason}` : decision.body,
+    p_priority: decision.status === "validated" ? "normal" : "high",
+    p_channels: ["in_app", "email"],
+    p_action_url: "/id",
+    p_action_label: "Open my Digital ID",
+    p_entity_type: "id_validation",
+    p_entity_id: validationId,
+  });
+  if (error) console.error("[id-validation] notification not created", validationId, error);
+}
+
+function revalidateValidationPages() {
   revalidatePath("/staff/id-validation");
   revalidatePath("/staff/gates");
-  return { ok: true };
+  revalidatePath("/id");
 }

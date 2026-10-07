@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getCurrentTerm } from "@/lib/access/term";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { logAuditEvent } from "@/lib/utils/audit";
@@ -88,16 +89,27 @@ export async function requestIdValidation(): Promise<ActionResult> {
     }
 
     // rejected / expired: reopen the same row (one row per student per term).
-    const { error } = await db
+    //
+    // Through the service role, after the checks above: RLS gives students
+    // no UPDATE on id_validations, deliberately — an UPDATE policy cannot
+    // limit which columns change, and this row is what opens the gates. On
+    // the student's own session this update matched no rows and changed
+    // nothing, while the page said "Request sent".
+    const { data: reopened, error } = await loose(createAdminClient())
       .from("id_validations")
       .update({
         status: "pending",
         rejection_reason: null,
         submitted_at: new Date().toISOString(),
       })
-      .eq("id", existing.id);
+      .eq("id", existing.id)
+      .eq("student_id", student.id)
+      .in("status", ["rejected", "expired"])
+      .select("id");
 
-    if (error) return { error: "Could not send your request. Please try again." };
+    if (error || ((reopened as unknown[] | null) ?? []).length === 0) {
+      return { error: "Could not send your request. Please try again." };
+    }
   } else {
     const { error } = await db.from("id_validations").insert({
       student_id: student.id,

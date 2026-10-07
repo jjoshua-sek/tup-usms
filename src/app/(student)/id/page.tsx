@@ -67,7 +67,7 @@ const NOT_VALID_FOR = ["Financial Transactions", "Grade Retrieval"];
 
 /** What the student should actually do, per validation state. */
 const STATUS_GUIDANCE: Record<IdValidationStatus | "none", string> = {
-  none: "Your ID has not been validated for this term yet. Request validation here, then bring your physical ID to the OSA for the term sticker.",
+  none: "Your ID has not been validated for this term yet. Request validation here, or go straight to the OSA window with your physical ID.",
   pending:
     "Your request is queued with the OSA. Bring your physical ID to the OSA window to have the term sticker applied.",
   under_review: "The OSA is verifying your photo and records. No action needed right now.",
@@ -284,6 +284,26 @@ export default async function DigitalIdPage() {
               </div>
             )}
           </div>
+
+          {/* How validation works */}
+          {!scannable && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <h5 className="mb-2.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                How validation works
+              </h5>
+              <ol className="list-decimal space-y-1.5 pl-4 text-[13px] leading-relaxed">
+                <li>Request validation here, or skip this and go straight to the OSA window.</li>
+                <li>
+                  Bring your physical TUP ID to the OSA. They match your face to your profile photo and apply
+                  this term&apos;s sticker.
+                </li>
+                <li>
+                  Once validated, your card and the QR on this page open the campus turnstiles until the term
+                  ends. You&apos;ll get a notification when it&apos;s done.
+                </li>
+              </ol>
+            </div>
+          )}
 
           {/* Uses */}
           <div className="rounded-xl border border-border bg-card p-5">

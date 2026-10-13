@@ -47,7 +47,7 @@ STARS replaces the OSA's paper logbooks with one web application. It handles dis
 | App | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
 | Data | Supabase: Postgres with Row-Level Security, Auth, Storage, Realtime, Vault, pg_cron, pg_net |
 | Email | Nodemailer over Gmail SMTP (Resend supported) |
-| AI | Anthropic Claude API: concern triage, COR and rating slip reading |
+| AI | Groq, free plan: concern triage (`openai/gpt-oss-120b`) and COR / rating slip reading (`qwen/qwen3.8-27b` for photos; PDF text via unpdf) |
 | Hosting | Vercel; every push to `main` deploys |
 | Tests | Vitest (192 tests), ESLint |
 

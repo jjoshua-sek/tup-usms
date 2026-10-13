@@ -56,9 +56,10 @@ export default function NewConcernPage() {
               </strong>
             </div>
             <p className="text-[11px] text-ai-accent leading-relaxed">
-              Your concern is processed by Claude Sonnet 4 to generate a
-              routing summary. Final decisions are always made by a human
-              staff member. Read more in the Privacy Notice.
+              An AI model hosted by Groq reads your concern to write a short
+              routing summary for staff. Groq keeps no copy of it. Final
+              decisions are always made by a human staff member. Read more in
+              the Privacy Notice.
             </p>
           </div>
         </aside>

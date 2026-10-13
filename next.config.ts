@@ -12,7 +12,7 @@ import type { NextConfig } from "next";
  * - X-DNS-Prefetch-Control: enables DNS prefetch (small perf win)
  *
  * NOTE: A full Content-Security-Policy (CSP) is intentionally NOT set here — it requires careful
- * tuning to allow Supabase's domain, Anthropic's API, etc. and breaks if misconfigured. We'll
+ * tuning to allow Supabase's domain (REST, Realtime, Storage) and breaks if misconfigured. We'll
  * add a tested CSP in a follow-up once the app's external requests are stable.
  */
 const securityHeaders = [

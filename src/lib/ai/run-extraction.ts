@@ -14,12 +14,13 @@ export interface RunExtractionResult {
 }
 
 /**
- * Downloads an uploaded document, reads it with Claude, and writes the result
- * back onto the `academic_documents` row.
+ * Downloads an uploaded document, reads it with the AI (Groq), and writes the
+ * result back onto the `academic_documents` row.
  *
  * Status is moved to `extracting` before the call so a second trigger (a
  * student re-tapping, staff re-running) doesn't start a parallel read of the
- * same file — each one costs money and they would race to write the result.
+ * same file — each one spends the free plan's quota and they would race to
+ * write the result.
  *
  * A failure is recorded, not thrown: the document stays reviewable and an OSA
  * officer types the figures by hand. Extraction is an accelerator for the
@@ -73,12 +74,15 @@ export async function runAcademicExtraction(
     return { error: "The uploaded file could not be opened." };
   }
 
-  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-
   const outcome = await extractAcademicDocument({
-    base64,
+    bytes: new Uint8Array(await file.arrayBuffer()),
     mediaType: document.mime_type,
     documentType: document.document_type,
+    // Ten minutes is ample for the AI service to fetch the photo once.
+    signedUrl: async () => {
+      const { data } = await admin.storage.from(BUCKET).createSignedUrl(document.file_path, 600);
+      return data?.signedUrl ?? null;
+    },
   });
 
   if (!outcome.ok) {

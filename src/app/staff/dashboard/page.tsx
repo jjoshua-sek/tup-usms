@@ -10,6 +10,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import { modelLabel } from "@/lib/ai/concern-summary";
+import { aiConfigured, aiModels } from "@/lib/ai/groq-core";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
@@ -87,6 +89,7 @@ export default async function StaffDashboardPage() {
     enrolledStudentsResult,
     openCasesResult,
     recentConcernsResult,
+    awaitingSummaryResult,
   ] = await Promise.all([
     supabase
       .from("concerns")
@@ -131,6 +134,14 @@ export default async function StaffDashboardPage() {
       )
       .order("created_at", { ascending: false })
       .limit(6),
+    // Concerns still waiting for their AI summary, newest first; its error,
+    // if any, says why (a "Waiting:" error means the queue is on hold).
+    loose(supabase)
+      .from("concerns")
+      .select("ai_summary_error", { count: "exact" })
+      .eq("ai_summary_status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1),
   ]);
 
   const concernsToday = concernsTodayResult.count ?? 0;
@@ -140,6 +151,16 @@ export default async function StaffDashboardPage() {
   const enrolledStudents = enrolledStudentsResult.count ?? 0;
   const openCases = openCasesResult.count ?? 0;
   const recentConcerns = (recentConcernsResult.data as unknown as ConcernRow[]) ?? [];
+
+  const awaitingSummary = awaitingSummaryResult.count ?? 0;
+  const latestSummaryError =
+    ((awaitingSummaryResult.data as Array<{ ai_summary_error: string | null }> | null) ?? [])[0]?.ai_summary_error ?? null;
+  const triageModel = modelLabel(aiModels().text);
+  const triageStatus = !aiConfigured()
+    ? { label: "Not configured", tone: "danger" as const }
+    : latestSummaryError?.startsWith("Waiting:")
+      ? { label: "Waiting", tone: "warning" as const }
+      : { label: "Operational", tone: "success" as const };
 
   const totalActive = highUrgency + (concernsTodayResult.count ?? 0);
   const greeting = staff?.full_name?.split(" ")[0] || "Officer";
@@ -196,9 +217,9 @@ export default async function StaffDashboardPage() {
           iconTone={highUrgency > 0 ? "danger" : "success"}
         />
         <StatsCard
-          label="Avg. AI Triage"
-          value="1.4s"
-          trend="Claude Sonnet 4"
+          label="Awaiting AI Summary"
+          value={awaitingSummary}
+          trend={triageModel}
           icon={Zap}
           iconTone="ai"
         />
@@ -259,11 +280,11 @@ export default async function StaffDashboardPage() {
           <div className="space-y-3 text-[13px]">
             <div className="flex justify-between items-baseline">
               <span className="text-muted-foreground">Model</span>
-              <span className="font-mono text-[11px]">Claude Sonnet 4</span>
+              <span className="font-mono text-[11px]">{triageModel} · Groq</span>
             </div>
             <div className="flex justify-between items-baseline">
-              <span className="text-muted-foreground">Avg. latency</span>
-              <span className="font-medium tabular-nums">1.4s</span>
+              <span className="text-muted-foreground">Awaiting summary</span>
+              <span className="font-medium tabular-nums">{awaitingSummary}</span>
             </div>
             <div className="flex justify-between items-baseline">
               <span className="text-muted-foreground">Processed today</span>
@@ -271,9 +292,17 @@ export default async function StaffDashboardPage() {
             </div>
             <div className="flex justify-between items-baseline">
               <span className="text-muted-foreground">Status</span>
-              <span className="inline-flex items-center gap-1 text-[#16a34a] text-xs font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
-                Operational
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 text-xs font-medium",
+                  triageStatus.tone === "success" && "text-[#16a34a]",
+                  triageStatus.tone === "warning" && "text-[#b45309]",
+                  triageStatus.tone === "danger" && "text-destructive",
+                )}
+                title={triageStatus.tone === "warning" ? (latestSummaryError ?? undefined) : undefined}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                {triageStatus.label}
               </span>
             </div>
           </div>

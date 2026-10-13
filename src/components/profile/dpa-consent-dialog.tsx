@@ -130,7 +130,7 @@ export function DpaConsentDialog({
               "You: full access to your own records",
               "TUP-Manila staff and faculty: only as needed for their roles",
               "Authorized government agencies: for mandated reports only",
-              "Anthropic (AI provider): your concern text is sent for summarization, then immediately discarded — not retained or used for training",
+              "Groq (AI provider): your concern text, and the grade documents you upload, are processed to prepare summaries and figures for staff, and are not retained afterward",
             ]}
           />
 

@@ -23,7 +23,10 @@ export const concernSummarySchema = z.object({
 
 export type ConcernSummary = z.infer<typeof concernSummarySchema>;
 
-/** Sent as output_config.format. Plain JSON Schema keywords only. */
+/**
+ * Sent as Groq's strict json_schema response format: every property is
+ * required and no others are allowed (concern-summary.test.ts checks).
+ */
 export const CONCERN_SUMMARY_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -90,11 +93,25 @@ export function parseConcernSummary(text: string): ConcernSummary | null {
   }
 }
 
-/** "claude-opus-5-5" → "Claude Opus 5.5", for showing which model wrote a summary. */
+/**
+ * A readable name for the model that wrote a summary or read a document:
+ * "openai/gpt-oss-120b" → "GPT-OSS 120B", "qwen/qwen3.8-27b" → "Qwen 3.8 27B".
+ * Summaries written before the move to Groq keep their Claude names
+ * ("claude-opus-5-5" → "Claude Opus 5.5").
+ */
 export function modelLabel(modelId: string | null | undefined): string {
-  if (!modelId) return "Claude";
-  const match = modelId.match(/^claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?$/);
-  if (!match) return modelId;
-  const [, family, major, minor] = match;
-  return `Claude ${family.charAt(0).toUpperCase()}${family.slice(1)} ${major}${minor ? `.${minor}` : ""}`;
+  if (!modelId) return "AI";
+
+  const claude = modelId.match(/^claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?$/);
+  if (claude) {
+    const [, family, major, minor] = claude;
+    return `Claude ${family.charAt(0).toUpperCase()}${family.slice(1)} ${major}${minor ? `.${minor}` : ""}`;
+  }
+
+  const name = modelId.slice(modelId.lastIndexOf("/") + 1);
+  const gptOss = name.match(/^gpt-oss-(\d+)b$/i);
+  if (gptOss) return `GPT-OSS ${gptOss[1]}B`;
+  const qwen = name.match(/^qwen(\d+(?:\.\d+)?)-(\d+)b$/i);
+  if (qwen) return `Qwen ${qwen[1]} ${qwen[2]}B`;
+  return name;
 }

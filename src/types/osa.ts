@@ -560,7 +560,7 @@ export interface AcademicDocument {
 }
 
 /**
- * Shape produced by the Claude Vision extraction step.
+ * Shape produced by the AI extraction step (lib/ai/academic-extraction.ts).
  * Every field is optional: the model reports only what it can actually
  * read from the document, and a rating slip carries different fields than
  * a Certificate of Registration.

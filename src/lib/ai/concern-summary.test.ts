@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { buildConcernPrompt, modelLabel, parseConcernSummary } from "./concern-summary";
+import { CONCERN_SUMMARY_JSON_SCHEMA, buildConcernPrompt, modelLabel, parseConcernSummary } from "./concern-summary";
+import { strictSchemaProblems } from "./groq-core";
 
 const valid = {
   summary: "The student reports that their scholarship stipend for September has not been released.",
@@ -47,11 +48,25 @@ describe("buildConcernPrompt", () => {
   });
 });
 
+describe("CONCERN_SUMMARY_JSON_SCHEMA", () => {
+  // Groq refuses a strict schema that leaves a property optional or allows
+  // extras, and every concern would then fail the same way.
+  it("meets Groq's strict-mode rules", () => {
+    expect(strictSchemaProblems(CONCERN_SUMMARY_JSON_SCHEMA)).toEqual([]);
+  });
+});
+
 describe("modelLabel", () => {
-  it("names models the way staff would read them", () => {
+  it("names the Groq models the way staff would read them", () => {
+    expect(modelLabel("openai/gpt-oss-120b")).toBe("GPT-OSS 120B");
+    expect(modelLabel("openai/gpt-oss-20b")).toBe("GPT-OSS 20B");
+    expect(modelLabel("qwen/qwen3.8-27b")).toBe("Qwen 3.8 27B");
+    expect(modelLabel("llama-3.3-70b-versatile")).toBe("llama-3.3-70b-versatile");
+    expect(modelLabel(null)).toBe("AI");
+  });
+
+  it("keeps the names on summaries written by Claude before the move", () => {
     expect(modelLabel("claude-opus-5-5")).toBe("Claude Opus 5.5");
-    expect(modelLabel("claude-opus-4-8")).toBe("Claude Opus 4.8");
     expect(modelLabel("claude-sonnet-4-20250514")).toBe("Claude Sonnet 4");
-    expect(modelLabel(null)).toBe("Claude");
   });
 });

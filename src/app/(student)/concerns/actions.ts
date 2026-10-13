@@ -24,7 +24,7 @@ interface ActionResult {
  * 2. Validate form data with Zod
  * 3. Sanitize text inputs (strip null bytes, enforce length)
  * 4. Look up the student's id from the students table
- * 5. INSERT into concerns, then summarize it with Claude once this request
+ * 5. INSERT into concerns, then summarize it with the AI (Groq) once this request
  *    has finished (lib/concerns/summarize.ts) — ai_summary/urgency/dept
  * 6. Audit log the submission
  * 7. revalidatePath() so the list refreshes immediately

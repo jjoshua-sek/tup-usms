@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   EXTRACTION_JSON_SCHEMA,
+  MISMATCH_CONFIDENCE_CAP,
   buildPdfTextPrompt,
   hasUsableText,
   parseExtraction,
@@ -17,8 +18,8 @@ const ratingSlip = {
   program: "BS Information Technology",
   year_level: "3rd Year",
   gwa: 1.75,
-  units_enrolled: 21,
-  units_passed: 18,
+  units_enrolled: 9,
+  units_passed: 3,
   units_failed: 3,
   scholastic_status: null,
   subjects: [
@@ -48,6 +49,41 @@ describe("parseExtraction", () => {
     expect(parseExtraction(JSON.stringify({ ...ratingSlip, gwa: 6.5 }))).toMatchObject({ ok: false });
     expect(parseExtraction(JSON.stringify({ ...ratingSlip, units_failed: -3 }))).toMatchObject({ ok: false });
     expect(parseExtraction("Here are the grades: ...")).toMatchObject({ ok: false });
+  });
+});
+
+describe("parseExtraction checks", () => {
+  it("reads a confidence given as a percentage", () => {
+    const parsed = parseExtraction(
+      JSON.stringify({ ...ratingSlip, overall_confidence: 95, field_confidence: [{ field: "gwa", confidence: 90 }] }),
+    );
+    expect(parsed).toMatchObject({ ok: true, data: { overall_confidence: 0.95, field_confidence: [{ confidence: 0.9 }] } });
+  });
+
+  // A COR's "Capstone Project 1 3" once came back as 1 unit: the total
+  // printed on the form is what catches it.
+  it("flags subjects whose units do not add up to the printed total", () => {
+    const misread = {
+      ...ratingSlip,
+      units_enrolled: 12,
+      subjects: [
+        { subject_code: "IT 321", description: "Capstone Project", units: 1, grade: null, schedule: [] },
+        { subject_code: "IT 322", description: null, units: 3, grade: null, schedule: [] },
+        { subject_code: "IT 323", description: null, units: 3, grade: null, schedule: [] },
+        { subject_code: "GEC 8", description: null, units: 3, grade: null, schedule: [] },
+      ],
+    };
+    const parsed = parseExtraction(JSON.stringify(misread));
+    if (!parsed.ok) throw new Error("should parse");
+    expect(parsed.data.overall_confidence).toBe(MISMATCH_CONFIDENCE_CAP);
+    expect(parsed.data.notes).toMatch(/add up to 10, not the 12 printed/);
+  });
+
+  it("leaves figures that agree untouched", () => {
+    expect(parseExtraction(JSON.stringify(ratingSlip))).toMatchObject({
+      ok: true,
+      data: { overall_confidence: 0.86, notes: null },
+    });
   });
 });
 

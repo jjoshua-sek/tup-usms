@@ -98,7 +98,10 @@ export const EXTRACTION_JSON_SCHEMA = {
           subject_code: { type: "string" },
           description: nullable("string"),
           units: nullable("number"),
-          grade: nullable("string", "As printed: 1.25, 3.00, 5.00, INC, DRP. Null on a Certificate of Registration."),
+          grade: nullable(
+            "string",
+            "The final grade printed for this subject on a rating slip: 1.25, 3.00, 5.00, INC, DRP. Null only on a Certificate of Registration.",
+          ),
           schedule: {
             type: "array",
             description: "Class meeting times, present on a Certificate of Registration; empty on a rating slip.",
@@ -148,8 +151,11 @@ Two document types:
 Rules:
 - Transcribe only what is printed. Never infer, average, or reconstruct a figure that is not on the page.
 - Philippine grades run 1.00 (highest) to 5.00 (failed). 4.00 is conditional, 5.00 is failed. INC and DRP are grades too; copy them as printed.
+- On a rating slip, every subject row has a final grade in its Grade column; copy each one.
+- Where total units enrolled are printed, the subjects' units must add up to that total. If they do not, read the rows again: a number at the end of a description ("Capstone Project 1") is part of the title, not the units.
 - Use null for a field you cannot read. A null is useful; a guess is not.
 - Split combined day codes (MWF, TTh, MW) into one schedule entry per day.
+- Confidence is a number from 0 to 1, never a percentage.
 - Report honest confidence. A photo at an angle, a crease through a row, text whose columns are jumbled, or a form you do not recognise should lower it.`;
 
 export type AcademicDocumentType = "certificate_of_registration" | "rating_slip" | "transcript";
@@ -223,6 +229,34 @@ export function toExtractedAcademicData(raw: AcademicExtraction): ExtractedAcade
   };
 }
 
+/** 95 → 0.95: a model sometimes answers a confidence as a percentage. */
+function asFraction(value: unknown): unknown {
+  return typeof value === "number" && value > 1 && value <= 100 ? value / 100 : value;
+}
+
+/** The most an extraction can claim when its own figures disagree. */
+export const MISMATCH_CONFIDENCE_CAP = 0.6;
+
+/**
+ * Checks the figures against each other. When the subjects' units do not
+ * add up to the printed total, a row was probably misread: confidence drops
+ * so the review screen flags it, and the note says what to look at.
+ */
+export function reconcile(data: AcademicExtraction): AcademicExtraction {
+  const units = data.subjects.map((subject) => subject.units);
+  if (data.units_enrolled === null || units.length === 0 || units.some((value) => value === null)) return data;
+
+  const sum = (units as number[]).reduce((total, value) => total + value, 0);
+  if (Math.abs(sum - data.units_enrolled) < 0.01) return data;
+
+  const warning = `Subject units add up to ${sum}, not the ${data.units_enrolled} printed; check each row.`;
+  return {
+    ...data,
+    overall_confidence: Math.min(data.overall_confidence, MISMATCH_CONFIDENCE_CAP),
+    notes: data.notes ? `${warning} ${data.notes}`.slice(0, 500) : warning,
+  };
+}
+
 /** Parses and checks the model's reply. */
 export function parseExtraction(text: string): { ok: true; data: AcademicExtraction } | { ok: false; error: string } {
   let json: unknown;
@@ -231,6 +265,13 @@ export function parseExtraction(text: string): { ok: true; data: AcademicExtract
   } catch {
     return { ok: false, error: "The AI response was not valid JSON." };
   }
+  if (json && typeof json === "object") {
+    const raw = json as { overall_confidence?: unknown; field_confidence?: Array<{ confidence?: unknown }> };
+    raw.overall_confidence = asFraction(raw.overall_confidence);
+    if (Array.isArray(raw.field_confidence)) {
+      for (const entry of raw.field_confidence) entry.confidence = asFraction(entry?.confidence);
+    }
+  }
   const parsed = extractionSchema.safeParse(json);
   if (!parsed.success) {
     return {
@@ -238,5 +279,5 @@ export function parseExtraction(text: string): { ok: true; data: AcademicExtract
       error: `The extracted figures failed validation: ${parsed.error.issues[0]?.message ?? "unknown field"}.`,
     };
   }
-  return { ok: true, data: parsed.data };
+  return { ok: true, data: reconcile(parsed.data) };
 }

@@ -34,14 +34,15 @@ export interface GroqJsonRequest {
 export type GroqJsonResult = { ok: true; text: string; model: string } | { ok: false; failure: GroqFailure };
 
 /**
- * Reasoning is spent on hard problems; triage and transcription are not.
- * gpt-oss always reasons, so keep it low and leave the reasoning out of the
- * reply. Qwen reasons only when asked; with JSON output its reasoning must
- * be hidden or parsed, never raw.
+ * A little reasoning, never more: gpt-oss always reasons, so keep it low and
+ * leave the reasoning out of the reply. Qwen reasons only when asked, but
+ * with reasoning off it returned every grade on a test rating slip as null;
+ * at "low" it read all six. With JSON output its reasoning must be hidden
+ * or parsed, never raw.
  */
 export function groqReasoning(model: string): Record<string, string | boolean> {
   if (model.startsWith("openai/gpt-oss")) return { reasoning_effort: "low", include_reasoning: false };
-  if (model.startsWith("qwen/")) return { reasoning_effort: "none", reasoning_format: "hidden" };
+  if (model.startsWith("qwen/")) return { reasoning_effort: "low", reasoning_format: "hidden" };
   return {};
 }
 

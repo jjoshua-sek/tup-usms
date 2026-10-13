@@ -45,7 +45,10 @@ export async function summarizeConcernText(input: {
     system: CONCERN_SYSTEM_PROMPT,
     user: buildConcernPrompt(input),
     schema: { name: "concern_summary", schema: CONCERN_SUMMARY_JSON_SCHEMA },
-    maxTokens: 2000,
+    // A summary is ~200 tokens plus low reasoning. Groq counts this ceiling
+    // against the free plan's 8,000 tokens a minute, so a tight one lets the
+    // minute job's three summaries share a minute.
+    maxTokens: 1200,
   });
 
   if (!result.ok) {

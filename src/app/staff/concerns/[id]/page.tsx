@@ -9,8 +9,11 @@ import {
 } from "lucide-react";
 
 import { modelLabel } from "@/lib/ai/concern-summary";
+import { listConcernAttachments } from "@/lib/concerns/attachments";
+import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { CONCERN_STUDENT_COLUMNS } from "@/lib/students/columns";
+import { ConcernAttachments } from "@/components/concerns/concern-attachments";
 import { ResponseForm } from "@/components/concerns/response-form";
 import { StatusUpdater } from "@/components/concerns/status-updater";
 import { ConcernRealtime } from "@/components/concerns/concern-realtime";
@@ -163,6 +166,8 @@ export default async function StaffConcernDetailPage({
     .eq("concern_id", id)
     .order("created_at", { ascending: true });
   const responses = (responsesRaw as unknown as ResponseEntry[]) ?? [];
+
+  const attachments = await listConcernAttachments(loose(supabase), id);
 
   const student = concern.students;
   const studentName = student
@@ -412,6 +417,16 @@ export default async function StaffConcernDetailPage({
               </div>
             </div>
           </div>
+
+          {/* Files the student attached when filing */}
+          {attachments.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-mono text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                📎 Attachments · {attachments.length}
+              </h3>
+              <ConcernAttachments attachments={attachments} />
+            </div>
+          )}
 
           {/* Action row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6 pt-5 border-t border-border">

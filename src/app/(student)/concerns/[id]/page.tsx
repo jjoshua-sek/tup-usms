@@ -9,10 +9,12 @@ import {
   Calendar,
 } from "lucide-react";
 
+import { listConcernAttachments } from "@/lib/concerns/attachments";
 import { createClient } from "@/lib/supabase/server";
 import { loose } from "@/lib/supabase/loose";
 import { UrgencyBadge } from "@/components/concerns/urgency-badge";
 import { StatusBadge } from "@/components/concerns/status-badge";
+import { ConcernAttachments } from "@/components/concerns/concern-attachments";
 import { ResponseForm } from "@/components/concerns/response-form";
 import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import {
@@ -117,6 +119,8 @@ export default async function ConcernDetailPage({
     .order("created_at", { ascending: true });
 
   const responses = (responsesRaw as unknown as ResponseEntry[]) ?? [];
+
+  const attachments = await listConcernAttachments(loose(supabase), id);
 
   // Look up responder names (in parallel)
   const responderMap = new Map<string, ResponderInfo>();
@@ -251,6 +255,15 @@ export default async function ConcernDetailPage({
               {concern.body_text}
             </p>
           </div>
+
+          {attachments.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Your attachments
+              </p>
+              <ConcernAttachments attachments={attachments} />
+            </div>
+          )}
         </CardContent>
       </Card>
 

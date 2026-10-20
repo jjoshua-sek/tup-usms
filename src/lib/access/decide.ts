@@ -125,11 +125,13 @@ export const ACCESS_REASON_META: Record<AccessReason, AccessReasonMeta> = {
     tone: "warning",
     discreet: false,
   },
+  // Let through, not turned away: the OSA is alerted and steps in itself.
+  // The kiosk greets the student like any other, so the queue learns nothing.
   suspended: {
-    staffLabel: "Campus privileges suspended",
-    kioskHeadline: "Access denied",
-    kioskHint: "Please see the guard on duty.",
-    tone: "danger",
+    staffLabel: "Suspended ID — let through, OSA alerted",
+    kioskHeadline: "Welcome",
+    kioskHint: "You may proceed.",
+    tone: "success",
     discreet: true,
   },
   revoked: {
@@ -255,20 +257,25 @@ export function decideAccess(facts: PolicyFacts): PolicyVerdict {
   // ---- ID validation state ----
   const status = facts.validation?.status ?? null;
 
-  if (status === "suspended" || status === "revoked") {
+  // Suspended: the OSA asked to be told rather than have the gate turn the
+  // student away, so the scan is flagged and the checks below still run.
+  // Revoked: the card was reported lost or stolen, so whoever holds it is
+  // probably not its owner — still refused, and flagged the same way.
+  const suspended = status === "suspended";
+  if (suspended || status === "revoked") {
     anomalies.push({
       type: "scan_while_suspended",
       severity: "high",
       details: { status, gate_id: facts.gate.id, direction: facts.direction },
     });
-    return deny(status);
   }
+  if (status === "revoked") return deny("revoked");
 
   // A surrendered ID is a graduate's, not an offender's — denied, but it
   // raises no anomaly and gets no discreet treatment.
   if (status === "surrendered") return deny("surrendered");
 
-  if (status !== "validated") {
+  if (!suspended && status !== "validated") {
     // pending / under_review / rejected / missing all mean "not validated yet".
     return deny(status === "expired" ? "expired" : "not_validated");
   }
@@ -323,7 +330,7 @@ export function decideAccess(facts: PolicyFacts): PolicyVerdict {
     // because only some lanes have exit readers.
   }
 
-  return { decision: "allow", reason: "ok", anomalies };
+  return { decision: "allow", reason: suspended ? "suspended" : "ok", anomalies };
 }
 
 /**

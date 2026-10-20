@@ -50,7 +50,7 @@ export default async function StaffCalendarPage() {
   const sinceDay = manilaDay(new Date(now.getTime() - LOOKBACK_DAYS * DAY_MS));
 
   const db = loose(await createClient());
-  const [hearings, sessions, interventions, appeals, services] = await Promise.all([
+  const [hearings, sessions, interventions, appeals, services, gateAlerts] = await Promise.all([
     db
       .from("case_hearings")
       .select(AGENDA_COLUMNS.case_hearings)
@@ -81,9 +81,17 @@ export default async function StaffCalendarPage() {
       .in("status", ["assigned", "in_progress"])
       .gte("deadline", sinceDay)
       .lte("deadline", untilDay),
+    // Open until handled, however old: no date window.
+    db
+      .from("access_anomalies")
+      .select(AGENDA_COLUMNS.access_anomalies)
+      .eq("anomaly_type", "scan_while_suspended")
+      .eq("status", "open")
+      .order("last_detected_at", { ascending: false })
+      .limit(50),
   ]);
 
-  for (const [name, result] of Object.entries({ hearings, sessions, interventions, appeals, services })) {
+  for (const [name, result] of Object.entries({ hearings, sessions, interventions, appeals, services, gateAlerts })) {
     if (result.error) console.error(`[calendar] ${name} not loaded`, result.error);
   }
 
@@ -120,6 +128,17 @@ export default async function StaffCalendarPage() {
       hours_completed: Number(s.hours_completed),
       case_number: s.violation_cases?.case_number ?? null,
       student: fullName(s.students),
+    })),
+    gateAlerts: rows<{
+      id: string; details: { status?: string; gate_label?: string } | null; occurrence_count: number;
+      last_detected_at: string; students: StudentName;
+    }>(gateAlerts).map((a) => ({
+      id: a.id,
+      last_detected_at: a.last_detected_at,
+      occurrence_count: a.occurrence_count,
+      status: a.details?.status ?? null,
+      gate_label: a.details?.gate_label ?? null,
+      student: fullName(a.students),
     })),
   };
 

@@ -34,6 +34,7 @@ import {
   type EnforcementMode,
   type PriorEvent,
 } from "./decide";
+import { alertOsaOfGateAnomaly } from "./alerts";
 import { maskStudentNumber, parseInstitutionalQr, shortDisplayName } from "./payload";
 import { getCurrentTerm } from "./term";
 
@@ -273,7 +274,7 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
   }
 
   for (const anomaly of anomalies) {
-    await db.rpc("record_access_anomaly", {
+    const { data: anomalyId } = await db.rpc("record_access_anomaly", {
       p_student_id: student?.id ?? null,
       p_student_number: parsed.studentNumber,
       p_type: anomaly.type,
@@ -281,6 +282,18 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
       p_details: { ...anomaly.details, gate_label: gateLabel, reason: verdict.reason },
       p_event_id: eventId,
     });
+
+    const status = validation?.status;
+    if (anomaly.type === "scan_while_suspended" && typeof anomalyId === "string" && (status === "suspended" || status === "revoked")) {
+      await alertOsaOfGateAnomaly(db, {
+        anomalyId,
+        status,
+        studentName: student ? `${student.first_name} ${student.last_name}`.trim() : null,
+        studentNumber: student?.student_number ?? parsed.studentNumber,
+        gateLabel,
+        letThrough: verdict.decision === "allow",
+      }).catch((error: unknown) => console.error("[gate alert] failed", error));
+    }
   }
 
   // ---- 7. Shape the response ----
@@ -323,8 +336,10 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
       expiresAt: validation?.expires_at ?? null,
     };
     // At the desk, staff need the real reason spelled out.
-    result.headline = verdict.decision === "allow" ? "Valid ID" : "Not valid";
+    result.headline =
+      verdict.reason === "suspended" ? "Let through — suspended" : verdict.decision === "allow" ? "Valid ID" : "Not valid";
     result.hint = meta.staffLabel;
+    if (verdict.reason === "suspended") result.tone = "warning";
   }
 
   return result;

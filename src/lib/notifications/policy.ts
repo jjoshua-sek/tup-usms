@@ -17,7 +17,7 @@
 
 /**
  * Every notification_type the CHECK constraint permits (latest definition:
- * migration 00019).
+ * migration 00031).
  *
  * A runtime array rather than a bare union so schema-drift.test.ts can
  * compare it against the SQL. The union and the constraint drifting apart
@@ -48,9 +48,10 @@ export const NOTIFICATION_TYPES = [
   "clearance_update",
   "clearance_on_hold",
   "clearance_ready",
-  // ID validation
+  // ID validation and gates
   "id_validation_status",
   "id_expiring",
+  "gate_alert",
   // Guidance & risk
   "guidance_scheduled",
   "guidance_reminder",
@@ -69,7 +70,7 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 /**
  * Every related_entity_type the second CHECK constraint on notifications
- * permits (latest definition: migration 00020). Two call sites passed
+ * permits (latest definition: migration 00031). Two call sites passed
  * values outside this list — apology_letter and case_settlement — and failed
  * silently for the life of the feature after the first constraint was fixed.
  */
@@ -86,6 +87,7 @@ export const NOTIFICATION_ENTITY_TYPES = [
   "risk_assessment",
   "risk_intervention",
   "academic_document",
+  "access_anomaly",
 ] as const;
 
 export type NotificationEntityType = (typeof NOTIFICATION_ENTITY_TYPES)[number];

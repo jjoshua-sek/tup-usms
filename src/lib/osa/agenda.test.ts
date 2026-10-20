@@ -113,4 +113,19 @@ describe("needsAttention", () => {
     sources.interventions.push({ id: "i1", scheduled_for: hoursFromNow(-48), status: "scheduled", intervention_type: "academic_advising", student: null });
     expect(needsAttention(sources, now).map((e) => e.key)).toEqual(["intervention-i1", "session-yesterday"]);
   });
+
+  // The gate lets a suspended student through on the promise that the OSA
+  // follows up; the alert stays here, whatever its age, until it is handled.
+  it("keeps open gate alerts under Needs attention, however old", () => {
+    const sources = empty();
+    sources.gateAlerts = [
+      { id: "a1", last_detected_at: hoursFromNow(-200), occurrence_count: 3, status: "suspended", gate_label: "Ayala Gate", student: "Juan Dela Cruz" },
+      { id: "a2", last_detected_at: hoursFromNow(-1), occurrence_count: 1, status: "revoked", gate_label: null, student: null },
+    ];
+    const flagged = needsAttention(sources, now);
+    expect(flagged.map((e) => e.key)).toEqual(["gate-a1", "gate-a2"]);
+    expect(flagged[0]).toMatchObject({ title: "Suspended ID used at Ayala Gate", href: "/staff/gates", badge: { tone: "danger" } });
+    expect(flagged[0].detail).toMatch(/^Juan Dela Cruz · 3 scans\./);
+    expect(flagged[1].title).toBe("Revoked ID refused at a gate");
+  });
 });

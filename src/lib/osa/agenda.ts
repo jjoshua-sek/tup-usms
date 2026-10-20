@@ -24,6 +24,7 @@ export const AGENDA_COLUMNS = {
   case_appeals: "id, case_id, appeal_deadline, status, violation_cases(case_number, students(first_name, last_name))",
   community_service_assignments:
     "id, case_id, deadline, status, hours_required, hours_completed, violation_cases(case_number), students(first_name, last_name)",
+  access_anomalies: "id, details, occurrence_count, last_detected_at, students(first_name, last_name)",
 } as const;
 
 export interface AgendaSources {
@@ -70,9 +71,22 @@ export interface AgendaSources {
     case_number: string | null;
     student: string | null;
   }>;
+  /**
+   * Open gate alerts: a suspended or revoked ID used at a gate. They stay
+   * under Needs attention, whatever their date, until someone marks them
+   * reviewed on Gates & Access.
+   */
+  gateAlerts?: Array<{
+    id: string;
+    last_detected_at: string;
+    occurrence_count: number;
+    status: string | null;
+    gate_label: string | null;
+    student: string | null;
+  }>;
 }
 
-export type AgendaKind = "hearing" | "session" | "intervention" | "appeal" | "service";
+export type AgendaKind = "hearing" | "session" | "intervention" | "appeal" | "service" | "gate";
 export type AgendaTone = "info" | "warning" | "danger" | "neutral";
 
 export interface AgendaEntry {
@@ -295,6 +309,21 @@ export function needsAttention(sources: AgendaSources, now: Date): AgendaEntry[]
       detail: `${who(i.student)}. Update its status.`,
       href: "/staff/interventions",
       badge: { label: "Update", tone: "warning" },
+    });
+  }
+
+  for (const alert of sources.gateAlerts ?? []) {
+    const gate = alert.gate_label ?? "a gate";
+    const scans = alert.occurrence_count > 1 ? ` · ${alert.occurrence_count} scans` : "";
+    entries.push({
+      key: `gate-${alert.id}`,
+      kind: "gate",
+      day: manilaDay(new Date(alert.last_detected_at)),
+      at: alert.last_detected_at,
+      title: alert.status === "revoked" ? `Revoked ID refused at ${gate}` : `Suspended ID used at ${gate}`,
+      detail: `${who(alert.student)}${scans}. Follow up, then mark it reviewed on Gates & Access.`,
+      href: "/staff/gates",
+      badge: { label: "Intervene", tone: "danger" },
     });
   }
 

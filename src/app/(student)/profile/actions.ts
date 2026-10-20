@@ -381,7 +381,7 @@ export async function uploadProfilePhoto(formData: FormData): Promise<ActionResu
 
   // Validate
   if (file.size > MAX_FILE_SIZE) {
-    return { error: "Photo too large. Max 10 MB." };
+    return { error: "Photo too large. Max 5 MB." };
   }
   // For photos, we accept image/* (broader than the strict allowed list for documents)
   if (!file.type.startsWith("image/")) {

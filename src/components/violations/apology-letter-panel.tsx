@@ -6,10 +6,10 @@ import { toast } from "sonner";
 
 import { submitApologyLetter } from "@/app/(student)/violations/actions";
 import { Button } from "@/components/ui/button";
+import { DOCUMENT_TARGET, MAX_UPLOAD_BYTES, compressImage, formatBytes } from "@/lib/images/compress";
 import { createClient } from "@/lib/supabase/client";
 
 const BUCKET = "case-documents";
-const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
 
 interface ApologyLetterPanelProps {
@@ -34,18 +34,20 @@ export function ApologyLetterPanel({ caseId, caseNumber }: ApologyLetterPanelPro
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (formData: FormData) => {
-    const file = formData.get("file");
+    const picked = formData.get("file");
     let filePath = "";
 
     setBusy(true);
     try {
-      if (file instanceof File && file.size > 0) {
-        if (!(ALLOWED as readonly string[]).includes(file.type)) {
+      if (picked instanceof File && picked.size > 0) {
+        if (!(ALLOWED as readonly string[]).includes(picked.type)) {
           toast.error("Attach a photo (JPG/PNG) or a PDF.");
           return;
         }
-        if (file.size > MAX_BYTES) {
-          toast.error("That file is larger than 10 MB. A phone photo is fine.");
+        // A photo of the signed letter is shrunk; the handwriting stays legible.
+        const file = await compressImage(picked, DOCUMENT_TARGET);
+        if (file.size > MAX_UPLOAD_BYTES) {
+          toast.error(`That file is ${formatBytes(file.size)}; the limit is 5 MB. A phone photo is fine.`);
           return;
         }
 

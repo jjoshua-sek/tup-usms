@@ -31,7 +31,7 @@ const registerSchema = z.object({
   file_path: z.string().trim().min(5).max(400),
   file_name: z.string().trim().min(1).max(200),
   mime_type: z.enum(ALLOWED_MIME),
-  file_size: z.number().int().positive().max(10 * 1024 * 1024),
+  file_size: z.number().int().positive().max(5 * 1024 * 1024),
 });
 
 export type RegisterDocumentInput = z.infer<typeof registerSchema>;

@@ -49,4 +49,4 @@ export function isAllowedMimeType(mimeType: string): mimeType is AllowedMimeType
   return ALLOWED_MIME_TYPES.includes(mimeType as AllowedMimeType);
 }
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB: photos are shrunk in the browser first (lib/images/compress.ts)

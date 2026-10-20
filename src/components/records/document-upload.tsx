@@ -9,10 +9,10 @@ import {
   registerAcademicDocument,
 } from "@/app/(student)/records/actions";
 import { Button } from "@/components/ui/button";
+import { DOCUMENT_TARGET, MAX_UPLOAD_BYTES, compressImage, formatBytes } from "@/lib/images/compress";
 import { createClient } from "@/lib/supabase/client";
 
 const BUCKET = "academic-documents";
-const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
 
 interface DocumentUploadProps {
@@ -38,22 +38,26 @@ export function DocumentUpload({
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (formData: FormData) => {
-    const file = formData.get("file");
-    if (!(file instanceof File) || file.size === 0) {
+    const picked = formData.get("file");
+    if (!(picked instanceof File) || picked.size === 0) {
       toast.error("Choose a file first.");
       return;
     }
-    if (!(ALLOWED as readonly string[]).includes(file.type)) {
+    if (!(ALLOWED as readonly string[]).includes(picked.type)) {
       toast.error("Upload a photo (JPG/PNG) or a PDF.");
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      toast.error("That file is larger than 10 MB. Try a photo instead of a scan.");
       return;
     }
 
     setBusy(true);
     try {
+      // Photos are shrunk to about 1.5 MB with every figure still legible;
+      // PDFs go up as they are.
+      const file = await compressImage(picked, DOCUMENT_TARGET);
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`That file is ${formatBytes(file.size)}; the limit is 5 MB. Upload a photo of it instead.`);
+        return;
+      }
+
       const supabase = createClient();
       const {
         data: { user },

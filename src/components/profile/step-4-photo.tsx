@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APP_NAME } from "@/lib/brand";
+import { MAX_UPLOAD_BYTES, PHOTO_TARGET, compressImage, formatBytes } from "@/lib/images/compress";
 import { cn } from "@/lib/utils";
 
 import { WebcamCapture } from "./webcam-capture";
@@ -77,15 +78,17 @@ export function Step4Photo({
   // ============================================
   // File upload path
   // ============================================
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0];
+    if (!picked) return;
+    if (!picked.type.startsWith("image/")) {
       toast.error("Please select an image file (JPG, PNG, etc.)");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be smaller than 5 MB.");
+    // Shrunk here so a 4 MB phone photo uploads as about 200 KB.
+    const file = await compressImage(picked, PHOTO_TARGET);
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`That image is ${formatBytes(file.size)}. Use one under 5 MB.`);
       return;
     }
     setPendingFile(file);

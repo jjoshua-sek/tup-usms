@@ -80,9 +80,11 @@ function copyDatabase() {
   });
 
   // 2. Accounts. Only staff (a row in public.staff) keep a password hash.
+  // Students get an empty one, which no password matches. (Not NULL: Supabase
+  // Auth then fails reading the account instead of refusing the password.)
   const userSelect = USER_COLUMNS.map((c) =>
     c === "encrypted_password"
-      ? "CASE WHEN EXISTS (SELECT 1 FROM public.staff s WHERE s.user_id = u.id) THEN u.encrypted_password ELSE NULL END"
+      ? "CASE WHEN EXISTS (SELECT 1 FROM public.staff s WHERE s.user_id = u.id) THEN u.encrypted_password ELSE '' END"
       : `u.${c}`,
   ).join(", ");
   sh("psql", [env.CLOUD_DB_URL, "-X", "-q", "-v", "ON_ERROR_STOP=1", "-c", `\\copy (SELECT ${userSelect} FROM auth.users u) TO '${users}' CSV`], {
@@ -127,6 +129,23 @@ INSERT INTO auth.users (${USER_COLUMNS.join(", ")})
   SELECT ${USER_COLUMNS.join(", ")} FROM incoming_users
   ON CONFLICT (id) DO UPDATE SET ${userUpdates};
 DELETE FROM auth.users WHERE id NOT IN (SELECT id FROM incoming_users);
+
+-- Supabase Auth reads its token columns as strings and fails on NULL
+-- ("converting NULL to string is unsupported"): every sign-in broke until
+-- these were filled. The columns differ between Auth versions, so they are
+-- looked up rather than listed.
+DO $$
+DECLARE col TEXT;
+BEGIN
+  FOR col IN
+    SELECT column_name FROM information_schema.columns
+     WHERE table_schema = 'auth' AND table_name = 'users'
+       AND data_type IN ('character varying', 'text')
+       AND (column_name LIKE '%token%' OR column_name IN ('email_change', 'phone_change'))
+  LOOP
+    EXECUTE format('UPDATE auth.users SET %I = '''' WHERE %I IS NULL', col, col);
+  END LOOP;
+END $$;
 
 CREATE TEMP TABLE incoming_identities (LIKE auth.identities INCLUDING DEFAULTS) ON COMMIT DROP;
 \\copy incoming_identities (${IDENTITY_COLUMNS.join(", ")}) FROM '${identities}' CSV

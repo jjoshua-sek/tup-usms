@@ -37,16 +37,11 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const VISIBILITY_OPTIONS = [
-  { value: "identified", label: "Identified (with my profile)" },
-  { value: "anonymous", label: "Anonymous" },
-] as const;
-
 /**
  * Inline concern form for the /concerns/new page.
  *
  * Matches Screen 03 of the mockup:
- * - Category + Visibility on the same row
+ * - Category, beside a note on who sees the concern (always identified)
  * - Subject (full width)
  * - Body textarea (200px tall) with live character counter
  * - Attachments dropzone: photos are shrunk when picked, then uploaded into
@@ -185,7 +180,7 @@ export function ConcernFormInline() {
         </Alert>
       )}
 
-      {/* Row: Category + Visibility */}
+      {/* Row: Category + who sees it */}
       <div className="grid sm:grid-cols-2 gap-4">
         <Field
           label="Category"
@@ -215,19 +210,15 @@ export function ConcernFormInline() {
           </Select>
         </Field>
 
-        <Field label="Visibility">
-          <Select defaultValue="identified" disabled={isPending}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {VISIBILITY_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* There used to be an "Anonymous" choice here. Nothing ever sent it,
+            so a student who picked it was still shown to staff by name. A
+            concern is always identified: OSA follows up with the student,
+            and staff can read student records regardless. Say so plainly
+            rather than offer a promise the system cannot keep. */}
+        <Field label="Who sees this">
+          <p className="flex min-h-9 items-center rounded-md border border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+            OSA staff see your name and student details, so they can follow up with you.
+          </p>
         </Field>
       </div>
 

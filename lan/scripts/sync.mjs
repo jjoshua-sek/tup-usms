@@ -101,6 +101,10 @@ function copyDatabase() {
   fs.writeFileSync(
     load,
     `
+-- One copy at a time, even when \`stars.mjs sync\` runs beside the loop:
+-- the second waits here, then loads the newer dump.
+SELECT pg_advisory_xact_lock(726801);
+
 -- Rows arrive in dump order, not dependency order: skip triggers and
 -- foreign-key checks while loading (they held in the cloud already).
 SET session_replication_role = replica;

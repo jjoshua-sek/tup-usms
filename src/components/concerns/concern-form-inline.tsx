@@ -48,10 +48,16 @@ const VISIBILITY_OPTIONS = [
  * Matches Screen 03 of the mockup:
  * - Category + Visibility on the same row
  * - Subject (full width)
- * - Body textarea (200px tall) with live character counter + auto-save timestamp
+ * - Body textarea (200px tall) with live character counter
  * - Attachments dropzone: photos are shrunk when picked, then uploaded into
  *   the concern's own folder once it has been filed (see uploadAttachments)
- * - Action row: Cancel, Save as Draft, Submit
+ * - Action row: Cancel, Submit
+ *
+ * The mockup's "Save as Draft" button and "Auto-saves while you type" note
+ * were dropped: nothing stored a draft. A browser-side draft was not added
+ * in their place because concerns can be personal (guidance, discipline)
+ * and students often file from shared campus computers, where the text
+ * would sit in storage for the next person to find.
  *
  * Differs from the dialog version by being page-embedded
  * (no Dialog wrapper, no trigger prop).
@@ -253,7 +259,7 @@ export function ConcernFormInline() {
         }
         required
         rightHint={`${bodyText.length} / 10,000`}
-        helper="Markdown not supported · Auto-saves while you type"
+        helper="Markdown not supported"
         error={errors.body_text?.message}
       >
         <Textarea
@@ -349,13 +355,6 @@ Examples: schedule conflicts, guidance consultations, document requests, account
           disabled={isPending}
         >
           Cancel
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isPending}
-        >
-          Save as Draft
         </Button>
         <Button
           type="submit"

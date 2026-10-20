@@ -4,8 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   Zap,
-  Flag,
   Building2,
+  MessageSquareReply,
 } from "lucide-react";
 
 import { modelLabel } from "@/lib/ai/concern-summary";
@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CONCERN_STUDENT_COLUMNS } from "@/lib/students/columns";
 import { ConcernAttachments } from "@/components/concerns/concern-attachments";
 import { ResponseForm } from "@/components/concerns/response-form";
-import { StatusUpdater } from "@/components/concerns/status-updater";
+import { MarkResolvedButton, StatusUpdater } from "@/components/concerns/status-updater";
 import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
@@ -290,7 +290,11 @@ export default async function StaffConcernDetailPage({
                 </span>
                 <span className="flex items-center gap-1">
                   Status:{" "}
+                  {/* Keyed on the status so a change made elsewhere (Mark
+                      Resolved, another officer via realtime) remounts it;
+                      its optimistic state would otherwise keep the old value. */}
                   <StatusUpdater
+                    key={concern.status}
                     concernId={id}
                     currentStatus={concern.status}
                     hasAiSummary={!!concern.ai_summary}
@@ -428,33 +432,23 @@ export default async function StaffConcernDetailPage({
             </div>
           )}
 
-          {/* Action row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6 pt-5 border-t border-border">
-            <button
-              type="button"
-              className="px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
-            >
-              Respond to Student
-            </button>
-            <button
-              type="button"
-              className="px-3 py-2 rounded-md text-xs font-medium bg-card border border-border hover:bg-muted transition-colors"
-            >
-              Reassign Department
-            </button>
-            <button
-              type="button"
-              className="px-3 py-2 rounded-md text-xs font-medium bg-card border border-border hover:bg-muted transition-colors"
-            >
-              Mark Resolved
-            </button>
-            <button
-              type="button"
-              className="px-3 py-2 rounded-md text-xs font-medium bg-card border border-[#fde68a] text-[#92400e] hover:bg-[#fef3c7] transition-colors inline-flex items-center justify-center gap-1"
-            >
-              <Flag className="h-3.5 w-3.5" />
-              Flag
-            </button>
+          {/* Action row. The mockup also had "Reassign Department" and
+              "Flag", but nothing stores a reassignment or a flag (concerns
+              has no such columns), so the buttons did nothing and were
+              removed rather than left promising it. */}
+          <div className="grid grid-cols-2 gap-2 mb-6 pt-5 border-t border-border">
+            {/* A plain in-page link: the reply form is the whole of
+                responding, this only saves the scroll on a long concern. */}
+            {!isClosed && (
+              <a
+                href="#reply"
+                className="px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors inline-flex items-center justify-center gap-1"
+              >
+                <MessageSquareReply className="h-3.5 w-3.5" />
+                Respond to Student
+              </a>
+            )}
+            <MarkResolvedButton concernId={id} currentStatus={concern.status} />
           </div>
 
           {/* Response thread */}
@@ -500,8 +494,8 @@ export default async function StaffConcernDetailPage({
             </div>
           )}
 
-          {/* Reply form */}
-          <div className="border-t border-border pt-5">
+          {/* Reply form; scroll-mt clears the sticky site header. */}
+          <div id="reply" className="border-t border-border pt-5 scroll-mt-20">
             <ResponseForm
               concernId={id}
               responderRole="staff"

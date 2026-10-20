@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, RefreshCw } from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 
 import {
   updateConcernStatus,
@@ -121,5 +121,53 @@ export function StatusUpdater({
         {hasAiSummary ? "Re-analyze" : "Run AI"}
       </Button>
     </div>
+  );
+}
+
+/**
+ * One-click shortcut for the most common status change. It goes through the
+ * same server action as the status select, so the RLS check, audit entry and
+ * revalidation are identical. The page keys StatusUpdater on the status, so
+ * the select picks up the new value when the refresh lands.
+ */
+export function MarkResolvedButton({
+  concernId,
+  currentStatus,
+}: {
+  concernId: string;
+  currentStatus: string;
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  // Resolving a closed concern would move it backwards, and resolving a
+  // resolved one does nothing; the select is still there for either.
+  const done = currentStatus === "resolved" || currentStatus === "closed";
+
+  const handleClick = () => {
+    startTransition(async () => {
+      const result = await updateConcernStatus(concernId, "resolved");
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Status changed to ${STATUS_LABELS.resolved}`);
+      router.refresh();
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={done || isPending}
+      className="px-3 py-2 rounded-md text-xs font-medium bg-card border border-border hover:bg-muted transition-colors inline-flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none"
+    >
+      {isPending ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <CheckCircle2 className="h-3.5 w-3.5" />
+      )}
+      {done ? STATUS_LABELS[currentStatus] : "Mark Resolved"}
+    </button>
   );
 }

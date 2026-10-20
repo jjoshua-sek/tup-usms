@@ -1,0 +1,4 @@
+# The offline LAN copy's files run inside Linux containers: a Windows
+# checkout must not turn their line endings into CRLF, or `sh` fails on \r.
+lan/** text eol=lf
+*.sh text eol=lf

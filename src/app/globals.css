@@ -232,3 +232,15 @@
   .border-ai-accent  { border-color: #ddd6fe; }
   .text-ai-accent    { color: #6d28d9; }
 }
+
+/*
+ * Offline mode (the LAN copy) is read-only: every form that saves shows its
+ * submit button dimmed and inert. Searches (method="get") and the sign-in
+ * form (data-offline-allowed) still work. The proxy refuses the save with a
+ * message anyway; this only says so before anyone tries.
+ */
+[data-offline-mode] form:not([method="get" i]):not([data-offline-allowed]) :is(button[type="submit"], input[type="submit"]) {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+}

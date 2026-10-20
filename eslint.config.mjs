@@ -56,6 +56,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The offline LAN copy: Supabase's downloaded files, and Node scripts
+    // that run in their own containers.
+    "lan/**",
   ]),
 ]);
 

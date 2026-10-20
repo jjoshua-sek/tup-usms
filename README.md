@@ -111,6 +111,10 @@ supabase/migrations   schema, RLS policies and functions, 00001–00030
 - **Sessions end on their own.** Staff are signed out after 15 idle minutes and students after 30, and closing every tab ends the session.
 - **Password resets reveal nothing.** The form gives the same answer for every request, is rate-limited, and is recorded in the audit log.
 
+## Offline copy
+
+When campus internet is down, the OSA can keep working on a read-only copy of STARS that runs on one laptop on the office network and refreshes from the cloud every 5 minutes. Setup and daily use: [`lan/README.md`](lan/README.md).
+
 ## Documentation
 
 The full system documentation (annotated architecture, workflows, roles, status reference and troubleshooting) is kept as *STARS System Documentation.docx* alongside the thesis files.

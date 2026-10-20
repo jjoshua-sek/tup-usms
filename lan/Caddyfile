@@ -1,0 +1,37 @@
+# STARS offline copy: one HTTPS address for everything.
+#
+# Supabase's own paths go to its API gateway; every other path is STARS. The
+# certificate comes from Caddy's local certificate authority: install its
+# root certificate (lan/stars.mjs cert) once on each OSA PC and phone, or
+# browsers warn and block the camera the kiosk needs.
+
+{
+	# Never reach out to the internet for certificates.
+	auto_https disable_redirects
+	skip_install_trust
+	# Browsers send no server name when the address is a bare IP (as with
+	# Windows Mobile Hotspot's 192.168.137.1); without this Caddy cannot
+	# tell which certificate to present, and the connection fails.
+	default_sni {$LAN_HOST}
+}
+
+https://{$LAN_HOST} {
+	tls internal
+
+	@supabase path /auth/v1/* /rest/v1/* /realtime/v1/* /storage/v1/*
+	handle @supabase {
+		reverse_proxy api-gw:8000
+	}
+
+	handle {
+		reverse_proxy stars-app:3000
+	}
+
+	encode zstd gzip
+	header -server
+}
+
+# Plain http:// sends people to the secure address.
+http://{$LAN_HOST} {
+	redir https://{$LAN_HOST}{uri} permanent
+}

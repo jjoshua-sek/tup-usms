@@ -10,6 +10,7 @@ import {
   sessionIdFromAccessToken,
   sessionKindForRole,
 } from "@/lib/auth/session-policy";
+import { OFFLINE_REFUSAL, isOfflineMode, offlineAllowsApi } from "@/lib/offline/mode";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // Routes that don't require authentication. /auth/confirm is where a
@@ -183,6 +184,17 @@ export async function middleware(request: NextRequest) {
     }
     return response;
   };
+
+  // ---- Offline mode (the LAN copy) -----------------------------------
+  // The LAN copy is read-only: the next five-minute refresh from the cloud
+  // would overwrite anything saved here. Every save is refused in words,
+  // including the sign-in record from /login (login-form.tsx tolerates it).
+  if (isOfflineMode()) {
+    if (isAction) return respond(session.carry(refuseAction(503, OFFLINE_REFUSAL)));
+    if (isApi && !offlineAllowsApi(request.method, pathname)) {
+      return respond(session.json({ error: OFFLINE_REFUSAL }, { status: 503 }));
+    }
+  }
 
   // ---- Public routes -------------------------------------------------
   // A signed-in user may still open /login. It used to redirect them to

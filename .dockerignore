@@ -1,0 +1,14 @@
+# The LAN image is built from the repository (lan/Dockerfile). Keep secrets,
+# build output and the LAN install's own data out of it.
+.env
+.env.*
+!.env.example
+node_modules
+.next
+.git
+coverage
+lan/supabase
+lan/backups
+lan/.env
+lan/.supabase-src-*
+*.log

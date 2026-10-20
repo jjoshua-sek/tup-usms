@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { OfflineBanner } from "@/components/offline/offline-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { APP_FULL_NAME, APP_NAME, APP_SITE_NAME } from "@/lib/brand";
+import { isOfflineMode } from "@/lib/offline/mode";
 import "./globals.css";
 
 /**
@@ -51,7 +53,9 @@ export default function RootLayout({
       className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans">
+      {/* data-offline-mode greys out every saving form on the LAN copy (globals.css). */}
+      <body className="min-h-full flex flex-col font-sans" data-offline-mode={isOfflineMode() ? "" : undefined}>
+        <OfflineBanner />
         <TooltipProvider>{children}</TooltipProvider>
         <Toaster richColors position="top-right" />
       </body>

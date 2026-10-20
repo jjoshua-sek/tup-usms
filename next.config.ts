@@ -33,6 +33,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // The offline LAN copy runs STARS in a Docker container (lan/Dockerfile),
+  // which needs the self-contained server. Vercel builds without it.
+  output: process.env.STARS_STANDALONE === "true" ? "standalone" : undefined,
   async headers() {
     return [
       {

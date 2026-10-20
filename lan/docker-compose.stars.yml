@@ -1,0 +1,124 @@
+# STARS offline copy, layered over Supabase's own docker-compose.yml
+# (downloaded into lan/supabase by lan/setup.mjs). Start it with
+# `node lan/stars.mjs up`, which passes both files and both env files.
+#
+# Only Caddy listens on the network (ports 80 and 443). The database, the
+# pooler and Supabase's API gateway are bound to this machine alone, so
+# nobody else on the OSA network can reach them directly.
+#
+# Relative paths are relative to lan/supabase, the project directory.
+
+services:
+  # ---- Supabase, narrowed --------------------------------------------
+  api-gw:
+    ports: !reset
+      - "127.0.0.1:8000:8000"
+
+  supavisor:
+    ports: !reset
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+      - "127.0.0.1:${POOLER_PROXY_PORT_TRANSACTION}:6543"
+
+  # STARS uses no Edge Functions; not starting them saves memory.
+  functions:
+    profiles: ["unused"]
+
+  # ---- HTTPS for every device on the network -------------------------
+  caddy:
+    container_name: stars-caddy
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      LAN_HOST: ${LAN_HOST}
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api-gw:
+        condition: service_healthy
+
+  # Caddy keeps its certificate authority readable by root only, as it
+  # should: the private key is in there. This copies just the PUBLIC root
+  # certificate where STARS (a non-root user) can read it, then exits.
+  ca-export:
+    container_name: stars-ca-export
+    image: caddy:2.10.2-alpine
+    restart: "no"
+    volumes:
+      - caddy_data:/data:ro
+      - ca_public:/ca-public
+    command:
+      - /bin/sh
+      - -c
+      - |
+        i=0
+        until [ -s /data/caddy/pki/authorities/local/root.crt ]; do
+          i=$$((i + 1)); [ $$i -gt 120 ] && echo "Caddy has not created its certificate" && exit 1
+          sleep 1
+        done
+        cp /data/caddy/pki/authorities/local/root.crt /ca-public/root.crt
+        chmod 644 /ca-public/root.crt
+    depends_on:
+      caddy:
+        condition: service_started
+
+  # ---- STARS itself ---------------------------------------------------
+  stars-app:
+    container_name: stars-app
+    build:
+      context: ../..
+      dockerfile: lan/Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: https://${LAN_HOST}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+        NEXT_PUBLIC_APP_URL: https://${LAN_HOST}
+    restart: unless-stopped
+    environment:
+      STARS_OFFLINE: "true"
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      # No email and no AI offline: notices stay in the portal, and AI work
+      # waits for the cloud.
+      EMAIL_PROVIDER: console
+      # The server calls Supabase at https://LAN_HOST, signed by Caddy.
+      NODE_EXTRA_CA_CERTS: /ca-public/root.crt
+    volumes:
+      - ca_public:/ca-public:ro
+    depends_on:
+      ca-export:
+        condition: service_completed_successfully
+
+  # ---- The five-minute copy from the cloud ---------------------------
+  sync:
+    container_name: stars-sync
+    build:
+      context: ../..
+      dockerfile: lan/sync.Dockerfile
+    restart: unless-stopped
+    environment:
+      CLOUD_DB_URL: ${CLOUD_DB_URL}
+      SYNC_EVERY_MINUTES: ${SYNC_EVERY_MINUTES:-5}
+      # As the database owner, so triggers stay off while rows are copied in.
+      LAN_DB_URL: postgres://supabase_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      LAN_API_URL: http://api-gw:8000
+      LAN_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      LAN_PUBLIC_URL: https://${LAN_HOST}
+      # The nightly backup (lan/scripts/backup.mjs), encrypted with this.
+      BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE}
+      TZ: Asia/Manila
+    command: ["node", "lan/scripts/sync.mjs", "--loop"]
+    volumes:
+      - ${BACKUP_DIR:-../backups}:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+      api-gw:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:
+  ca_public:

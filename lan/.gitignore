@@ -1,0 +1,8 @@
+# Created by lan/setup.mjs: Supabase's files, and this install's secrets.
+/supabase/
+/.supabase-src-*/
+/.env
+# Nightly database copies hold student records: never commit them.
+/backups/
+# The certificate is per install; `node lan/stars.mjs cert` makes it.
+/stars-root-ca.crt

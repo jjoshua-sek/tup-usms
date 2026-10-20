@@ -241,7 +241,7 @@ export function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-offline-allowed>
         {/* Student Number */}
         <div className="space-y-1.5">
           <Label htmlFor="student_number" className="text-[12px] font-medium">

@@ -4,13 +4,17 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { runAcademicExtraction } from "@/lib/ai/run-extraction";
+import { unitsFromGrades } from "@/lib/documents/integrity";
+import { readStampedScan } from "@/lib/documents/scan-stamped";
+import { compareWithScan, type ScanComparison } from "@/lib/documents/stamped-scan";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { classScheduleToBlocks } from "@/lib/scheduling/find-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
+import { checkRateLimit } from "@/lib/utils/rate-limit";
 import { sanitizeText } from "@/lib/utils/sanitize";
-import type { ExtractedAcademicData } from "@/types/osa";
+import type { AcademicDocument, ExtractedAcademicData } from "@/types/osa";
 
 interface Result {
   ok?: boolean;
@@ -66,6 +70,41 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
     return { error: parsed.error.issues[0]?.message ?? "Check the figures you entered." };
   }
 
+  return verifyDocument({
+    staff,
+    documentId: parsed.data.document_id,
+    figures: {
+      gwa: parsed.data.gwa,
+      units_enrolled: parsed.data.units_enrolled,
+      units_passed: parsed.data.units_passed,
+      units_failed: parsed.data.units_failed,
+      scholastic_status: parsed.data.scholastic_status || undefined,
+    },
+    method: "on_screen",
+    notes: parsed.data.notes ? sanitizeText(parsed.data.notes, 1000) : null,
+  });
+}
+
+interface VerifiedFigures {
+  gwa?: number;
+  units_enrolled?: number;
+  units_passed?: number;
+  units_failed?: number;
+  scholastic_status?: string;
+}
+
+/**
+ * Marks a document verified and writes its term snapshot: the one path both
+ * kinds of verification take, so they cannot drift apart.
+ */
+async function verifyDocument(input: {
+  staff: NonNullable<Awaited<ReturnType<typeof getStaffContext>>>;
+  documentId: string;
+  figures: VerifiedFigures;
+  method: "on_screen" | "counter_scan";
+  notes: string | null;
+}): Promise<Result> {
+  const { staff } = input;
   const db = loose(createAdminClient());
 
   const { data: documentRow } = await db
@@ -73,7 +112,7 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
     .select(
       "id, student_id, school_year, semester, document_type, extracted_data, students(user_id)",
     )
-    .eq("id", parsed.data.document_id)
+    .eq("id", input.documentId)
     .maybeSingle();
 
   const document = documentRow as {
@@ -87,24 +126,21 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
   } | null;
   if (!document) return { error: "Document not found." };
 
-  const corrected = {
-    gwa: parsed.data.gwa,
-    units_enrolled: parsed.data.units_enrolled,
-    units_passed: parsed.data.units_passed,
-    units_failed: parsed.data.units_failed,
-    scholastic_status: parsed.data.scholastic_status || undefined,
-  };
+  const corrected = input.figures;
 
-  await db
-    .from("academic_documents")
-    .update({
+  const { error: verifyError } = await updateDocument(
+    db,
+    document.id,
+    {
       processing_status: "verified",
       verified_by: staff.staffId,
       verified_at: new Date().toISOString(),
       corrected_data: corrected,
-      verification_notes: parsed.data.notes ? sanitizeText(parsed.data.notes, 1000) : null,
-    })
-    .eq("id", document.id);
+      verification_notes: input.notes,
+    },
+    { verification_method: input.method },
+  );
+  if (verifyError) return { error: "Could not mark the document verified." };
 
   // One snapshot per student per term: a COR (units) and a rating slip
   // (grades) for the same term fill in different columns of the same row.
@@ -122,13 +158,15 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
     semester: document.semester,
     term_sequence: termSequence(document.school_year, document.semester),
     source_document_id: document.id,
-    data_source: "manual_entry",
+    // Typed or confirmed by an officer on screen, or read from the upload
+    // and matched against the stamped paper.
+    data_source: input.method === "counter_scan" ? "document_extraction" : "manual_entry",
   };
-  if (parsed.data.gwa != null) snapshot.gwa = parsed.data.gwa;
-  if (parsed.data.units_enrolled != null) snapshot.units_enrolled = parsed.data.units_enrolled;
-  if (parsed.data.units_passed != null) snapshot.units_passed = parsed.data.units_passed;
-  if (parsed.data.units_failed != null) snapshot.units_failed = parsed.data.units_failed;
-  if (parsed.data.scholastic_status) snapshot.scholastic_status = parsed.data.scholastic_status;
+  if (corrected.gwa != null) snapshot.gwa = corrected.gwa;
+  if (corrected.units_enrolled != null) snapshot.units_enrolled = corrected.units_enrolled;
+  if (corrected.units_passed != null) snapshot.units_passed = corrected.units_passed;
+  if (corrected.units_failed != null) snapshot.units_failed = corrected.units_failed;
+  if (corrected.scholastic_status) snapshot.scholastic_status = corrected.scholastic_status;
 
   const { error } = existingRow
     ? await db
@@ -158,17 +196,185 @@ export async function verifyAcademicDocument(formData: FormData): Promise<Result
   await logAuditEvent(staff.userId, "academic_doc_reviewed", "academic_documents", {
     document_id: document.id,
     decision: "verified",
+    method: input.method,
     imported_schedule_blocks: importedBlocks,
   });
 
   revalidatePath("/staff/documents");
   revalidatePath("/staff/risk");
+  revalidatePath("/staff/id-validation");
+  const how = input.method === "counter_scan" ? "Verified with the stamped copy" : "Verified";
   return {
     ok: true,
     message: importedBlocks
-      ? `Verified — snapshot updated and ${importedBlocks} class times imported.`
-      : "Verified — the term snapshot is updated.",
+      ? `${how}: snapshot updated and ${importedBlocks} class times imported.`
+      : `${how}: the term snapshot is updated.`,
   };
+}
+
+/**
+ * An update that also writes columns a newer migration added, and still
+ * saves the rest if that migration has not run yet.
+ */
+async function updateDocument(
+  db: ReturnType<typeof loose>,
+  id: string,
+  values: Record<string, unknown>,
+  newColumns: Record<string, unknown>,
+): Promise<{ error: { message: string } | null }> {
+  const first = await db.from("academic_documents").update({ ...values, ...newColumns }).eq("id", id);
+  if (!first.error || !["PGRST204", "42703"].includes((first.error as { code?: string }).code ?? "")) {
+    return { error: first.error };
+  }
+  return db.from("academic_documents").update(values).eq("id", id);
+}
+
+/** A counter photo goes through a Server Action, whose body is capped at 1 MB. */
+const MAX_SCAN_BYTES = 950 * 1024;
+const SCAN_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+export interface ScanResult extends Result {
+  comparison?: ScanComparison;
+}
+
+/**
+ * Reads a photo of the Registrar-stamped COR or rating slip, taken at the
+ * counter, and compares it row by row with what the student uploaded. Saves
+ * the photo as evidence and the comparison on the document; verifying is a
+ * separate click (verifyWithStampedScan), so the officer sees the result
+ * first.
+ */
+export async function scanStampedCopy(formData: FormData): Promise<ScanResult> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can verify documents." };
+
+  const documentId = z.string().uuid().safeParse(formData.get("document_id"));
+  const photo = formData.get("photo");
+  if (!documentId.success) return { error: "Choose a document first." };
+  if (!(photo instanceof File) || photo.size === 0) return { error: "Take a photo of the stamped copy first." };
+  if (!SCAN_TYPES.has(photo.type)) return { error: "The photo must be a JPG, PNG or WebP image." };
+  if (photo.size > MAX_SCAN_BYTES) return { error: "The photo is too large. Retake it; it is shrunk automatically." };
+
+  const limit = checkRateLimit({ identifier: `stamped-scan:${staff.staffId}`, maxRequests: 30, windowSeconds: 600 });
+  if (!limit.success) return { error: "Too many scans in a few minutes. Wait a moment, then try again." };
+
+  const admin = createAdminClient();
+  const db = loose(admin);
+  const { data: documentRow } = await db
+    .from("academic_documents")
+    .select("*")
+    .eq("id", documentId.data)
+    .maybeSingle();
+  const document = documentRow as (AcademicDocument & { stamped_scan_path?: string | null }) | null;
+  if (!document) return { error: "Document not found." };
+  if (document.processing_status === "verified") return { error: "This document is already verified." };
+  if (!document.extracted_data) {
+    return { error: "STARS has not read the upload yet, so there is nothing to compare. Use Re-read with AI first." };
+  }
+
+  const bytes = new Uint8Array(await photo.arrayBuffer());
+  const read = await readStampedScan({
+    bytes,
+    mediaType: photo.type,
+    documentLabel: document.document_type === "rating_slip" ? "rating slip" : "Certificate of Registration",
+  });
+  if (!read.ok) return { error: `The photo could not be read: ${read.error} Try again, or verify on screen.` };
+
+  // The figures the officer would otherwise confirm: what was read from the
+  // upload, with any correction an officer already typed on top.
+  const uploaded: ExtractedAcademicData = {
+    ...document.extracted_data,
+    ...(document.corrected_data ?? {}),
+    subjects: document.extracted_data.subjects,
+    school_year: document.extracted_data.school_year ?? document.school_year,
+    semester: document.extracted_data.semester ?? document.semester,
+  };
+  const comparison = compareWithScan({ documentType: document.document_type, uploaded, scan: read.scan });
+
+  const path = `stamped/${document.student_id}/${document.id}-${Date.now()}.${photo.type.split("/")[1] === "jpeg" ? "jpg" : photo.type.split("/")[1]}`;
+  const { error: uploadError } = await admin.storage
+    .from("academic-documents")
+    .upload(path, bytes, { contentType: photo.type, upsert: false });
+  if (uploadError) {
+    console.error("[stamped-scan] photo not saved", uploadError);
+    return { error: "The photo could not be saved as evidence. Try again." };
+  }
+
+  const { error: saveError } = await db
+    .from("academic_documents")
+    .update({
+      stamped_scan_path: path,
+      scan_comparison: { ...comparison, model: read.model, read_at: new Date().toISOString(), scan: read.scan },
+      scanned_by: staff.staffId,
+      scanned_at: new Date().toISOString(),
+    })
+    .eq("id", document.id);
+  if (saveError) {
+    await admin.storage.from("academic-documents").remove([path]);
+    return {
+      error: ["PGRST204", "42703"].includes((saveError as { code?: string }).code ?? "")
+        ? "Scanning needs migration 00037. Ask the administrator to run it."
+        : "The comparison could not be saved. Try again.",
+    };
+  }
+  // One scan per document is kept: the latest.
+  if (document.stamped_scan_path) await admin.storage.from("academic-documents").remove([document.stamped_scan_path]);
+
+  await logAuditEvent(staff.userId, "academic_doc_reviewed", "academic_documents", {
+    document_id: document.id,
+    decision: "stamped_copy_scanned",
+    verdict: comparison.verdict,
+    registrar_stamp: comparison.stamps.registrar,
+    differences: comparison.differences.length,
+  });
+
+  revalidatePath("/staff/documents");
+  revalidatePath("/staff/id-validation");
+  return { ok: true, comparison };
+}
+
+/** Verifies a document whose stamped copy matched, with the figures the upload carries. */
+export async function verifyWithStampedScan(documentId: string): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can verify documents." };
+  if (!z.string().uuid().safeParse(documentId).success) return { error: "Choose a document first." };
+
+  const db = loose(createAdminClient());
+  const { data: documentRow } = await db.from("academic_documents").select("*").eq("id", documentId).maybeSingle();
+  const document = documentRow as (AcademicDocument & { scan_comparison?: ScanComparison | null }) | null;
+  if (!document) return { error: "Document not found." };
+  if (document.processing_status === "verified") return { error: "This document is already verified." };
+  if (!document.scan_comparison?.canVerify) {
+    return { error: "The stamped copy has not matched yet. Scan it again, or verify on screen." };
+  }
+
+  const figures = { ...(document.extracted_data ?? {}), ...(document.corrected_data ?? {}) };
+  const fromGrades = unitsFromGrades(document.extracted_data?.subjects);
+  return verifyDocument({
+    staff,
+    documentId: document.id,
+    figures: {
+      gwa: figures.gwa,
+      units_enrolled: figures.units_enrolled,
+      units_passed: figures.units_passed ?? (document.document_type === "rating_slip" ? fromGrades.passed : undefined),
+      units_failed: figures.units_failed ?? (document.document_type === "rating_slip" ? fromGrades.failed : undefined),
+      scholastic_status: figures.scholastic_status,
+    },
+    method: "counter_scan",
+    notes: "Matched against the Registrar-stamped copy scanned at the OSA counter.",
+  });
+}
+
+/** Opens the stamped-copy photo kept as evidence, for five minutes. */
+export async function getStampedScanUrl(documentId: string): Promise<{ url?: string; error?: string }> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Not permitted." };
+  const admin = createAdminClient();
+  const { data } = await loose(admin).from("academic_documents").select("stamped_scan_path").eq("id", documentId).maybeSingle();
+  const path = (data as { stamped_scan_path?: string | null } | null)?.stamped_scan_path;
+  if (!path) return { error: "No stamped copy has been scanned for this document." };
+  const { data: signed } = await admin.storage.from("academic-documents").createSignedUrl(path, 300);
+  return signed?.signedUrl ? { url: signed.signedUrl } : { error: "Could not open the scan." };
 }
 
 const DAY_NAMES = [

@@ -24,6 +24,13 @@ export const PHOTO_TARGET: CompressTarget = { maxDimension: 800, maxBytes: 200 *
 /** CORs, rating slips, signed apology letters: text must stay readable. */
 export const DOCUMENT_TARGET: CompressTarget = { maxDimension: 2200, maxBytes: 1.5 * 1024 * 1024 };
 
+/**
+ * A counter photo of a stamped COR or rating slip. It goes through a Server
+ * Action (1 MB body cap), so it is kept under 900 KB; 2000 px still leaves
+ * every grade and the stamps legible.
+ */
+export const SCAN_TARGET: CompressTarget = { maxDimension: 2000, maxBytes: 900 * 1024 };
+
 /** The largest file any STARS upload accepts, after compression. */
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 

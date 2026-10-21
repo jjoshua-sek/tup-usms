@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkDocumentIntegrity } from "@/lib/documents/integrity";
+import { readPdfFacts } from "@/lib/documents/pdf-facts";
 import { loose } from "@/lib/supabase/loose";
 
 import { extractAcademicDocument } from "./extract-academic";
@@ -34,12 +36,13 @@ export async function runAcademicExtraction(
 
   const { data: documentRow } = await db
     .from("academic_documents")
-    .select("id, file_path, mime_type, document_type, processing_status")
+    .select("id, student_id, file_path, mime_type, document_type, processing_status")
     .eq("id", documentId)
     .maybeSingle();
 
   const document = documentRow as {
     id: string;
+    student_id: string;
     file_path: string;
     mime_type: string;
     document_type: "certificate_of_registration" | "rating_slip" | "transcript";
@@ -74,8 +77,9 @@ export async function runAcademicExtraction(
     return { error: "The uploaded file could not be opened." };
   }
 
+  const bytes = new Uint8Array(await file.arrayBuffer());
   const outcome = await extractAcademicDocument({
-    bytes: new Uint8Array(await file.arrayBuffer()),
+    bytes,
     mediaType: document.mime_type,
     documentType: document.document_type,
     // Ten minutes is ample for the AI service to fetch the photo once.
@@ -110,6 +114,31 @@ export async function runAcademicExtraction(
       extraction_error: outcome.notes,
     })
     .eq("id", document.id);
+
+  // Flags for the officer: whose it is, whether its own figures add up, and
+  // what made the file. Stored separately so the extraction itself stays
+  // verbatim; a failure here only means the review screen shows no checks.
+  try {
+    const { data: studentRow } = await db
+      .from("students")
+      .select("student_number, first_name, last_name")
+      .eq("id", document.student_id)
+      .maybeSingle();
+    const student = studentRow as { student_number: string; first_name: string; last_name: string } | null;
+    if (student) {
+      const checks = checkDocumentIntegrity({
+        documentType: document.document_type,
+        data: outcome.data,
+        student,
+        pdf: await readPdfFacts(bytes),
+      });
+      const { error } = await db.from("academic_documents").update({ integrity_checks: checks }).eq("id", document.id);
+      // Before migration 00037 the column does not exist; nothing is lost.
+      if (error) console.error("[extraction] integrity checks not saved", error.message);
+    }
+  } catch (error) {
+    console.error("[extraction] integrity checks failed", error);
+  }
 
   return { ok: true, confidence: outcome.confidence };
 }

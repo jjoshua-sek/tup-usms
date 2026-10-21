@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BadgeCheck, Clock, IdCard, Search, ShieldX } from "lucide-react";
 
+import { StampedScanPanel } from "@/components/documents/stamped-scan-panel";
 import { CounterValidateForm } from "@/components/id-validation/counter-validate-form";
 import { OfflineReviewButton } from "@/components/id-validation/offline-review-button";
 import { ReviewControls } from "@/components/id-validation/review-controls";
@@ -17,7 +18,7 @@ import { searchTokens, tokenFilter } from "@/lib/students/search";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { formatManilaMonthDayTime } from "@/lib/utils/time";
-import { ID_STATUS_META, type IdValidationStatus } from "@/types/osa";
+import { ID_STATUS_META, type AcademicDocument, type IdValidationStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
   title: "ID Validation",
@@ -162,6 +163,7 @@ export default async function StaffIdValidationPage({
 
   // Counter search: students matching every word typed, with this term's record if any.
   let matches: Array<{ student: StudentSummary & { id: string }; record: { id: string; status: IdValidationStatus } | null }> = [];
+  const pendingDocuments = new Map<string, AcademicDocument[]>();
   if (tokens.length > 0) {
     let query = db
       .from("students")
@@ -188,6 +190,25 @@ export default async function StaffIdValidationPage({
       }
     }
     matches = students.map((student) => ({ student, record: records.get(student.id) ?? null }));
+
+    // The stamped COR and rating slip are in the officer's hands right now:
+    // offer to scan them against what each student uploaded. "*" so this
+    // still loads before migration 00037 adds the scan columns.
+    if (students.length > 0 && !offline) {
+      const { data: documentRows } = await db
+        .from("academic_documents")
+        .select("*")
+        .in(
+          "student_id",
+          students.map((student) => student.id),
+        )
+        .in("processing_status", ["extracted", "verification_failed", "uploaded"])
+        .order("uploaded_at", { ascending: false });
+      for (const document of (documentRows as AcademicDocument[] | null) ?? []) {
+        if (document.document_type === "transcript") continue;
+        pendingDocuments.set(document.student_id, [...(pendingDocuments.get(document.student_id) ?? []), document]);
+      }
+    }
   }
 
   return (
@@ -216,7 +237,7 @@ export default async function StaffIdValidationPage({
 
       <Section
         title="Validate at the counter"
-        note="For a student at the OSA window with their ID. Check their face against the photo, apply the term sticker, then validate. No online request is needed."
+        note="For a student at the OSA window with their ID. Check their face against the photo, scan the Registrar-stamped COR and rating slip they hand you, apply the term sticker, then validate. No online request is needed."
       >
         <form method="get" className="mb-3 flex max-w-xl gap-2">
           <label htmlFor="counter-search" className="sr-only">
@@ -276,6 +297,7 @@ export default async function StaffIdValidationPage({
                       <CounterValidateForm studentId={student.id} termLabel={term.label} />
                     )}
                   </div>
+                  <CounterDocuments documents={pendingDocuments.get(student.id) ?? []} />
                 </li>
               ))}
             </ul>
@@ -341,6 +363,47 @@ export default async function StaffIdValidationPage({
           <ValidationList rows={validated} total={validatedCount} newestFirst />
         )}
       </Section>
+    </div>
+  );
+}
+
+const DOCUMENT_LABELS: Record<string, string> = {
+  certificate_of_registration: "Certificate of Registration",
+  rating_slip: "Rating slip",
+};
+
+/**
+ * The student's uploads still waiting for verification, each with the
+ * stamped-copy scan: the paper the officer is holding is the evidence.
+ */
+function CounterDocuments({ documents }: { documents: AcademicDocument[] }) {
+  if (documents.length === 0) return null;
+  return (
+    <div className="w-full space-y-2 border-t border-border pt-3">
+      <p className="text-[12px] text-muted-foreground">
+        Uploads waiting for verification. Scan the stamped copies the student handed you.
+      </p>
+      {documents.map((document) => (
+        <div key={document.id}>
+          <p className="mb-1 text-[11px] font-medium">
+            {DOCUMENT_LABELS[document.document_type]}
+            <span className="ml-1.5 font-normal text-muted-foreground">
+              {document.semester}, {document.school_year}
+            </span>
+          </p>
+          {document.extracted_data ? (
+            <StampedScanPanel
+              documentId={document.id}
+              documentLabel={(DOCUMENT_LABELS[document.document_type] ?? "document").toLowerCase()}
+              initial={document.scan_comparison}
+            />
+          ) : (
+            <p className="rounded-md bg-muted p-2 text-[11px] text-muted-foreground">
+              Not read yet, so there is nothing to compare. Open it on Document Review and use Re-read with AI.
+            </p>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

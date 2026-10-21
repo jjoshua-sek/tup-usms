@@ -243,11 +243,8 @@ export const MISMATCH_CONFIDENCE_CAP = 0.6;
  * so the review screen flags it, and the note says what to look at.
  */
 export function reconcile(data: AcademicExtraction): AcademicExtraction {
-  const units = data.subjects.map((subject) => subject.units);
-  if (data.units_enrolled === null || units.length === 0 || units.some((value) => value === null)) return data;
-
-  const sum = (units as number[]).reduce((total, value) => total + value, 0);
-  if (Math.abs(sum - data.units_enrolled) < 0.01) return data;
+  if (unitsAddUp(data) !== false) return data;
+  const sum = data.subjects.reduce((total, subject) => total + (subject.units ?? 0), 0);
 
   const warning = `Subject units add up to ${sum}, not the ${data.units_enrolled} printed; check each row.`;
   return {
@@ -255,6 +252,33 @@ export function reconcile(data: AcademicExtraction): AcademicExtraction {
     overall_confidence: Math.min(data.overall_confidence, MISMATCH_CONFIDENCE_CAP),
     notes: data.notes ? `${warning} ${data.notes}`.slice(0, 500) : warning,
   };
+}
+
+/** Whether the subjects' units add up to the printed total; null when there is nothing to check. */
+export function unitsAddUp(data: Pick<AcademicExtraction, "units_enrolled" | "subjects">): boolean | null {
+  const units = data.subjects.map((subject) => subject.units);
+  if (data.units_enrolled === null || units.length === 0 || units.some((value) => value === null)) return null;
+  return Math.abs((units as number[]).reduce((total, value) => total + value, 0) - data.units_enrolled) < 0.01;
+}
+
+/**
+ * Said to the model when its first reading's units do not add up, for one
+ * more try. The usual cause, seen on a real ERS COR: a number ending a
+ * subject title ("IT Capstone & Research 1", "Systems Integration and
+ * Architecture 2") taken as that subject's units.
+ */
+export function unitsRecheckHint(data: AcademicExtraction): string {
+  const sum = data.subjects.reduce((total, subject) => total + (subject.units ?? 0), 0);
+  const suspects = data.subjects
+    .filter((subject) => subject.description && /\d\s*$/.test(subject.description))
+    .map((subject) => subject.subject_code);
+  return [
+    `Your first reading gave subject units that add up to ${sum}, but the document prints a total of ${data.units_enrolled}. Read every row again.`,
+    "A number at the end of a subject title is part of the title, not the units; the units are the next number after the title.",
+    suspects.length ? `Look closely at: ${suspects.join(", ")}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /** Parses and checks the model's reply. */

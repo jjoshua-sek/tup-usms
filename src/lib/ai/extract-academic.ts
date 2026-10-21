@@ -12,6 +12,8 @@ import {
   hasUsableText,
   parseExtraction,
   toExtractedAcademicData,
+  unitsAddUp,
+  unitsRecheckHint,
   type AcademicDocumentType,
 } from "./academic-extraction";
 import { aiModels } from "./groq-core";
@@ -54,7 +56,8 @@ export async function extractAcademicDocument(input: {
   signedUrl?: () => Promise<string | null>;
 }): Promise<ExtractionOutcome> {
   const models = aiModels();
-  let result: GroqJsonResult;
+  /** One reading; `hint` is added to the request when asking again. */
+  let ask: (hint?: string) => Promise<GroqJsonResult>;
 
   if (input.mediaType === "application/pdf") {
     const text = await pdfText(input.bytes);
@@ -65,13 +68,15 @@ export async function extractAcademicDocument(input: {
         error: "This PDF is a scan with no readable text. Upload a photo (JPG or PNG) instead, or staff can verify it by hand.",
       };
     }
-    result = await groqJson({
-      model: models.text,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      user: buildPdfTextPrompt(input.documentType, text.slice(0, MAX_PDF_TEXT_CHARS)),
-      schema: { name: "academic_document", schema: EXTRACTION_JSON_SCHEMA },
-      maxTokens: 3000,
-    });
+    const prompt = buildPdfTextPrompt(input.documentType, text.slice(0, MAX_PDF_TEXT_CHARS));
+    ask = (hint) =>
+      groqJson({
+        model: models.text,
+        system: EXTRACTION_SYSTEM_PROMPT,
+        user: hint ? `${prompt}\n\n${hint}` : prompt,
+        schema: { name: "academic_document", schema: EXTRACTION_JSON_SCHEMA },
+        maxTokens: 3000,
+      });
   } else {
     let imageUrl: string | null = null;
     if (input.bytes.byteLength <= MAX_INLINE_IMAGE_BYTES) {
@@ -81,36 +86,49 @@ export async function extractAcademicDocument(input: {
     }
     if (!imageUrl) return { ok: false, error: "The photo is too large for the AI to read. Staff can verify it by hand." };
 
-    const user: ChatContent = [
-      { type: "image_url", image_url: { url: imageUrl } },
-      { type: "text", text: `This is a photo of a ${documentLabel(input.documentType)}. Read it and return the figures.` },
-    ];
-    result = await groqJson({
-      model: models.vision,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      user,
-      schema: { name: "academic_document", schema: EXTRACTION_JSON_SCHEMA },
-      maxTokens: 3000,
-    });
-
-    // If the vision model will not take a schema alongside an image, ask
-    // for plain JSON with the schema spelled out; Zod still checks it.
-    if (!result.ok && result.failure.kind === "bad_request") {
-      result = await groqJson({
+    const url = imageUrl;
+    ask = async (hint) => {
+      const user: ChatContent = [
+        { type: "image_url", image_url: { url } },
+        { type: "text", text: `This is a photo of a ${documentLabel(input.documentType)}. Read it and return the figures.${hint ? ` ${hint}` : ""}` },
+      ];
+      const first = await groqJson({
+        model: models.vision,
+        system: EXTRACTION_SYSTEM_PROMPT,
+        user,
+        schema: { name: "academic_document", schema: EXTRACTION_JSON_SCHEMA },
+        maxTokens: 3000,
+      });
+      // If the vision model will not take a schema alongside an image, ask
+      // for plain JSON with the schema spelled out; Zod still checks it.
+      if (first.ok || first.failure.kind !== "bad_request") return first;
+      return groqJson({
         model: models.vision,
         system: `${EXTRACTION_SYSTEM_PROMPT}\n\nReply with one JSON object that matches this JSON Schema exactly:\n${JSON.stringify(EXTRACTION_JSON_SCHEMA)}`,
         user,
         maxTokens: 3000,
       });
-    }
+    };
   }
 
+  let result = await ask();
   if (!result.ok) {
     return { ok: false, error: `${result.failure.message.replace(/^Waiting: /, "")} Staff can still verify it by hand.` };
   }
 
-  const parsed = parseExtraction(result.text);
+  let parsed = parseExtraction(result.text);
   if (!parsed.ok) return { ok: false, error: parsed.error };
+
+  // Units that do not add up are nearly always a misread row, so ask once
+  // more, saying what is wrong. The second reading is kept only if it adds up.
+  if (unitsAddUp(parsed.data) === false) {
+    const again = await ask(unitsRecheckHint(parsed.data));
+    const reparsed = again.ok ? parseExtraction(again.text) : null;
+    if (again.ok && reparsed?.ok && unitsAddUp(reparsed.data) !== false) {
+      result = again;
+      parsed = reparsed;
+    }
+  }
 
   return {
     ok: true,

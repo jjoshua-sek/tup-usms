@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, FileSearch, FolderOpen, Sparkles } from "lucide-react";
+import { CheckCircle2, FileSearch, FolderOpen, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
 
 import {
   DocumentReviewForms,
   RerunExtractionButton,
   ViewFileButton,
 } from "@/components/documents/document-review";
+import { StampedScanPanel } from "@/components/documents/stamped-scan-panel";
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
+import { flaggedChecks, type IntegrityCheck } from "@/lib/documents/integrity";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -92,7 +94,7 @@ export default async function StaffDocumentsPage() {
       <PageHeader
         breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Document Review" }]}
         title="Document Review"
-        description="Confirm the figures on uploaded rating slips and CORs. Verified figures feed scholarship eligibility and the early warning list."
+        description="Check uploaded rating slips and CORs against the Registrar-stamped copies. Verified figures feed scholarship eligibility and the early warning list."
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -119,6 +121,33 @@ export default async function StaffDocumentsPage() {
           <Group title="Rejected" documents={rejected} actionable={false} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** What the automatic checks found: flags spelled out, passes counted. */
+function IntegrityFlags({ checks }: { checks: IntegrityCheck[] | null | undefined }) {
+  if (!checks || checks.length === 0) return null;
+  const flags = flaggedChecks(checks);
+  const passed = checks.filter((check) => check.status === "pass").length;
+  if (flags.length === 0) {
+    return (
+      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <ShieldCheck className="h-3 w-3" /> {passed} automatic check{passed === 1 ? "" : "s"} passed (name, number, figures, file).
+      </p>
+    );
+  }
+  return (
+    <div className="mt-2 rounded-md bg-amber-50 p-2 text-[11px] leading-relaxed text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+      <p className="flex items-center gap-1.5 font-semibold">
+        <TriangleAlert className="h-3 w-3" /> Check before verifying
+      </p>
+      <ul className="ml-4 mt-1 list-disc">
+        {flags.map((flag) => (
+          <li key={flag.code}>{flag.detail}</li>
+        ))}
+      </ul>
+      <p className="mt-1 opacity-80">A flag can also be a misread figure. The stamped copy settles it.</p>
     </div>
   );
 }
@@ -156,6 +185,12 @@ function Group({
                     label={document.processing_status.replace(/_/g, " ")}
                     tone={STATUS_TONE[document.processing_status] ?? "neutral"}
                   />
+                  {document.processing_status === "verified" && (
+                    <ToneBadge
+                      label={document.verification_method === "counter_scan" ? "with stamped copy" : "on screen"}
+                      tone={document.verification_method === "counter_scan" ? "success" : "neutral"}
+                    />
+                  )}
                   <span className="text-[11px] text-muted-foreground">
                     {document.semester}, {document.school_year}
                   </span>
@@ -220,8 +255,17 @@ function Group({
               </p>
             )}
 
+            <IntegrityFlags checks={document.integrity_checks} />
+
             {actionable && (
-              <div className="mt-3 border-t border-border pt-3">
+              <div className="mt-3 space-y-3 border-t border-border pt-3">
+                {document.extracted_data && document.document_type !== "transcript" && (
+                  <StampedScanPanel
+                    documentId={document.id}
+                    documentLabel={(DOC_LABELS[document.document_type] ?? "document").toLowerCase()}
+                    initial={document.scan_comparison}
+                  />
+                )}
                 <DocumentReviewForms
                   documentId={document.id}
                   documentType={document.document_type}

@@ -1,3 +1,6 @@
+import type { IntegrityCheck } from "@/lib/documents/integrity";
+import type { ScanComparison } from "@/lib/documents/stamped-scan";
+
 /**
  * Domain types for the OSA System.
  *
@@ -557,6 +560,12 @@ export interface AcademicDocument {
   verification_notes: string | null;
   rejection_reason: string | null;
   uploaded_at: string;
+  /** Migration 00037; absent until it runs. */
+  integrity_checks?: IntegrityCheck[] | null;
+  verification_method?: "counter_scan" | "on_screen" | null;
+  stamped_scan_path?: string | null;
+  scan_comparison?: ScanComparison | null;
+  scanned_at?: string | null;
 }
 
 /**

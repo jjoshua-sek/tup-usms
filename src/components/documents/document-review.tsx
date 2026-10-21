@@ -119,7 +119,7 @@ export function DocumentReviewForms({
           className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
         >
           <ThumbsUp className="h-3 w-3" />
-          Verify
+          Verify on screen
         </button>
         <button
           type="button"

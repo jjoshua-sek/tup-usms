@@ -9,6 +9,7 @@ import {
   registerAcademicDocument,
 } from "@/app/(student)/records/actions";
 import { Button } from "@/components/ui/button";
+import { isPdfBytes } from "@/lib/documents/integrity";
 import { DOCUMENT_TARGET, MAX_UPLOAD_BYTES, compressImage, formatBytes } from "@/lib/images/compress";
 import { createClient } from "@/lib/supabase/client";
 
@@ -38,11 +39,12 @@ export function DocumentUpload({
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (formData: FormData) => {
-    const picked = formData.get("file");
-    if (!(picked instanceof File) || picked.size === 0) {
+    const chosen = formData.get("file");
+    if (!(chosen instanceof File) || chosen.size === 0) {
       toast.error("Choose a file first.");
       return;
     }
+    const picked = await asPdfIfItIsOne(chosen);
     if (!(ALLOWED as readonly string[]).includes(picked.type)) {
       toast.error("Upload a photo (JPG/PNG) or a PDF.");
       return;
@@ -164,7 +166,8 @@ export function DocumentUpload({
         <input
           type="file"
           name="file"
-          accept="image/jpeg,image/png,image/webp,application/pdf"
+          // .php: ERS hands out the rating slip as rating_slip_main.php, a PDF.
+          accept="image/jpeg,image/png,image/webp,application/pdf,.pdf,.php"
           required
           className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs file:mr-2 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs"
         />
@@ -185,11 +188,27 @@ export function DocumentUpload({
 
       <p className="text-[11px] leading-relaxed text-muted-foreground sm:col-span-2 lg:col-span-4">
         <FileUp className="mr-1 inline h-3 w-3" />
-        A clear phone photo is fine. Your file is private — only you and the OSA officer
-        verifying it can open it.
+        Best: the file from ERS. For the COR, use Enrollment → Certificate of Registration. For the
+        rating slip, open Grades → Student&apos;s Rating Slip, then Print → Save as PDF (its download
+        button saves an empty file). A clear phone photo also works. Bring the Registrar-stamped
+        copies when you validate your ID: the OSA checks them against this upload. Your file is
+        private; only you and the OSA can open it.
       </p>
     </form>
   );
+}
+
+/**
+ * ERS serves the rating slip from rating_slip_main.php, and a browser may
+ * keep that name and give the file no PDF type. What makes it a PDF is its
+ * first bytes, so those decide; the name and type are fixed to match.
+ */
+async function asPdfIfItIsOne(file: File): Promise<File> {
+  if (file.type === "application/pdf" || file.type.startsWith("image/")) return file;
+  const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+  if (!isPdfBytes(head)) return file;
+  const name = `${file.name.replace(/\.[^.]*$/, "") || "document"}.pdf`;
+  return new File([file], name, { type: "application/pdf", lastModified: file.lastModified });
 }
 
 const inputClass =

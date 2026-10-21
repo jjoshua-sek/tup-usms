@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Filter, Inbox, Sparkles } from "lucide-react";
+import { ChevronRight, Filter, Inbox, Plus, Sparkles } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatManilaDate } from "@/lib/utils/time";
+import { RECEIVED_VIA_LABEL, receivedVia } from "@/lib/concerns/intake";
 import {
   CONCERN_CATEGORIES,
   CONCERN_STATUSES,
@@ -40,6 +41,9 @@ interface ConcernRow {
   created_at: string;
   /** Migration 00023; absent until it runs. */
   ai_summary_status?: "pending" | "done" | "failed";
+  /** Migration 00036; absent until it runs. */
+  received_via?: string;
+  referred_by?: string | null;
   students: {
     first_name: string;
     last_name: string;
@@ -109,7 +113,14 @@ export default async function StaffConcernsPage({
       <PageHeader
         title="Concern Queue"
         description="All student concerns, sorted by AI-assessed urgency."
-      />
+      >
+        <Link
+          href="/staff/concerns/new"
+          className={cn(buttonVariants({ size: "sm" }), "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700")}
+        >
+          <Plus className="mr-1 h-4 w-4" /> Record a concern
+        </Link>
+      </PageHeader>
 
       {/* Filter Bar */}
       <Card>
@@ -227,6 +238,12 @@ export default async function StaffConcernsPage({
                         <Badge variant="secondary" className="h-5 text-[10px]">
                           {concern.category}
                         </Badge>
+                        {receivedVia(concern.received_via) !== "online" && (
+                          <Badge variant="outline" className="h-5 text-[10px]">
+                            {RECEIVED_VIA_LABEL[receivedVia(concern.received_via)]}
+                            {concern.referred_by ? ` · ${concern.referred_by}` : ""}
+                          </Badge>
+                        )}
                       </div>
 
                       {isProcessing ? (

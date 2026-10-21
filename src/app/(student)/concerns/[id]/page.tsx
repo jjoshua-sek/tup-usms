@@ -29,6 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatManilaDateTime } from "@/lib/utils/time";
+import { RECEIVED_VIA_LABEL, receivedVia } from "@/lib/concerns/intake";
 
 export const metadata: Metadata = {
   title: "Concern Detail",
@@ -47,6 +48,8 @@ interface ConcernDetail {
   status: string;
   created_at: string;
   updated_at: string;
+  /** Migration 00036; absent until it runs. */
+  received_via?: string;
   /** Migration 00023; absent until it runs. */
   ai_summary_status?: "pending" | "done" | "failed";
   students: {
@@ -203,7 +206,10 @@ export default async function ConcernDetailPage({
             </h1>
             <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              Submitted {formatManilaDateTime(concern.created_at)}
+              {receivedVia(concern.received_via) === "online"
+                ? "Submitted"
+                : `Recorded by the OSA from your ${RECEIVED_VIA_LABEL[receivedVia(concern.received_via)].toLowerCase()}`}{" "}
+              {formatManilaDateTime(concern.created_at)}
               {concern.updated_at !== concern.created_at && (
                 <span> · Updated {formatManilaDateTime(concern.updated_at)}</span>
               )}

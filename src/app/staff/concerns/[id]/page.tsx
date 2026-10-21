@@ -20,6 +20,7 @@ import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
 import { formatManila, manilaWallClock } from "@/lib/utils/time";
+import { RECEIVED_VIA_LABEL, receivedVia } from "@/lib/concerns/intake";
 
 export const metadata: Metadata = {
   title: "Concern Review",
@@ -39,6 +40,9 @@ interface ConcernDetail {
   created_at: string;
   updated_at: string;
   assigned_to: string | null;
+  /** Migration 00036; absent until it runs. */
+  received_via?: string;
+  referred_by?: string | null;
   /** Migration 00023; absent until it runs. */
   ai_summary_status?: "pending" | "done" | "failed";
   ai_summary_error?: string | null;
@@ -270,7 +274,11 @@ export default async function StaffConcernDetailPage({
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-5 pb-5 border-b border-border">
             <div className="min-w-0">
               <div className="font-mono text-[11px] text-muted-foreground mb-1">
-                {shortId(concern)} · Submitted {formatManila(concern.created_at, TIMESTAMP)}
+                {shortId(concern)} ·{" "}
+                {receivedVia(concern.received_via) === "online"
+                  ? "Submitted"
+                  : `${RECEIVED_VIA_LABEL[receivedVia(concern.received_via)]}${concern.referred_by ? ` (${concern.referred_by})` : ""}, recorded by the OSA`}{" "}
+                {formatManila(concern.created_at, TIMESTAMP)}
               </div>
               <h2 className="text-[18px] font-semibold tracking-tight mb-2 text-balance">
                 {concern.subject_line}

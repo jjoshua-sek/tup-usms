@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { CameraScanner } from "@/components/access/camera-scanner";
+import { initialScanMode, SCAN_MODE_KEY } from "@/lib/access/scan-mode";
 import { attemptOrder, CLOUD_TIMEOUT_WITH_FALLBACK_MS, isUsableResponse, kioskBases, normalizeLanUrl, type Endpoint } from "@/lib/access/kiosk-endpoints";
 import {
   connectSerialRelay,
@@ -110,15 +111,30 @@ export function GateKiosk() {
 
   useEffect(() => {
     let saved: string | null = null;
+    let savedMode: string | null = null;
     try {
       saved = window.localStorage.getItem(LAN_URL_KEY);
+      savedMode = window.localStorage.getItem(SCAN_MODE_KEY);
     } catch {
       // Blocked storage: the copy's address is asked for again each session.
     }
     lanUrlRef.current = saved;
     setLanUrl(saved);
     setLanInput(saved ?? "");
+
+    const touchOnly =
+      window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(any-pointer: fine)").matches;
+    setUseCamera(initialScanMode(savedMode, touchOnly) === "camera");
   }, []);
+
+  const chooseScanMode = (camera: boolean) => {
+    setUseCamera(camera);
+    try {
+      window.localStorage.setItem(SCAN_MODE_KEY, camera ? "camera" : "scanner");
+    } catch {
+      // Blocked storage: the choice lasts until the page is reloaded.
+    }
+  };
 
   /**
    * One request to the gate API: the cloud first, then the offline copy
@@ -659,7 +675,7 @@ export function GateKiosk() {
 
           <button
             type="button"
-            onClick={() => setUseCamera((current) => !current)}
+            onClick={() => chooseScanMode(!useCamera)}
             className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 px-3 py-2 font-medium transition-colors hover:bg-white/10"
           >
             {useCamera ? <QrCode className="h-3.5 w-3.5" /> : <Camera className="h-3.5 w-3.5" />}

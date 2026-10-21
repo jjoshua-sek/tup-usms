@@ -4,6 +4,8 @@ import {
   ALWAYS_DELIVER,
   DEFAULT_PREFERENCES,
   decideDelivery,
+  decideDeliveryToAll,
+  deliveryAddresses,
   type NotificationPreferences,
 } from "./policy";
 
@@ -138,5 +140,43 @@ describe("decideDelivery", () => {
 
     expect(decision.send).toBe(false);
     expect(decision.reason).toBe("not_allowlisted");
+  });
+});
+
+describe("deliveryAddresses", () => {
+  it("sends to the TUP address and the personal one, once each", () => {
+    expect(deliveryAddresses(["TUPM-23-5047@tup.edu.ph", " juan.delacruz@Gmail.com ", "tupm-23-5047@tup.edu.ph", null, undefined])).toEqual([
+      "tupm-23-5047@tup.edu.ph",
+      "juan.delacruz@gmail.com",
+    ]);
+  });
+
+  it("drops anything that is not one address", () => {
+    expect(deliveryAddresses(["", "not an email", "a@b.ph, c@d.ph", "x@y"])).toEqual([]);
+  });
+});
+
+describe("decideDeliveryToAll", () => {
+  const recipients = ["tupm-23-5047@tup.edu.ph", "juan@gmail.com"];
+
+  it("goes to every address in production", () => {
+    const decision = decideDeliveryToAll({ type: "hearing_scheduled", recipients, preferences: DEFAULT_PREFERENCES, allowlist: null });
+    expect(decision.send).toBe(true);
+    expect(decision.to).toEqual(recipients);
+  });
+
+  it("outside production, mails only the allowlisted addresses", () => {
+    const decision = decideDeliveryToAll({ type: "hearing_scheduled", recipients, preferences: DEFAULT_PREFERENCES, allowlist: ["juan@gmail.com"] });
+    expect(decision.send).toBe(true);
+    expect(decision.to).toEqual(["juan@gmail.com"]);
+  });
+
+  it("skips when no address is allowlisted, or there is none at all", () => {
+    expect(decideDeliveryToAll({ type: "hearing_scheduled", recipients, preferences: DEFAULT_PREFERENCES, allowlist: ["someone@else.ph"] })).toMatchObject({ send: false, reason: "not_allowlisted", to: [] });
+    expect(decideDeliveryToAll({ type: "hearing_scheduled", recipients: [], preferences: DEFAULT_PREFERENCES, allowlist: null })).toMatchObject({ send: false, reason: "no_recipient_address" });
+  });
+
+  it("still respects a student who muted a category", () => {
+    expect(decideDeliveryToAll({ type: "scholarship_match", recipients, preferences: MUTED, allowlist: null }).send).toBe(false);
   });
 });

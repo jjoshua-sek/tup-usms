@@ -22,7 +22,7 @@ export function createConsoleProvider(): EmailProvider {
         [
           "",
           "──────── email (not sent: console provider) ────────",
-          `to:      ${message.to}`,
+          `to:      ${[message.to].flat().join(", ")}`,
           `subject: ${message.subject}`,
           "",
           message.text,

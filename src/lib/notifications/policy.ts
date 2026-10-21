@@ -206,6 +206,41 @@ export function decideDelivery(input: DeliveryInput): DeliveryDecision {
   return send(false);
 }
 
+const EMAIL_SHAPE = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
+
+/**
+ * Every inbox a notice goes to: the account's TUP address and the personal
+ * one on record (OSA checklist I2, "both"). The TUP address is built from
+ * the student number for signing in and may not be a real mailbox, so a
+ * notice sent only there could reach nobody. Lowercased, de-duplicated, and
+ * anything that is not an address is dropped.
+ */
+export function deliveryAddresses(candidates: ReadonlyArray<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  for (const candidate of candidates) {
+    const address = candidate?.trim().toLowerCase();
+    if (address && EMAIL_SHAPE.test(address)) seen.add(address);
+  }
+  return [...seen];
+}
+
+/**
+ * The addresses to send to, and the decision for the notice as a whole.
+ * Outside production, addresses missing from the allowlist are dropped
+ * one by one; the notice is skipped only when none is left.
+ */
+export function decideDeliveryToAll(
+  input: Omit<DeliveryInput, "recipient"> & { recipients: readonly string[] },
+): DeliveryDecision & { to: string[] } {
+  const allowed = input.allowlist ? input.recipients.filter((a) => input.allowlist!.includes(a)) : [...input.recipients];
+  const decision = decideDelivery({
+    ...input,
+    recipient: allowed[0] ?? input.recipients[0] ?? null,
+    allowlist: allowed.length > 0 ? null : input.allowlist,
+  });
+  return { ...decision, to: decision.send ? allowed : [] };
+}
+
 /** Human-readable text stored in `email_skip_reason`. */
 export const SKIP_REASON_TEXT: Record<SkipReason, string> = {
   no_recipient_address: "the account has no email address on record",

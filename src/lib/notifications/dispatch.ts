@@ -16,7 +16,7 @@
 import { loose } from "@/lib/supabase/loose";
 
 import { isPermanentFailure, nextAttempt } from "./backoff";
-import { decideDelivery, SKIP_REASON_TEXT, type NotificationPreferences } from "./policy";
+import { decideDeliveryToAll, deliveryAddresses, SKIP_REASON_TEXT, type NotificationPreferences } from "./policy";
 import {
   PermanentDeliveryError,
   resolveAllowlist,
@@ -107,6 +107,7 @@ export async function dispatchQueuedEmails(
 
   const rows = (data as ClaimedRow[] | null) ?? [];
   report.claimed = rows.length;
+  const personal = await personalAddresses(db, [...new Set(rows.map((row) => row.user_id))]);
 
   for (const row of rows) {
     const preferences: NotificationPreferences = {
@@ -116,12 +117,15 @@ export async function dispatchQueuedEmails(
       announcements: row.announcements,
     };
 
-    const decision = decideDelivery({
+    const recipients = deliveryAddresses([row.recipient, ...(personal.get(row.user_id) ?? [])]);
+    const decision = decideDeliveryToAll({
       type: row.notification_type,
-      recipient: row.recipient,
+      recipients,
       preferences,
       allowlist,
     });
+    // What the delivery trail records: every address it went to.
+    const recordedTo = (decision.send ? decision.to : recipients).join(", ") || null;
 
     if (!decision.send) {
       report.skipped += 1;
@@ -130,7 +134,7 @@ export async function dispatchQueuedEmails(
         .update({
           email_status: "skipped",
           email_skip_reason: SKIP_REASON_TEXT[decision.reason!],
-          email_recipient: row.recipient ?? null,
+          email_recipient: recordedTo,
           email_next_attempt_at: null,
         })
         .eq("id", row.id);
@@ -148,7 +152,7 @@ export async function dispatchQueuedEmails(
 
     try {
       const sent = await provider.send({
-        to: row.recipient!,
+        to: decision.to,
         subject: message.subject,
         html: message.html,
         text: message.text,
@@ -167,7 +171,7 @@ export async function dispatchQueuedEmails(
           .update({
             email_status: "skipped",
             email_skip_reason: `logged only — no mail provider configured (${provider.name})`,
-            email_recipient: row.recipient,
+            email_recipient: recordedTo,
             email_provider_id: `${provider.name}:${sent.id}`,
             email_next_attempt_at: null,
           })
@@ -181,7 +185,7 @@ export async function dispatchQueuedEmails(
         .update({
           email_status: "sent",
           email_sent_at: new Date().toISOString(),
-          email_recipient: row.recipient,
+          email_recipient: recordedTo,
           email_provider_id: `${provider.name}:${sent.id}`,
           email_error: null,
           email_next_attempt_at: null,
@@ -205,7 +209,7 @@ export async function dispatchQueuedEmails(
         .update({
           email_status: outcome.status,
           email_error: detail.slice(0, 500),
-          email_recipient: row.recipient,
+          email_recipient: recordedTo,
           email_next_attempt_at: outcome.nextAttemptAt?.toISOString() ?? null,
         })
         .eq("id", row.id);
@@ -221,4 +225,31 @@ export async function dispatchQueuedEmails(
   }
 
   return report;
+}
+
+/**
+ * The personal inboxes on record for each user: the email on a student's
+ * profile, a staff record's email, and the address the OSA typed when it
+ * created the account (where the setup link went). Three small reads per
+ * batch; a failed read only means that notice goes to fewer addresses.
+ */
+async function personalAddresses(db: ReturnType<typeof loose>, userIds: string[]): Promise<Map<string, string[]>> {
+  const found = new Map<string, string[]>();
+  if (userIds.length === 0) return found;
+  const add = (userId: string, address: string | null) => {
+    if (address) found.set(userId, [...(found.get(userId) ?? []), address]);
+  };
+
+  const [students, staff, invitations] = await Promise.all([
+    db.from("students").select("user_id, email_address").in("user_id", userIds),
+    db.from("staff").select("user_id, institutional_email").in("user_id", userIds),
+    db.from("account_invitations").select("user_id, delivery_email").in("user_id", userIds),
+  ]);
+  for (const result of [students, staff, invitations]) {
+    if (result.error) console.error("[notifications] personal address lookup failed", result.error);
+  }
+  for (const row of (students.data as Array<{ user_id: string; email_address: string | null }> | null) ?? []) add(row.user_id, row.email_address);
+  for (const row of (staff.data as Array<{ user_id: string; institutional_email: string | null }> | null) ?? []) add(row.user_id, row.institutional_email);
+  for (const row of (invitations.data as Array<{ user_id: string; delivery_email: string | null }> | null) ?? []) add(row.user_id, row.delivery_email);
+  return found;
 }

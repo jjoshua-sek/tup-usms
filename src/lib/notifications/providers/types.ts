@@ -8,7 +8,8 @@
  */
 
 export interface OutgoingEmail {
-  to: string;
+  /** One address, or several for one message (a student's TUP and personal inbox). */
+  to: string | string[];
   subject: string;
   html: string;
   text: string;

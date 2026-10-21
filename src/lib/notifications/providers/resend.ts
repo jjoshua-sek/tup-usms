@@ -34,7 +34,7 @@ export function createResendProvider(config: {
         },
         body: JSON.stringify({
           from: config.from,
-          to: [message.to],
+          to: [message.to].flat(),
           subject: message.subject,
           html: message.html,
           text: message.text,

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AlreadySignedIn } from "@/components/auth/already-signed-in";
 import { LoginForm } from "@/components/auth/login-form";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { isOfflineMode } from "@/lib/offline/mode";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -35,7 +36,7 @@ export default async function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <LoginForm offline={isOfflineMode()} />
     </Suspense>
   );
 }

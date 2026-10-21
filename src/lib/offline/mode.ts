@@ -25,6 +25,14 @@ export const OFFLINE_REFUSAL =
   "STARS is in offline mode, so this wasn't saved. Changes resume once the internet is back; until then, record it on the paper downtime form.";
 
 /**
+ * Shown when a sign-in fails on the offline copy. Students cannot sign in
+ * there at all (only staff passwords are copied), and a student with the
+ * right password would otherwise be told it is wrong.
+ */
+export const OFFLINE_SIGN_IN_FAILED =
+  "Wrong login ID or password. During an internet outage only OSA staff can sign in here; students, please use STARS online once the internet is back.";
+
+/**
  * Pages whose saves the proxy lets through offline (Phase 2). The actions
  * there decide for themselves: on ID Validation only "Validate at the
  * counter" works offline; every other decision still refuses.

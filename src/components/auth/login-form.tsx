@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { createClient } from "@/lib/supabase/client";
 import { recordSignIn } from "@/lib/accounts/account-actions";
+import { OFFLINE_SIGN_IN_FAILED } from "@/lib/offline/mode";
 import { announceSignIn, markTabOpen } from "@/components/auth/session-guard";
 import { toast } from "sonner";
 
@@ -28,7 +29,7 @@ import Link from "next/link";
  * - Redirect back to intended page after login
  * - Role-aware redirect (students → /dashboard, staff/admin → /staff/dashboard)
  */
-export function LoginForm() {
+export function LoginForm({ offline = false }: { offline?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
@@ -111,7 +112,10 @@ export function LoginForm() {
       });
 
       if (error || !authData.user) {
-        handleFailedAttempt("Invalid student number or password.");
+        // On the offline copy a student's correct password fails too (only
+        // staff passwords are copied), so say why. One message for both
+        // cases: telling them apart would show which numbers are students.
+        handleFailedAttempt(offline ? OFFLINE_SIGN_IN_FAILED : "Invalid student number or password.");
         return;
       }
 

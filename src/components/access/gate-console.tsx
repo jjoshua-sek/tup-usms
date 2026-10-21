@@ -22,6 +22,7 @@ import {
   updateGate,
 } from "@/app/staff/gates/actions";
 import { Button } from "@/components/ui/button";
+import { isGateOnline } from "@/lib/access/gate-status";
 import { formatManilaTime } from "@/lib/utils/time";
 
 export interface GateRow {
@@ -42,14 +43,6 @@ export interface GateRow {
 interface GateConsoleProps {
   gates: GateRow[];
   canManage: boolean;
-}
-
-/** A kiosk that hasn't checked in for three heartbeats is presumed down. */
-const ONLINE_WINDOW_MS = 3 * 60_000;
-
-export function isGateOnline(lastSeenAt: string | null): boolean {
-  if (!lastSeenAt) return false;
-  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS;
 }
 
 export function GateConsole({ gates, canManage }: GateConsoleProps) {

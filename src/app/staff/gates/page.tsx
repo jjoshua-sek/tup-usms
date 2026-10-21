@@ -3,9 +3,10 @@ import { DoorOpen, Lock, ShieldAlert, XCircle } from "lucide-react";
 
 import { AccessFeed, type AccessEventRow } from "@/components/access/access-feed";
 import { AnomalyList, type AnomalyRow } from "@/components/access/anomaly-list";
-import { GateConsole, isGateOnline, type GateRow } from "@/components/access/gate-console";
+import { GateConsole, type GateRow } from "@/components/access/gate-console";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
+import { GATE_CONSOLE_COLUMNS, isGateOnline } from "@/lib/access/gate-status";
 import { getAccessStaff } from "@/lib/access/guards";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -54,7 +55,7 @@ export default async function StaffGatesPage() {
     { count: allowedToday },
     { count: deniedToday },
   ] = await Promise.all([
-    db.from("access_gates").select("*").order("name", { ascending: true }),
+    db.from("access_gates").select(GATE_CONSOLE_COLUMNS).order("name", { ascending: true }),
     db
       .from("access_events")
       .select(

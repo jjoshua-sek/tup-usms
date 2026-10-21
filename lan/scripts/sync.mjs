@@ -30,6 +30,9 @@ const env = process.env;
 const EVERY_MS = Math.max(1, Number(env.SYNC_EVERY_MINUTES || 5)) * 60_000;
 const WORK = fs.mkdtempSync(path.join(os.tmpdir(), "stars-sync-"));
 const PHOTO_BUCKET = "student-photos";
+/** Tables only the copy has: never cleared by a refresh. */
+const LAN_ONLY_TABLES = ["offline_sync_state", "offline_outbox"];
+const UPLOAD_BATCH = 50;
 
 /** The only columns copied from auth.users and auth.identities. Naming
  * them keeps the copy working when the cloud and the LAN run different
@@ -117,7 +120,7 @@ BEGIN
   SELECT string_agg(format('%I.%I', schemaname, tablename), ', ')
     INTO tables
     FROM pg_tables
-   WHERE schemaname = 'public' AND tablename <> 'offline_sync_state';
+   WHERE schemaname = 'public' AND tablename NOT IN (${LAN_ONLY_TABLES.map((t) => `'${t}'`).join(", ")});
   IF tables IS NOT NULL THEN EXECUTE 'TRUNCATE ' || tables || ' CASCADE'; END IF;
 END $$;
 
@@ -171,6 +174,71 @@ SET session_replication_role = DEFAULT;
     ).trim() || 0,
   );
   return rows;
+}
+
+const sqlText = (value) =>
+  value === null || value === undefined ? "NULL" : `'${String(value).replace(/'/g, "''").slice(0, 500)}'`;
+
+const pendingCount = () =>
+  Number(lanSql("SELECT count(*) FROM public.offline_outbox WHERE status = 'pending';", "counting the outbox").trim() || 0);
+
+/**
+ * Sends what happened on the copy during the outage to the cloud, oldest
+ * first, in batches. Each record's answer is kept: applied, conflict (on the
+ * cloud's ID Validation review list) or rejected; "retry" leaves it waiting.
+ * Returns how many are still waiting.
+ */
+async function uploadOutbox() {
+  if (pendingCount() === 0) return { uploaded: 0, waiting: 0 };
+  if (!env.CLOUD_APP_URL || !env.OFFLINE_UPLOAD_KEY) {
+    throw new Error("OFFLINE_UPLOAD_KEY or CLOUD_APP_URL is not set in lan/.env, so offline actions cannot be uploaded.");
+  }
+
+  let uploaded = 0;
+  for (;;) {
+    const batch = JSON.parse(
+      lanSql(
+        `SELECT COALESCE(json_agg(t), '[]') FROM (SELECT id, kind, occurred_at, payload FROM public.offline_outbox WHERE status = 'pending' ORDER BY occurred_at LIMIT ${UPLOAD_BATCH}) t;`,
+        "reading the outbox",
+      ).trim() || "[]",
+    );
+    if (batch.length === 0) break;
+
+    const response = await fetch(`${env.CLOUD_APP_URL.replace(/\/$/, "")}/api/offline/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.OFFLINE_UPLOAD_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ records: batch.map((r) => ({ ...r, occurred_at: new Date(r.occurred_at).toISOString() })) }),
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!response.ok) {
+      throw new Error(`the cloud refused the upload (${response.status}): ${(await response.text()).slice(0, 200)}`);
+    }
+    const { results } = await response.json();
+
+    const done = results.filter((r) => r.outcome !== "retry");
+    const retry = results.filter((r) => r.outcome === "retry");
+    if (done.length > 0) {
+      const values = done.map((r) => `(${sqlText(r.id)}::uuid, ${sqlText(r.outcome)}, ${sqlText(r.detail)})`).join(", ");
+      lanSql(
+        `UPDATE public.offline_outbox o
+            SET status = v.status, detail = v.detail, uploaded_at = NOW(), attempts = o.attempts + 1, last_error = NULL
+           FROM (VALUES ${values}) AS v(id, status, detail)
+          WHERE o.id = v.id;`,
+        "recording upload answers",
+      );
+    }
+    if (retry.length > 0) {
+      const ids = retry.map((r) => `${sqlText(r.id)}::uuid`).join(", ");
+      lanSql(
+        `UPDATE public.offline_outbox SET attempts = attempts + 1, last_error = 'The cloud asked to send it again.' WHERE id IN (${ids});`,
+        "recording retries",
+      );
+    }
+    uploaded += done.length;
+    // Nothing settled in this batch: stop here and try again next round.
+    if (done.length === 0) break;
+  }
+  return { uploaded, waiting: pendingCount() };
 }
 
 async function copyPhotos() {
@@ -253,6 +321,20 @@ async function runOnce() {
     return false;
   }
   try {
+    // First what happened here offline, then the refresh: a refresh before
+    // the upload would show the cloud's older picture over it, and gates on
+    // the cloud would not know about an ID validated here.
+    let upload;
+    try {
+      upload = await uploadOutbox();
+      if (upload.uploaded) log(`uploaded ${upload.uploaded} offline action(s) to the cloud`);
+    } catch (error) {
+      throw new Error(`${pendingCount()} offline action(s) not uploaded yet, so the copy was not refreshed: ${error.message}`);
+    }
+    if (upload.waiting > 0) {
+      throw new Error(`${upload.waiting} offline action(s) still waiting to upload, so the copy was not refreshed.`);
+    }
+
     const rows = copyDatabase();
     let photos = 0;
     try {

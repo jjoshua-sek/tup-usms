@@ -24,6 +24,18 @@ export function isOfflineMode(env: Env = process.env): boolean {
 export const OFFLINE_REFUSAL =
   "STARS is in offline mode, so this wasn't saved. Changes resume once the internet is back; until then, record it on the paper downtime form.";
 
+/**
+ * Pages whose saves the proxy lets through offline (Phase 2). The actions
+ * there decide for themselves: on ID Validation only "Validate at the
+ * counter" works offline; every other decision still refuses.
+ */
+export const OFFLINE_ACTION_PAGES = ["/staff/id-validation"] as const;
+
+export function offlineAllowsActionOn(pathname: string): boolean {
+  const page = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return (OFFLINE_ACTION_PAGES as readonly string[]).includes(page);
+}
+
 /** API calls that only read, or keep a session alive, still work offline. */
 export function offlineAllowsApi(method: string, pathname: string): boolean {
   if (method === "GET" || method === "HEAD") return true;

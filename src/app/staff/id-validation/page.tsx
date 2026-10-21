@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BadgeCheck, Clock, IdCard, Search, ShieldX } from "lucide-react";
 
 import { CounterValidateForm } from "@/components/id-validation/counter-validate-form";
+import { OfflineReviewButton } from "@/components/id-validation/offline-review-button";
 import { ReviewControls } from "@/components/id-validation/review-controls";
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
@@ -9,6 +10,8 @@ import { ToneBadge } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { getCurrentTerm } from "@/lib/access/term";
+import { isOfflineMode } from "@/lib/offline/mode";
+import { OFFLINE_UPLOAD_COLUMNS, offlineMoment } from "@/lib/offline/upload-rules";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { searchTokens, tokenFilter } from "@/lib/students/search";
 import { loose } from "@/lib/supabase/loose";
@@ -50,6 +53,16 @@ const VALIDATION_COLUMNS =
 
 /** How many rows each list shows; the counts above them are exact. */
 const LIST_LIMIT = 50;
+
+/** Offline, open requests in these states are completed with the counter form (it is kept for upload). */
+const OFFLINE_COUNTER_STATUSES = new Set<IdValidationStatus>(["pending", "under_review", "rejected", "expired"]);
+
+interface OfflineReviewRow {
+  id: string;
+  occurred_at: string;
+  detail: string | null;
+  students: { first_name: string; last_name: string; student_number: string } | null;
+}
 
 /** Which actions make sense from each state. */
 type Decision = "validate" | "reject" | "suspend" | "revoke" | "reinstate" | "surrender";
@@ -103,7 +116,8 @@ export default async function StaffIdValidationPage({
   const db = loose(await createClient());
   const term = getCurrentTerm();
 
-  const [queueResult, flaggedResult, validatedResult] = await Promise.all([
+  const offline = isOfflineMode();
+  const [queueResult, flaggedResult, validatedResult, reviewResult] = await Promise.all([
     db
       .from("id_validations")
       .select(VALIDATION_COLUMNS, { count: "exact" })
@@ -126,7 +140,18 @@ export default async function StaffIdValidationPage({
       .eq("status", "validated")
       .order("validated_at", { ascending: false })
       .limit(LIST_LIMIT),
+    // Records from the offline copy the cloud could not apply as they were.
+    // Not on the copy itself, and empty until migration 00034 runs.
+    offline
+      ? Promise.resolve({ data: [] })
+      : db
+          .from("offline_uploads")
+          .select(OFFLINE_UPLOAD_COLUMNS)
+          .eq("review_status", "open")
+          .order("occurred_at", { ascending: true })
+          .limit(LIST_LIMIT),
   ]);
+  const reviews = ((reviewResult as { data: unknown }).data as OfflineReviewRow[] | null) ?? [];
 
   const queue = (queueResult.data as ValidationRow[] | null) ?? [];
   const flagged = (flaggedResult.data as ValidationRow[] | null) ?? [];
@@ -239,6 +264,8 @@ export default async function StaffIdValidationPage({
                       <p className="max-w-[260px] text-[12px] text-muted-foreground">
                         No profile photo on file. The student must add one before the ID can be validated.
                       </p>
+                    ) : record && offline && OFFLINE_COUNTER_STATUSES.has(record.status) ? (
+                      <CounterValidateForm studentId={student.id} termLabel={term.label} />
                     ) : record ? (
                       DECISIONS[record.status].length > 0 ? (
                         <ReviewControls validationId={record.id} decisions={DECISIONS[record.status]} />
@@ -254,6 +281,32 @@ export default async function StaffIdValidationPage({
             </ul>
           ))}
       </Section>
+
+      {reviews.length > 0 && (
+        <Section
+          title="From the offline copy: needs review"
+          count={reviews.length}
+          note="Validated at the counter while STARS was offline, but the cloud record had changed meanwhile, so it was not applied. Decide on the student's record below, then mark it reviewed."
+        >
+          <ul className="space-y-2">
+            {reviews.map((review) => (
+              <li key={review.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50/60 p-4 dark:border-amber-800 dark:bg-amber-950/20">
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-[15px] font-semibold">
+                    {review.students ? `${review.students.first_name} ${review.students.last_name}` : "Unknown student"}
+                    {review.students && (
+                      <span className="ml-2 font-mono text-[12px] font-normal text-muted-foreground">{review.students.student_number}</span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[13px]">{review.detail}</p>
+                  <p className="mt-1 text-[12px] text-muted-foreground">Happened offline on {offlineMoment(review.occurred_at)}</p>
+                </div>
+                <OfflineReviewButton uploadId={review.id} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       <Section
         title="Requests from students"

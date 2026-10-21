@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { GATE_CORS_HEADERS, gatePreflight } from "@/lib/access/cors";
 import { authenticateGateRequest, touchGate } from "@/lib/access/gate-request";
 import { verifyScan } from "@/lib/access/verify";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
@@ -22,9 +23,14 @@ const bodySchema = z.object({
   direction: z.enum(["entry", "exit"]).optional(),
 });
 
+// Every answer carries the CORS headers: a kiosk may be calling from the
+// cloud's page or the offline copy's (lib/access/cors.ts).
 const NO_STORE = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
+  ...GATE_CORS_HEADERS,
 } as const;
+
+export const OPTIONS = gatePreflight;
 
 export async function POST(request: Request) {
   const startedAt = Date.now();

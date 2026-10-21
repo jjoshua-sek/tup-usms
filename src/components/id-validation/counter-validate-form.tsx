@@ -20,10 +20,12 @@ export function CounterValidateForm({ studentId, termLabel }: { studentId: strin
         startTransition(async () => {
           const result = await validateAtCounter(formData);
           if (result.error) toast.error(result.error);
-          else toast.success("Validated. The ID opens the gates now, and the student has been notified.");
+          else toast.success(result.message ?? "Validated. The ID opens the gates now, and the student has been notified.");
         })
       }
       className="flex flex-wrap items-center gap-2"
+      // The one save that works on the offline copy (it waits in the outbox).
+      data-offline-allowed
     >
       <input type="hidden" name="student_id" value={studentId} />
       <label htmlFor={`sticker-${studentId}`} className="sr-only">

@@ -11,12 +11,18 @@
 
 import { NextResponse } from "next/server";
 
+import { GATE_CORS_HEADERS, gatePreflight } from "@/lib/access/cors";
 import { authenticateGateRequest, touchGate } from "@/lib/access/gate-request";
 import { getCurrentTerm } from "@/lib/access/term";
 
+// Every answer carries the CORS headers: a kiosk may be calling from the
+// cloud's page or the offline copy's (lib/access/cors.ts).
 const NO_STORE = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
+  ...GATE_CORS_HEADERS,
 } as const;
+
+export const OPTIONS = gatePreflight;
 
 export async function POST(request: Request) {
   const auth = await authenticateGateRequest(request);

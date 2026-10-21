@@ -76,6 +76,8 @@ services:
         NEXT_PUBLIC_SUPABASE_URL: https://${LAN_HOST}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
         NEXT_PUBLIC_APP_URL: https://${LAN_HOST}
+        # A kiosk opened from the copy tries the cloud first (Phase 2).
+        NEXT_PUBLIC_CLOUD_APP_URL: ${CLOUD_APP_URL:-https://tup-usms.vercel.app}
     restart: unless-stopped
     environment:
       STARS_OFFLINE: "true"
@@ -106,6 +108,10 @@ services:
       LAN_API_URL: http://api-gw:8000
       LAN_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
       LAN_PUBLIC_URL: https://${LAN_HOST}
+      # Where the outbox goes once the internet is back (Phase 2). The same
+      # OFFLINE_UPLOAD_KEY must be set in Vercel.
+      CLOUD_APP_URL: ${CLOUD_APP_URL:-https://tup-usms.vercel.app}
+      OFFLINE_UPLOAD_KEY: ${OFFLINE_UPLOAD_KEY}
       # The nightly backup (lan/scripts/backup.mjs), encrypted with this.
       BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE}
       TZ: Asia/Manila

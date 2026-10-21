@@ -16,6 +16,7 @@
 
 import "server-only";
 
+import { isOfflineMode } from "@/lib/offline/mode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import type { IdValidationStatus } from "@/types/osa";
@@ -216,6 +217,8 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
     lastEvent,
     lastAllowed,
     now,
+    // On the offline copy: flag, rather than deny, what only the cloud can see.
+    fallback: isOfflineMode(),
   });
 
   const gateOpened =
@@ -251,6 +254,27 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
     .select("id")
     .maybeSingle();
   eventId = (inserted as { id: string } | null)?.id ?? null;
+
+  // On the offline copy, every turnstile scan also waits in the outbox, to be
+  // uploaded to the cloud (the official record) once the internet is back.
+  if (isOfflineMode() && input.context === "turnstile") {
+    const { error: outboxError } = await db.from("offline_outbox").insert({
+      kind: "gate_scan",
+      occurred_at: now.toISOString(),
+      payload: {
+        student_number: parsed.studentNumber ?? null,
+        scanned_payload: input.payload.slice(0, 64),
+        gate_id: input.gate?.id ?? null,
+        gate_label: gateLabel,
+        direction,
+        decision: verdict.decision,
+        reason: verdict.reason,
+        gate_opened: gateOpened,
+        enforced,
+      },
+    });
+    if (outboxError) console.error("[access] offline scan not queued for upload", outboxError);
+  }
 
   // ---- 6. Anomalies ----
   const anomalies = [...verdict.anomalies];

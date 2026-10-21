@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { defaultTermExpiry, getCurrentTerm } from "@/lib/access/term";
+import { OFFLINE_REFUSAL, isOfflineMode } from "@/lib/offline/mode";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
@@ -13,6 +14,8 @@ import type { IdValidationStatus } from "@/types/osa";
 interface Result {
   ok?: boolean;
   error?: string;
+  /** Shown on success instead of the usual line (the offline copy has its own). */
+  message?: string;
 }
 
 const reviewSchema = z.object({
@@ -79,6 +82,8 @@ const DECISION_MAP: Record<
  * also writes a notification to the student's own user id.
  */
 export async function reviewIdValidation(formData: FormData): Promise<Result> {
+  // Offline, only "Validate at the counter" is kept for upload (Phase 2).
+  if (isOfflineMode()) return { error: OFFLINE_REFUSAL };
   const staff = await getStaffContext();
   if (!staff?.isOsa) return { error: "Only OSA staff can review ID validations." };
 
@@ -257,6 +262,34 @@ export async function validateAtCounter(formData: FormData): Promise<Result> {
     validationId = (inserted as { id: string }).id;
   }
 
+  // On the offline copy the validation counts at once (the gates here read
+  // it) and waits in the outbox; the cloud applies it, notifies the student
+  // and writes the audit entry when it is uploaded.
+  if (isOfflineMode()) {
+    const { error: outboxError } = await db.from("offline_outbox").insert({
+      kind: "id_validation",
+      occurred_at: now.toISOString(),
+      payload: {
+        student_id: student.id,
+        student_number: student.student_number,
+        school_year: term.schoolYear,
+        semester: term.semester,
+        sticker_number: parsed.data.sticker_number || null,
+        validated_by_staff_id: staff.staffId,
+        validated_by_user_id: staff.userId,
+      },
+    });
+    if (outboxError) {
+      console.error("[id-validation] offline validation not queued", outboxError);
+      return { error: "Validated here, but it could not be queued for upload. Record it on the paper downtime form too." };
+    }
+    revalidateValidationPages();
+    return {
+      ok: true,
+      message: "Validated on the offline copy. The ID opens the gates now; the student is notified once the internet is back.",
+    };
+  }
+
   await notifyStudent(db, student.user_id, DECISION_MAP.validate, "", validationId);
 
   await logAuditEvent(staff.userId, "id_validation_reviewed", "id_validations", {
@@ -266,6 +299,39 @@ export async function validateAtCounter(formData: FormData): Promise<Result> {
     had_request: Boolean(existing),
   });
 
+  revalidateValidationPages();
+  return { ok: true };
+}
+
+const resolveSchema = z.object({ upload_id: z.string().uuid() });
+
+/**
+ * Takes an item off the review list of records from the offline copy (an ID
+ * validated offline while the cloud had suspended it). Marking it reviewed
+ * changes nothing else: a reinstatement, if warranted, is its own decision
+ * on the student's record.
+ */
+export async function resolveOfflineReview(formData: FormData): Promise<Result> {
+  if (isOfflineMode()) return { error: OFFLINE_REFUSAL };
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can review records from the offline copy." };
+  const parsed = resolveSchema.safeParse({ upload_id: formData.get("upload_id") });
+  if (!parsed.success) return { error: "Invalid item." };
+
+  const db = loose(createAdminClient());
+  const { data, error } = await db
+    .from("offline_uploads")
+    .update({ review_status: "resolved", resolved_by: staff.staffId, resolved_at: new Date().toISOString() })
+    .eq("id", parsed.data.upload_id)
+    .eq("review_status", "open")
+    .select("id");
+  if (error) return { error: "Could not update the review list." };
+  if (((data as unknown[] | null) ?? []).length === 0) return { error: "Someone already marked this reviewed." };
+
+  await logAuditEvent(staff.userId, "id_validation_reviewed", "offline_uploads", {
+    upload_id: parsed.data.upload_id,
+    decision: "offline_conflict_reviewed",
+  });
   revalidateValidationPages();
   return { ok: true };
 }

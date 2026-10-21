@@ -21,14 +21,17 @@ export async function OfflineBanner() {
   await connection();
 
   let lastRefresh: Date | null = null;
+  let waiting = 0;
   try {
-    const { data } = await loose(createAdminClient())
-      .from("offline_sync_state")
-      .select("last_success_at")
-      .eq("id", 1)
-      .maybeSingle();
+    const db = loose(createAdminClient());
+    const [{ data }, { count }] = await Promise.all([
+      db.from("offline_sync_state").select("last_success_at").eq("id", 1).maybeSingle(),
+      // Gate scans and counter validations made here, not yet in the cloud.
+      db.from("offline_outbox").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    ]);
     const value = (data as { last_success_at: string | null } | null)?.last_success_at;
     lastRefresh = value ? new Date(value) : null;
+    waiting = count ?? 0;
   } catch {
     // No state table yet: shown as "not yet copied", which is the truth.
   }
@@ -45,8 +48,14 @@ export async function OfflineBanner() {
     >
       <WifiOff className="h-4 w-4 shrink-0" aria-hidden />
       <span>
-        Offline mode · {asOf}. Look-ups only: changes wait for the internet, so record them on the paper downtime form.
+        Offline mode · {asOf}. Look-ups, gate scans and counter validation only: record anything else on the paper
+        downtime form.
       </span>
+      {waiting > 0 && (
+        <span className="rounded-full bg-white/20 px-2 py-0.5 font-semibold">
+          {waiting} waiting to upload
+        </span>
+      )}
       {stale && <span className="font-semibold">Records may be out of date. Confirm suspensions with the OSA head.</span>}
     </div>
   );

@@ -27,6 +27,11 @@ export async function alertOsaOfGateAnomaly(
     gateLabel: string;
     /** False when a later check (an expired validation, another gate) refused it. */
     letThrough: boolean;
+    /**
+     * When the scan happened on the offline copy and reached the cloud only
+     * later ("Oct 21, 10:47 AM"), so staff do not mistake it for a new scan.
+     */
+    offlineAt?: string;
   },
 ): Promise<void> {
   const { data: anomaly } = await db
@@ -47,14 +52,13 @@ export async function alertOsaOfGateAnomaly(
   }
 
   const who = [input.studentName, input.studentNumber && `(${input.studentNumber})`].filter(Boolean).join(" ") || "A student";
-  const title =
-    input.status === "suspended"
-      ? `Suspended ID ${input.letThrough ? "used" : "refused"} at ${input.gateLabel}`
-      : `Revoked ID refused at ${input.gateLabel}`;
+  const verb = input.letThrough ? "used" : "refused";
+  const title = `${input.status === "suspended" ? "Suspended" : "Revoked"} ID ${verb} at ${input.gateLabel}${input.offlineAt ? " (offline)" : ""}`;
+  const when = input.offlineAt ? `While STARS was offline, on ${input.offlineAt}, ` : "";
   const body =
     input.status === "suspended"
-      ? `${who} ${input.letThrough ? "was let through" : "was refused for another reason"} with a suspended ID. Follow up with the student, then mark the alert reviewed on Gates & Access.`
-      : `${who}'s ID is reported lost or stolen and was refused. Whoever holds the card may not be its owner. Mark the alert reviewed on Gates & Access once handled.`;
+      ? `${when}${who} ${input.letThrough ? "was let through" : "was refused for another reason"} with a suspended ID. Follow up with the student, then mark the alert reviewed on Gates & Access.`
+      : `${when}${who}'s ID, reported lost or stolen, ${input.letThrough ? "was let through: the offline copy did not know yet" : "was refused"}. Whoever holds the card may not be its owner. Mark the alert reviewed on Gates & Access once handled.`;
 
   for (const row of (staffRows as Array<{ user_id: string }> | null) ?? []) {
     const { error: notifyError } = await db.rpc("create_notification", {

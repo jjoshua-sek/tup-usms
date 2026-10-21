@@ -1,12 +1,23 @@
 import { describe, expect, it } from "vitest";
 
-import { isOfflineMode, offlineAllowsApi, offlineBannerState } from "./mode";
+import { isOfflineMode, offlineAllowsActionOn, offlineAllowsApi, offlineBannerState } from "./mode";
 
 describe("isOfflineMode", () => {
   it("is on only when STARS_OFFLINE is true", () => {
     expect(isOfflineMode({})).toBe(false);
     expect(isOfflineMode({ STARS_OFFLINE: "false" })).toBe(false);
     expect(isOfflineMode({ STARS_OFFLINE: " TRUE " })).toBe(true);
+  });
+});
+
+describe("offlineAllowsActionOn", () => {
+  // Only "Validate at the counter" is kept for upload; the page's other
+  // actions refuse by themselves.
+  it("lets saves through on the ID Validation page only", () => {
+    expect(offlineAllowsActionOn("/staff/id-validation")).toBe(true);
+    expect(offlineAllowsActionOn("/staff/id-validation/")).toBe(true);
+    expect(offlineAllowsActionOn("/staff/cases")).toBe(false);
+    expect(offlineAllowsActionOn("/")).toBe(false);
   });
 });
 

@@ -120,11 +120,20 @@ setEnv(LAN_ENV, {
   // Encrypts the nightly backups. Store it somewhere safe, away from this
   // machine: without it no backup can be opened.
   ...(existing.BACKUP_PASSPHRASE ? {} : { BACKUP_PASSPHRASE: crypto.randomBytes(24).toString("base64url") }),
+  // Phase 2: where the outbox goes once the internet is back, and the key
+  // that proves it comes from this copy. Set the same OFFLINE_UPLOAD_KEY in
+  // Vercel (Settings → Environment Variables), or uploads are refused.
+  ...(existing.CLOUD_APP_URL ? {} : { CLOUD_APP_URL: "https://tup-usms.vercel.app" }),
+  ...(existing.OFFLINE_UPLOAD_KEY ? {} : { OFFLINE_UPLOAD_KEY: crypto.randomBytes(32).toString("base64url") }),
 });
 
-const missing = readEnv(LAN_ENV).CLOUD_DB_URL ? "" :
-  "\n  Before the first copy, open lan/.env and set CLOUD_DB_URL to the cloud database's\n" +
-  "  Session pooler connection string (Supabase dashboard → Connect → Session pooler).\n";
+const missing =
+  (readEnv(LAN_ENV).CLOUD_DB_URL
+    ? ""
+    : "\n  Before the first copy, open lan/.env and set CLOUD_DB_URL to the cloud database's\n" +
+      "  Session pooler connection string (Supabase dashboard → Connect → Session pooler).\n") +
+  "\n  So offline gate scans and ID validations reach the cloud: copy OFFLINE_UPLOAD_KEY from\n" +
+  "  lan/.env into Vercel → Settings → Environment Variables (same name), then redeploy.\n";
 
 console.log(`
 ✓ Ready. STARS offline copy will answer at ${publicUrl}

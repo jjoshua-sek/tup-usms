@@ -12,6 +12,7 @@ import {
   QrCode,
   ScanLine,
   Settings,
+  Server,
   ShieldAlert,
   WifiOff,
   X,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { CameraScanner } from "@/components/access/camera-scanner";
+import { attemptOrder, isUsableResponse, kioskBases, normalizeLanUrl, type Endpoint } from "@/lib/access/kiosk-endpoints";
 import {
   connectSerialRelay,
   relayIsSupported,
@@ -32,6 +34,10 @@ import { formatManila } from "@/lib/utils/time";
 
 /** Where the paired device key lives. Never leaves this browser. */
 const STORAGE_KEY = "usms.gate.deviceKey";
+/** The OSA's offline copy, tried when the cloud does not answer. */
+const LAN_URL_KEY = "stars.gate.lanUrl";
+/** Built into the offline copy only: the cloud to try first from there. */
+const CLOUD_APP_URL = process.env.NEXT_PUBLIC_CLOUD_APP_URL;
 const HEARTBEAT_MS = 60_000;
 /** A scan burst from a USB wedge finishes in well under this. */
 const WEDGE_IDLE_RESET_MS = 400;
@@ -86,6 +92,11 @@ export function GateKiosk() {
   const [showSettings, setShowSettings] = useState(false);
   const [relayNote, setRelayNote] = useState<string | null>(null);
   const [tally, setTally] = useState({ allowed: 0, denied: 0 });
+  const [lanUrl, setLanUrl] = useState<string | null>(null);
+  const [lanInput, setLanInput] = useState("");
+  const [lanError, setLanError] = useState<string | null>(null);
+  /** Which answered last: the cloud, or the offline copy. */
+  const [via, setVia] = useState<Endpoint | null>(null);
 
   const deviceKeyRef = useRef<string | null>(null);
   const gateRef = useRef<GateConfig | null>(null);
@@ -94,6 +105,45 @@ export function GateKiosk() {
   const lastKeystrokeRef = useRef(0);
   const lastPayloadRef = useRef<{ payload: string; at: number } | null>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lanUrlRef = useRef<string | null>(null);
+  const cloudFailedAtRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem(LAN_URL_KEY);
+    } catch {
+      // Blocked storage: the copy's address is asked for again each session.
+    }
+    lanUrlRef.current = saved;
+    setLanUrl(saved);
+    setLanInput(saved ?? "");
+  }, []);
+
+  /**
+   * One request to the gate API: the cloud first, then the offline copy
+   * (lib/access/kiosk-endpoints.ts says in what order and how long to
+   * wait). A rejected key is an answer; only no answer, or a server error,
+   * moves on to the other.
+   */
+  const callGate = useCallback(async (path: string, init: RequestInit): Promise<Response> => {
+    const bases = kioskBases(CLOUD_APP_URL, lanUrlRef.current);
+    let lastError: unknown = new Error("No gate server configured.");
+    for (const { endpoint, timeoutMs } of attemptOrder(bases, cloudFailedAtRef.current, Date.now())) {
+      const base = endpoint === "cloud" ? bases.cloud : bases.lan;
+      try {
+        const response = await fetch(`${base}${path}`, { ...init, cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
+        if (!isUsableResponse(response.status)) throw new Error(`${endpoint} answered ${response.status}`);
+        if (endpoint === "cloud") cloudFailedAtRef.current = null;
+        setVia(endpoint);
+        return response;
+      } catch (error) {
+        if (endpoint === "cloud") cloudFailedAtRef.current = Date.now();
+        lastError = error;
+      }
+    }
+    throw lastError;
+  }, []);
 
   useEffect(() => {
     gateRef.current = gate;
@@ -110,10 +160,9 @@ export function GateKiosk() {
   const heartbeat = useCallback(
     async (key: string): Promise<{ ok: boolean; message?: string }> => {
       try {
-        const response = await fetch("/api/access/heartbeat", {
+        const response = await callGate("/api/access/heartbeat", {
           method: "POST",
           headers: { Authorization: `Bearer ${key}` },
-          cache: "no-store",
         });
 
         if (!response.ok) {
@@ -127,7 +176,7 @@ export function GateKiosk() {
         return { ok: false, message: `Cannot reach the ${APP_NAME} server.` };
       }
     },
-    [applyHeartbeat],
+    [applyHeartbeat, callGate],
   );
 
   // Restore a previous pairing on load.
@@ -184,6 +233,24 @@ export function GateKiosk() {
     setOnline(true);
   };
 
+  const saveLanUrl = () => {
+    const value = lanInput.trim() ? normalizeLanUrl(lanInput) : null;
+    if (lanInput.trim() && !value) {
+      setLanError("Enter the copy's https address, e.g. https://192.168.137.1");
+      return;
+    }
+    try {
+      if (value) window.localStorage.setItem(LAN_URL_KEY, value);
+      else window.localStorage.removeItem(LAN_URL_KEY);
+    } catch {
+      // Still used for this session.
+    }
+    lanUrlRef.current = value;
+    setLanUrl(value);
+    setLanInput(value ?? "");
+    setLanError(null);
+  };
+
   const handleUnpair = () => {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -216,15 +283,13 @@ export function GateKiosk() {
 
       let scan: KioskScanResult;
       try {
-        const response = await fetch("/api/access/verify", {
+        const response = await callGate("/api/access/verify", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${key}`,
             "Content-Type": "application/json",
           },
-          cache: "no-store",
           body: JSON.stringify({ payload }),
-          signal: AbortSignal.timeout(8_000),
         });
 
         scan = (await response.json()) as KioskScanResult;
@@ -275,7 +340,7 @@ export function GateKiosk() {
         scan.decision === "allow" ? RESULT_HOLD_ALLOW_MS : RESULT_HOLD_DENY_MS,
       );
     },
-    [termLabel],
+    [termLabel, callGate],
   );
 
   // USB scanners are keyboard wedges: they "type" the payload fast and press
@@ -475,6 +540,11 @@ export function GateKiosk() {
         </div>
 
         <div className="flex items-center gap-3">
+          {online && via === "lan" && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 font-medium text-amber-100">
+              <Server className="h-3 w-3" /> Offline copy
+            </span>
+          )}
           {!online && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 font-medium text-red-100">
               <WifiOff className="h-3 w-3" /> Offline
@@ -548,6 +618,39 @@ export function GateKiosk() {
             <SettingRow label="Anti-passback" value={gate?.anti_passback ?? "—"} />
             <SettingRow label="Relay" value={gate?.relay_mode ?? "none"} />
           </dl>
+
+          {CLOUD_APP_URL ? (
+            <p className="mb-4 rounded-lg border border-white/10 bg-white/5 p-2.5 leading-relaxed text-white/60">
+              Opened from the offline copy. Scans go to the cloud first and come here when it does not answer.
+            </p>
+          ) : (
+            <div className="mb-4">
+              <label htmlFor="lan-url" className="mb-1 block font-medium text-white/70">
+                Offline copy address
+              </label>
+              <div className="flex gap-1.5">
+                <input
+                  id="lan-url"
+                  value={lanInput}
+                  onChange={(event) => setLanInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") saveLanUrl();
+                  }}
+                  placeholder="https://192.168.137.1"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="min-w-0 flex-1 rounded-md border border-white/15 bg-black/40 px-2 py-1.5 font-mono text-[11px] text-white placeholder:text-white/30 focus:border-tup-gold-500 focus:outline-none"
+                />
+                <button type="button" onClick={saveLanUrl} className="rounded-md border border-white/15 px-2 font-medium hover:bg-white/10">
+                  Save
+                </button>
+              </div>
+              <p className="mt-1 text-white/45">
+                {lanUrl ? `If the cloud does not answer in 3 s, scans go to ${lanUrl}.` : "Not set: without internet this gate cannot check IDs."}
+              </p>
+              {lanError && <p className="mt-1 text-red-300">{lanError}</p>}
+            </div>
+          )}
 
           <button
             type="button"

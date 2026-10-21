@@ -10,7 +10,7 @@ import {
   sessionIdFromAccessToken,
   sessionKindForRole,
 } from "@/lib/auth/session-policy";
-import { OFFLINE_REFUSAL, isOfflineMode, offlineAllowsApi } from "@/lib/offline/mode";
+import { OFFLINE_REFUSAL, isOfflineMode, offlineAllowsActionOn, offlineAllowsApi } from "@/lib/offline/mode";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // Routes that don't require authentication. /auth/confirm is where a
@@ -25,12 +25,14 @@ const PUBLIC_ROUTES = ["/login", "/reset-password", "/auth/callback", "/auth/con
  *   /api/access/        — gate endpoints; Bearer device key
  *   /api/notifications/ — the email dispatcher; Bearer CRON_SECRET, called
  *                         by pg_cron from Supabase (migration 00019 §6)
+ *   /api/offline/       — uploads from the offline LAN copy; Bearer
+ *                         OFFLINE_UPLOAD_KEY
  *
  * These are checked before `updateSession()` so a caller with no cookies is
  * never redirected to /login. A cron job cannot follow a redirect to a login
  * form, so without this the queue silently stops draining.
  */
-const MACHINE_ROUTES = ["/kiosk", "/api/access/", "/api/notifications/"];
+const MACHINE_ROUTES = ["/kiosk", "/api/access/", "/api/notifications/", "/api/offline/"];
 
 // Student-facing route prefixes (OSA System).
 const STUDENT_ROUTES = [
@@ -188,9 +190,10 @@ export async function middleware(request: NextRequest) {
   // ---- Offline mode (the LAN copy) -----------------------------------
   // The LAN copy is read-only: the next five-minute refresh from the cloud
   // would overwrite anything saved here. Every save is refused in words,
-  // including the sign-in record from /login (login-form.tsx tolerates it).
+  // including the sign-in record from /login (login-form.tsx tolerates it),
+  // except on the pages that keep their saves in the outbox for upload.
   if (isOfflineMode()) {
-    if (isAction) return respond(session.carry(refuseAction(503, OFFLINE_REFUSAL)));
+    if (isAction && !offlineAllowsActionOn(pathname)) return respond(session.carry(refuseAction(503, OFFLINE_REFUSAL)));
     if (isApi && !offlineAllowsApi(request.method, pathname)) {
       return respond(session.json({ error: OFFLINE_REFUSAL }, { status: 503 }));
     }

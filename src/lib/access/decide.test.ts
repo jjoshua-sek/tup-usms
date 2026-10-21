@@ -54,6 +54,26 @@ describe("decideAccess", () => {
     expect(verdict.anomalies.map((a) => a.type)).toEqual(["scan_while_suspended"]);
   });
 
+  // On the offline copy, the "other gate" or the missing exit may be a scan
+  // only the cloud has seen: flag it, never turn the student away for it.
+  it("only flags concurrent use and passback on the offline copy", () => {
+    const elsewhere = { gateId: "gate-2", direction: "entry" as const, decision: "allow" as const, occurredAt: "2026-10-14T00:29:30Z" };
+    // An entry right after an entry elsewhere: both flags, neither denies.
+    expect(decideAccess(facts({ lastAllowed: elsewhere, fallback: true }))).toMatchObject({
+      decision: "allow",
+      anomalies: expect.arrayContaining([expect.objectContaining({ type: "concurrent_use" })]),
+    });
+    expect(decideAccess(facts({ lastAllowed: elsewhere }))).toMatchObject({ decision: "deny", reason: "concurrent_use" });
+
+    const enteredEarlier = { gateId: "gate-1", direction: "entry" as const, decision: "allow" as const, occurredAt: "2026-10-13T22:00:00Z" };
+    const hardGate = { id: "gate-1", isActive: true, enforcementMode: "enforce" as const, antiPassback: "hard" as const };
+    expect(decideAccess(facts({ gate: hardGate, lastAllowed: enteredEarlier }))).toMatchObject({ decision: "deny", reason: "passback" });
+    expect(decideAccess(facts({ gate: hardGate, lastAllowed: enteredEarlier, fallback: true }))).toMatchObject({
+      decision: "allow",
+      anomalies: [expect.objectContaining({ type: "passback_violation" })],
+    });
+  });
+
   it("refuses an ID not validated this term, without an anomaly", () => {
     expect(decideAccess(facts({ validation: null }))).toMatchObject({ decision: "deny", reason: "not_validated", anomalies: [] });
     expect(decideAccess(facts({ validation: { status: "surrendered", expiresAt: null } }))).toMatchObject({

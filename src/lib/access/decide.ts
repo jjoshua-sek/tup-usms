@@ -206,6 +206,13 @@ export interface PolicyFacts {
   /** Most recent *allowed* turnstile event for this student, any gate. */
   lastAllowed: PriorEvent | null;
   now: Date;
+  /**
+   * The scan is being decided on the offline LAN copy. It cannot see scans
+   * made at gates still on the cloud, so "used at another gate" and "entered
+   * twice" only flag instead of denying; the cloud checks them again when
+   * the scan is uploaded.
+   */
+  fallback?: boolean;
 }
 
 export interface PolicyVerdict {
@@ -303,8 +310,9 @@ export function decideAccess(facts: PolicyFacts): PolicyVerdict {
       },
     });
     // Always denied: one person cannot be at two gates at once, so at least
-    // one of the two scans is not the cardholder.
-    return deny("concurrent_use");
+    // one of the two scans is not the cardholder. Offline, the other scan may
+    // be one this copy has not seen, so it is flagged instead.
+    if (!facts.fallback) return deny("concurrent_use");
   }
 
   // ---- Anti-passback: entry after entry, no exit in between ----
@@ -325,7 +333,7 @@ export function decideAccess(facts: PolicyFacts): PolicyVerdict {
       },
     });
 
-    if (facts.gate.antiPassback === "hard") return deny("passback");
+    if (facts.gate.antiPassback === "hard" && !facts.fallback) return deny("passback");
     // Soft mode: let them in, flag it for OSA. Real exits are often missed
     // because only some lanes have exit readers.
   }

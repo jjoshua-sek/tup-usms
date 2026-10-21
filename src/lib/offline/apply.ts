@@ -2,6 +2,7 @@ import "server-only";
 
 import type { PriorEvent } from "@/lib/access/decide";
 import { alertOsaOfGateAnomaly } from "@/lib/access/alerts";
+import { MISSING_COLUMN } from "@/lib/access/verify";
 import { defaultTermExpiry, getCurrentTerm } from "@/lib/access/term";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose, type LooseClient } from "@/lib/supabase/loose";
@@ -103,6 +104,26 @@ async function termValidation(db: LooseClient, studentId: string, at: Date) {
 async function applyGateScan(db: LooseClient, record: GateScanUpload) {
   const scan = record.payload;
   const at = new Date(record.occurred_at);
+  const when = offlineMoment(record.occurred_at);
+
+  // The kiosk gave up waiting for the cloud and asked the copy, but the
+  // cloud still answered: it already has this scan, decided with its own
+  // records, so its event stands and the copy's is not added.
+  const alreadyRecorded = {
+    outcome: "applied" as const,
+    detail: `Scan at ${scan.gate_label} on ${when} was already recorded by the cloud; the cloud's record was kept.`,
+    studentId: null,
+    review: false,
+  };
+  // Before migration 00035 the cloud has no scan ids: record it as before.
+  let scanId = scan.scan_id ?? null;
+  if (scanId) {
+    const { data: existing, error: lookupError } = await db.from("access_events").select("id").eq("scan_id", scanId).maybeSingle();
+    if (lookupError && MISSING_COLUMN.has(lookupError.code ?? "")) scanId = null;
+    else if (lookupError) throw lookupError;
+    else if (existing) return alreadyRecorded;
+  }
+
   const student = await findStudent(db, { number: scan.student_number });
 
   // The cloud's history around the scan, before it is added.
@@ -140,9 +161,12 @@ async function applyGateScan(db: LooseClient, record: GateScanUpload) {
       reason: scan.reason,
       occurred_at: record.occurred_at,
       recorded_offline: true,
+      ...(scanId ? { scan_id: scanId } : {}),
     })
     .select("id")
     .single();
+  // The cloud's own answer landed between the lookup and this insert.
+  if (error?.code === "23505" && scanId) return alreadyRecorded;
   if (error) throw error;
   const eventId = (inserted as { id: string }).id;
 
@@ -162,7 +186,6 @@ async function applyGateScan(db: LooseClient, record: GateScanUpload) {
     anomalies.push({ type: "scan_while_suspended", severity: "high", details: { status: flaggedStatus, gate_id: scan.gate_id, direction: scan.direction, recorded_offline: true } });
   }
 
-  const when = offlineMoment(record.occurred_at);
   for (const anomaly of anomalies) {
     const { data: anomalyId } = await db.rpc("record_access_anomaly", {
       p_student_id: student?.id ?? null,

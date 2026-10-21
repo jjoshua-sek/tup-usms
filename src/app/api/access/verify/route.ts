@@ -21,6 +21,8 @@ import { checkRateLimit } from "@/lib/utils/rate-limit";
 const bodySchema = z.object({
   payload: z.string().min(1, { message: "Nothing was scanned." }).max(256),
   direction: z.enum(["entry", "exit"]).optional(),
+  /** The kiosk's id for this scan, the same at the cloud and the offline copy. */
+  scan_id: z.string().uuid().optional(),
 });
 
 // Every answer carries the CORS headers: a kiosk may be calling from the
@@ -85,6 +87,7 @@ export async function POST(request: Request) {
       direction:
         parsed.data.direction ??
         (gate.direction_mode === "exit" ? "exit" : "entry"),
+      scanId: parsed.data.scan_id ?? null,
       startedAt,
     });
 

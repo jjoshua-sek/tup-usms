@@ -21,6 +21,8 @@ import { CONCURRENT_USE_MS, PASSBACK_WINDOW_MS, type PriorEvent } from "@/lib/ac
 import type { IdValidationStatus } from "@/types/osa";
 
 const gateScanPayload = z.object({
+  /** The kiosk's id for the scan; absent from copies and kiosks older than migration 00035. */
+  scan_id: z.string().uuid().nullable().optional(),
   student_number: z.string().max(40).nullable(),
   scanned_payload: z.string().max(64).nullable(),
   gate_id: z.string().uuid().nullable(),

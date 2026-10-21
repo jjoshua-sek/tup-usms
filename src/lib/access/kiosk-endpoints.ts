@@ -15,11 +15,15 @@
  * The same device key works at both: the copy holds a copy of the gates.
  */
 
-/** How long to wait for the cloud before trying the copy. */
-export const CLOUD_TIMEOUT_WITH_FALLBACK_MS = 3_000;
+/**
+ * How long to wait for the cloud before trying the copy. Long enough for a
+ * cold start on Vercel's free plan (2–4 s); at 3 s a first scan after a quiet
+ * spell went to the copy while the cloud was still answering it.
+ */
+export const CLOUD_TIMEOUT_WITH_FALLBACK_MS = 5_000;
 /** With nowhere else to go, wait longer before showing "Gate offline". */
 export const SOLE_TIMEOUT_MS = 8_000;
-/** After the cloud fails, go straight to the copy for this long, so each scan does not wait 3 s. */
+/** After the cloud fails, go straight to the copy for this long, so each scan does not wait for it. */
 export const FALLBACK_STICKY_MS = 60_000;
 
 export type Endpoint = "cloud" | "lan";

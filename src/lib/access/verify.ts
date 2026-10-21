@@ -18,7 +18,7 @@ import "server-only";
 
 import { isOfflineMode } from "@/lib/offline/mode";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { loose } from "@/lib/supabase/loose";
+import { loose, type LooseClient } from "@/lib/supabase/loose";
 import type { IdValidationStatus } from "@/types/osa";
 
 import {
@@ -63,6 +63,11 @@ export interface VerifyScanInput {
   scannedBy?: string | null;
   /** Label to store when there is no gate row (e.g. "OSA Front Desk"). */
   deskLabel?: string;
+  /**
+   * The kiosk's id for this scan. It sends the same id to the cloud and to
+   * the offline copy, so a scan both of them recorded is kept once.
+   */
+  scanId?: string | null;
   /** For latency measurement; pass Date.now() at the top of the handler. */
   startedAt?: number;
 }
@@ -231,37 +236,32 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
     (input.gate?.enforcement_mode ?? "enforce") === "enforce";
 
   // ---- 5. Append the event ----
-  let eventId: string | null = null;
-  const { data: inserted } = await db
-    .from("access_events")
-    .insert({
-      gate_id: input.gate?.id ?? null,
-      gate_label: gateLabel,
-      context: input.context,
-      student_id: student?.id ?? null,
-      id_validation_id: validation?.id ?? null,
-      // Truncated: enough to debug a misprinted card, not a free-form log sink.
-      scanned_payload: input.payload.slice(0, 64),
-      normalized_student_number: parsed.studentNumber,
-      direction,
-      decision: verdict.decision,
-      enforced,
-      gate_opened: gateOpened,
-      reason: verdict.reason,
-      latency_ms: Math.max(0, Date.now() - startedAt),
-      scanned_by: input.scannedBy ?? null,
-    })
-    .select("id")
-    .maybeSingle();
-  eventId = (inserted as { id: string } | null)?.id ?? null;
+  const { eventId, duplicate } = await appendEvent(db, input.scanId ?? null, {
+    gate_id: input.gate?.id ?? null,
+    gate_label: gateLabel,
+    context: input.context,
+    student_id: student?.id ?? null,
+    id_validation_id: validation?.id ?? null,
+    // Truncated: enough to debug a misprinted card, not a free-form log sink.
+    scanned_payload: input.payload.slice(0, 64),
+    normalized_student_number: parsed.studentNumber,
+    direction,
+    decision: verdict.decision,
+    enforced,
+    gate_opened: gateOpened,
+    reason: verdict.reason,
+    latency_ms: Math.max(0, Date.now() - startedAt),
+    scanned_by: input.scannedBy ?? null,
+  });
 
   // On the offline copy, every turnstile scan also waits in the outbox, to be
   // uploaded to the cloud (the official record) once the internet is back.
-  if (isOfflineMode() && input.context === "turnstile") {
+  if (isOfflineMode() && input.context === "turnstile" && !duplicate) {
     const { error: outboxError } = await db.from("offline_outbox").insert({
       kind: "gate_scan",
       occurred_at: now.toISOString(),
       payload: {
+        scan_id: input.scanId ?? null,
         student_number: parsed.studentNumber ?? null,
         scanned_payload: input.payload.slice(0, 64),
         gate_id: input.gate?.id ?? null,
@@ -277,9 +277,10 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
   }
 
   // ---- 6. Anomalies ----
-  const anomalies = [...verdict.anomalies];
+  // A scan already recorded here was already checked for them.
+  const anomalies = duplicate ? [] : [...verdict.anomalies];
 
-  if (verdict.decision === "deny" && parsed.studentNumber) {
+  if (verdict.decision === "deny" && parsed.studentNumber && !duplicate) {
     const since = new Date(now.getTime() - REPEATED_DENIAL_WINDOW_MS).toISOString();
     const { count } = await db
       .from("access_events")
@@ -367,4 +368,28 @@ export async function verifyScan(input: VerifyScanInput): Promise<VerifyScanResu
   }
 
   return result;
+}
+
+/** Codes for "no such column": scan_id before migration 00035 has run. */
+export const MISSING_COLUMN = new Set(["PGRST204", "42703"]);
+
+/**
+ * Records the event, with the kiosk's scan id when it sent one. `duplicate`:
+ * this server already recorded that scan (unique scan_id), so nothing new
+ * was written.
+ */
+async function appendEvent(
+  db: LooseClient,
+  scanId: string | null,
+  row: Record<string, unknown>,
+): Promise<{ eventId: string | null; duplicate: boolean }> {
+  const insert = (values: Record<string, unknown>) =>
+    db.from("access_events").insert(values).select("id").maybeSingle();
+
+  let { data, error } = await insert(scanId ? { ...row, scan_id: scanId } : row);
+  if (error?.code === "23505" && scanId) return { eventId: null, duplicate: true };
+  // Never lose a scan over its id: record it without one until 00035 runs.
+  if (error && scanId && MISSING_COLUMN.has(error.code ?? "")) ({ data, error } = await insert(row));
+  if (error) console.error("[access] scan not recorded", error);
+  return { eventId: (data as { id: string } | null)?.id ?? null, duplicate: false };
 }

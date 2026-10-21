@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { CameraScanner } from "@/components/access/camera-scanner";
-import { attemptOrder, isUsableResponse, kioskBases, normalizeLanUrl, type Endpoint } from "@/lib/access/kiosk-endpoints";
+import { attemptOrder, CLOUD_TIMEOUT_WITH_FALLBACK_MS, isUsableResponse, kioskBases, normalizeLanUrl, type Endpoint } from "@/lib/access/kiosk-endpoints";
 import {
   connectSerialRelay,
   relayIsSupported,
@@ -281,6 +281,11 @@ export function GateKiosk() {
       if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
       setPhase("checking");
 
+      // One id for this scan, sent to the cloud and, if it is slow, to the
+      // offline copy as well: a slow cloud can still record the scan after
+      // the kiosk stops waiting, and the id keeps it to one record.
+      const scanId = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : undefined;
+
       let scan: KioskScanResult;
       try {
         const response = await callGate("/api/access/verify", {
@@ -289,7 +294,7 @@ export function GateKiosk() {
             Authorization: `Bearer ${key}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ payload }),
+          body: JSON.stringify({ payload, scan_id: scanId }),
         });
 
         scan = (await response.json()) as KioskScanResult;
@@ -646,7 +651,7 @@ export function GateKiosk() {
                 </button>
               </div>
               <p className="mt-1 text-white/45">
-                {lanUrl ? `If the cloud does not answer in 3 s, scans go to ${lanUrl}.` : "Not set: without internet this gate cannot check IDs."}
+                {lanUrl ? `If the cloud does not answer in ${CLOUD_TIMEOUT_WITH_FALLBACK_MS / 1000} s, scans go to ${lanUrl}.` : "Not set: without internet this gate cannot check IDs."}
               </p>
               {lanError && <p className="mt-1 text-red-300">{lanError}</p>}
             </div>

@@ -65,7 +65,7 @@ Each gate is a phone running the `/kiosk` page, paired with that gate's device k
 2. Open **https://tup-usms.vercel.app/kiosk**, pair it, then open the gear icon → **Offline copy address** → `https://192.168.137.1` → *Save*.
 3. The first time the kiosk reaches the copy, Chrome may ask to allow access to devices on the local network: tap **Allow**.
 
-Scans go to the cloud first. If it does not answer within 3 seconds, the kiosk asks the copy, shows an amber **Offline copy** badge, and stays with the copy for a minute before trying the cloud again. If the phone has to be restarted during an outage, open **https://192.168.137.1/kiosk** instead: it works the same way from there.
+Scans go to the cloud first. If it does not answer within 5 seconds, the kiosk asks the copy, shows an amber **Offline copy** badge, and stays with the copy for a minute before trying the cloud again. If the phone has to be restarted during an outage, open **https://192.168.137.1/kiosk** instead: it works the same way from there.
 
 ## Every day
 

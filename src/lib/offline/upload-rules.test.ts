@@ -67,6 +67,16 @@ describe("uploadBodySchema", () => {
     expect(uploadBodySchema.safeParse({ records: [{ ...gateScan, kind: "case_filed" }] }).success).toBe(false);
     expect(uploadBodySchema.safeParse({ records: [] }).success).toBe(false);
   });
+
+  it("carries the kiosk's scan id, and still takes scans from copies that send none", () => {
+    const withId = { ...gateScan, payload: { ...gateScan.payload, scan_id: "3f1c2b7a-9d4e-4f6a-8b2c-1e5d7a9c0b34" } };
+    const parsed = uploadBodySchema.safeParse({ records: [withId] });
+    expect(parsed.success && parsed.data.records[0].kind === "gate_scan" && parsed.data.records[0].payload.scan_id).toBe(
+      "3f1c2b7a-9d4e-4f6a-8b2c-1e5d7a9c0b34",
+    );
+    expect(uploadBodySchema.safeParse({ records: [{ ...gateScan, payload: { ...gateScan.payload, scan_id: null } }] }).success).toBe(true);
+    expect(uploadBodySchema.safeParse({ records: [{ ...gateScan, payload: { ...gateScan.payload, scan_id: "not-an-id" } }] }).success).toBe(false);
+  });
 });
 
 describe("the review list's query", () => {

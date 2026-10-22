@@ -117,8 +117,10 @@ export function FileCaseForm({
   };
 
   const selectedType = violationTypes.find((type) => type.id === typeId) ?? null;
-  const routesToCodi =
-    selectedType?.auto_route_codi || selectedType?.default_classification === "confidential";
+  // Checklist A7: CODI takes what the law sends it; other confidential
+  // types stay with the OSA as restricted cases (migration 00040).
+  const routesToCodi = Boolean(selectedType?.auto_route_codi);
+  const restricted = !routesToCodi && selectedType?.default_classification === "confidential";
 
   const grouped = {
     minor: violationTypes.filter((type) => type.default_classification === "minor"),
@@ -287,7 +289,7 @@ export function FileCaseForm({
               ))}
             </optgroup>
             {grouped.confidential.length > 0 && (
-              <optgroup label="Confidential (routed to CODI)">
+              <optgroup label="Confidential">
                 {grouped.confidential.map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.code} — {type.name}
@@ -320,6 +322,15 @@ export function FileCaseForm({
                   Committee on Decorum and Investigation. It will not appear in the general
                   OSA case queue, and only CODI members can open it. Do not discuss it with
                   other staff.
+                </span>
+              </p>
+            ) : restricted ? (
+              <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-900">
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  This is filed as a <strong>restricted</strong> case. The OSA handles it, but only the OSA head,
+                  the administrator and the assigned officer can open it (you, if you are an OSA officer). Do not
+                  discuss it with other staff.
                 </span>
               </p>
             ) : (

@@ -14,6 +14,7 @@ import {
   canChooseMinorProcess,
   minorProcessPlan,
 } from "@/lib/osa/minor-process";
+import { CASE_NOT_VISIBLE, staffCanSeeCase } from "@/lib/osa/case-access";
 import { announceSummons, createHearingWithSummons } from "@/lib/osa/summons";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import {
@@ -102,8 +103,8 @@ export async function getStudentTrackRecord(studentId: string): Promise<{
     .from("violation_cases")
     .select("classification, status, incident_date")
     .eq("student_id", studentId)
-    // CODI matters never inform a general filing screen.
-    .neq("confidentiality", "codi")
+    // CODI and restricted matters never inform a general filing screen.
+    .eq("confidentiality", "normal")
     .order("incident_date", { ascending: false });
 
   const rows =
@@ -215,8 +216,11 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     return { error: "That offense type is no longer available." };
   }
 
-  const isConfidential =
-    violationType.auto_route_codi || violationType.default_classification === "confidential";
+  // Checklist A7: CODI takes what the law sends it (auto_route_codi:
+  // sexual harassment, gender-based violence); any other confidential type
+  // is the OSA's own, as a restricted case (migration 00040).
+  const isConfidential = violationType.auto_route_codi;
+  const isRestricted = !isConfidential && violationType.default_classification === "confidential";
 
   const { data: studentRow } = await db
     .from("students")
@@ -243,6 +247,9 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
         (parsed.data.complainant_type === "osa_initiated" ? "OSA-initiated" : staff.fullName),
       violation_type_id: violationType.id,
       classification: isConfidential ? "confidential" : violationType.default_classification,
+      // A restricted case is visible only to the OSA head, the admin and its
+      // officer, so the filer, when an OSA officer, takes it on.
+      ...(isRestricted && staff.isOsa ? { assigned_officer_id: staff.staffId } : {}),
       incident_date: parsed.data.incident_date,
       incident_time: parsed.data.incident_time || null,
       incident_location: parsed.data.incident_location
@@ -250,7 +257,7 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
         : null,
       description: sanitizeText(parsed.data.description, 5000),
       status: isConfidential ? "referred_codi" : "filed",
-      confidentiality: isConfidential ? "codi" : "normal",
+      confidentiality: isConfidential ? "codi" : isRestricted ? "restricted" : "normal",
       resolution_path: isConfidential ? "codi_referral" : null,
     })
     .select("id, case_number")
@@ -272,6 +279,7 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
       violation_code: violationType.code,
       classification: isConfidential ? "confidential" : violationType.default_classification,
       routed_to_codi: isConfidential,
+      restricted: isRestricted,
     },
   });
 
@@ -281,6 +289,7 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     student_number: student.student_number,
     violation_code: violationType.code,
     confidential: isConfidential,
+    restricted: isRestricted,
   });
 
   revalidatePath("/staff/cases");
@@ -289,7 +298,9 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     caseId: created.id,
     message: isConfidential
       ? `Filed as ${created.case_number} and routed to CODI. It will not appear in the general case queue.`
-      : `Filed as ${created.case_number}.`,
+      : isRestricted
+        ? `Filed as ${created.case_number}, restricted: only the OSA head, the administrator and ${staff.isOsa ? "you, as its officer," : "the officer the OSA head assigns"} can see it.`
+        : `Filed as ${created.case_number}.`,
   };
 }
 
@@ -335,6 +346,7 @@ export async function proposeHearingSlots(caseId: string): Promise<Result> {
     students: { user_id: string } | null;
   } | null;
   if (!violationCase) return { error: "Case not found." };
+  if (!(await staffCanSeeCase(caseId))) return { error: CASE_NOT_VISIBLE };
 
   const studentUserId = violationCase.students?.user_id ?? null;
 
@@ -463,6 +475,7 @@ export async function scheduleHearingFromProposal(formData: FormData): Promise<R
     rationale: string | null;
   } | null;
   if (!proposal) return { error: "That slot is no longer available." };
+  if (!(await staffCanSeeCase(proposal.case_id))) return { error: CASE_NOT_VISIBLE };
 
   const created = await createHearingWithSummons(db, staff, {
     caseId: proposal.case_id,
@@ -851,6 +864,7 @@ export async function draftSettlement(formData: FormData): Promise<Result> {
     students: { user_id: string } | null;
   } | null;
   if (!violationCase) return { error: "Case not found." };
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
 
   const { error } = await db.from("case_settlements").insert({
     case_id: parsed.data.case_id,
@@ -1139,6 +1153,7 @@ export async function escalateCase(formData: FormData): Promise<Result> {
     students: { user_id: string } | null;
   } | null;
   if (!violationCase) return { error: "Case not found." };
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
 
   const { error } = await db.from("case_escalations").insert({
     case_id: parsed.data.case_id,
@@ -1384,6 +1399,7 @@ export async function chooseMinorProcess(formData: FormData): Promise<Result> {
     students: { user_id: string } | null;
   } | null;
   if (!violationCase) return { error: "Case not found." };
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
   if (!canChooseMinorProcess(violationCase)) {
     return { error: "This can only be chosen for an open minor case before the apology stage." };
   }
@@ -1461,6 +1477,56 @@ export async function chooseMinorProcess(formData: FormData): Promise<Result> {
   };
 }
 
+const assignOfficerSchema = z.object({
+  case_id: z.string().uuid(),
+  officer_id: z.string().uuid({ message: "Choose an officer." }),
+});
+
+/**
+ * Hands a restricted case to an officer (checklist A7). Only the OSA head or
+ * the administrator decides who may see one; the officer then works it like
+ * any other case.
+ */
+export async function assignCaseOfficer(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff || !["osa_head", "admin"].includes(staff.role)) {
+    return { error: "Only the OSA head can assign a restricted case." };
+  }
+  const parsed = assignOfficerSchema.safeParse({ case_id: formData.get("case_id"), officer_id: formData.get("officer_id") });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Choose an officer." };
+
+  const db = loose(createAdminClient());
+  const [{ data: caseRow }, { data: officerRow }] = await Promise.all([
+    db.from("violation_cases").select("id, case_number, confidentiality, assigned_officer_id").eq("id", parsed.data.case_id).maybeSingle(),
+    db.from("staff").select("id, full_name, role_type").eq("id", parsed.data.officer_id).maybeSingle(),
+  ]);
+  const violationCase = caseRow as { id: string; case_number: string; confidentiality: string; assigned_officer_id: string | null } | null;
+  const officer = officerRow as { id: string; full_name: string; role_type: string } | null;
+  if (!violationCase) return { error: "Case not found." };
+  if (violationCase.confidentiality !== "restricted") return { error: "Only restricted cases are assigned this way." };
+  if (!officer || !["osa_officer", "osa_head"].includes(officer.role_type)) return { error: "Choose an OSA officer." };
+
+  const { error } = await db.from("violation_cases").update({ assigned_officer_id: officer.id }).eq("id", violationCase.id);
+  if (error) return { error: "Could not assign the case." };
+
+  await addTimelineEntry(db, {
+    caseId: violationCase.id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "status_changed",
+    summary: `${staff.fullName} assigned this restricted case to ${officer.full_name}.`,
+    details: { assigned_officer_id: officer.id, previous_officer_id: violationCase.assigned_officer_id },
+  });
+  await logAuditEvent(staff.userId, "case_updated", "violation_cases", {
+    case_id: violationCase.id,
+    assigned_officer_id: officer.id,
+  });
+
+  revalidatePath(`/staff/cases/${violationCase.id}`);
+  revalidatePath("/staff/cases");
+  return { ok: true, message: `Assigned to ${officer.full_name}. Only they, the OSA head and the administrator can see it.` };
+}
+
 const statusSchema = z.object({
   case_id: z.string().uuid(),
   status: z.enum(CASE_STATUSES),
@@ -1477,6 +1543,7 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
     note: formData.get("note") ?? "",
   });
   if (!parsed.success) return { error: "Invalid status change." };
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
 
   const db = loose(createAdminClient());
 

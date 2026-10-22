@@ -12,6 +12,7 @@ import { logAuditEvent } from "@/lib/utils/audit";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import { parseManilaDateTime } from "@/lib/utils/time";
 import type { CaseStatus } from "@/types/osa";
+import { CASE_NOT_VISIBLE, staffCanSeeCase } from "@/lib/osa/case-access";
 import { createHearingWithSummons } from "@/lib/osa/summons";
 
 /**
@@ -76,6 +77,7 @@ export async function getMinorOffenseCounts(caseId: string): Promise<{
     violation_type_id: string | null;
   } | null;
   if (!current) return { error: "Case not found." };
+  if (!(await staffCanSeeCase(caseId))) return { error: CASE_NOT_VISIBLE };
 
   const { data: priorRows } = await db
     .from("violation_cases")
@@ -169,6 +171,7 @@ export async function assignCommunityService(formData: FormData): Promise<Result
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the assignment." };
   }
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
 
   const prescribed = prescribeMinorSanction(parsed.data.offense_sequence);
   if (prescribed.kind !== "community_service") {
@@ -532,6 +535,7 @@ export async function scheduleHearingManually(formData: FormData): Promise<Resul
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the date and venue." };
   }
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
 
   // The form sends a wall-clock time with no zone. It means Manila time;
   // `new Date` on the server would read it as UTC, eight hours late.
@@ -615,6 +619,7 @@ export async function openAppealWindow(formData: FormData): Promise<Result> {
     students: { user_id: string } | null;
   } | null;
   if (!violationCase) return { error: "Case not found." };
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
 
   const { error } = await db.from("case_appeals").insert({
     case_id: parsed.data.case_id,

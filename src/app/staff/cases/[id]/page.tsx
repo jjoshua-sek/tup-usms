@@ -59,7 +59,9 @@ import {
   formatManilaLongDate,
   formatManilaMonthDay,
 } from "@/lib/utils/time";
+import { AssignOfficerForm } from "@/components/cases/assign-officer-form";
 import { MinorProcessForm } from "@/components/cases/minor-process-form";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { canChooseMinorProcess, minorProcessOf } from "@/lib/osa/minor-process";
 import {
   CASE_STATUS_META,
@@ -173,6 +175,8 @@ interface CaseDetail {
   resolution_path: string | null;
   /** Migration 00039; absent until it runs. */
   minor_process?: string | null;
+  confidentiality: "normal" | "restricted" | "codi";
+  assigned_officer_id: string | null;
   sanction_applied: string | null;
   resolution_notes: string | null;
   complainant_name: string | null;
@@ -225,6 +229,22 @@ export default async function StaffCaseDetailPage({
   // RLS also returns nothing for a case this staff member may not see, which
   // is the right answer for both "missing" and "not yours".
   if (!violationCase) notFound();
+
+  // A restricted case (checklist A7): who holds it, and for the OSA head,
+  // who else could. Staff names come from the service role, since staff
+  // cannot list one another (00024).
+  const restricted = violationCase.confidentiality === "restricted";
+  const canAssign = restricted && ["osa_head", "admin"].includes(staff.role);
+  let officers: Array<{ id: string; full_name: string }> = [];
+  if (restricted) {
+    const { data: officerRows } = await loose(createAdminClient())
+      .from("staff")
+      .select("id, full_name")
+      .in("role_type", ["osa_officer", "osa_head"])
+      .order("full_name", { ascending: true });
+    officers = (officerRows as Array<{ id: string; full_name: string }> | null) ?? [];
+  }
+  const assignedOfficer = officers.find((officer) => officer.id === violationCase.assigned_officer_id) ?? null;
 
   const [
     { data: timelineRows },
@@ -342,6 +362,19 @@ export default async function StaffCaseDetailPage({
                 {violationCase.violation_types?.handbook_reference ?? "—"}
               </Detail>
             </dl>
+
+            {restricted && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50/60 p-3 text-[13px] dark:border-amber-800 dark:bg-amber-950/20">
+                <p className="min-w-0">
+                  <span className="font-semibold">Restricted.</span> Only the OSA head, the administrator and the
+                  assigned officer{assignedOfficer ? ` (${assignedOfficer.full_name})` : ""} can see this case.
+                  {!assignedOfficer && " No officer is assigned yet."}
+                </p>
+                {canAssign && (
+                  <AssignOfficerForm caseId={violationCase.id} officers={officers} current={violationCase.assigned_officer_id} />
+                )}
+              </div>
+            )}
 
             {violationCase.sanction_applied && (
               <p className="mt-4 rounded-lg bg-muted p-3 text-[12px]">

@@ -21,7 +21,7 @@ const BODIES = [
   {
     value: "CODI",
     label: "CODI — Committee on Decorum and Investigation",
-    note: "Harassment and similar matters. Makes the case confidential immediately and removes it from the general queue.",
+    note: "Sexual harassment and gender-based violence (RA 7877, RA 11313). Makes the case confidential immediately and removes it from the general queue.",
   },
 ] as const;
 

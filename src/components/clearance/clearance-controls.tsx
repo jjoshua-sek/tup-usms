@@ -10,6 +10,7 @@ import {
   runClearanceCheck,
 } from "@/app/staff/clearance/actions";
 import { Button } from "@/components/ui/button";
+import { clearanceHasFee } from "@/lib/osa/clearance-fee";
 
 export function RunCheckButton({ requestId }: { requestId: string }) {
   const [isPending, startTransition] = useTransition();
@@ -96,8 +97,10 @@ const NEXT_STATUSES = [
   { value: "rejected", label: "Rejected" },
 ] as const;
 
-export function AdvanceClearanceForm({ requestId }: { requestId: string }) {
+export function AdvanceClearanceForm({ requestId, requestType }: { requestId: string; requestType: string }) {
   const [isPending, startTransition] = useTransition();
+  // Only the Good Moral certificate is paid for at the Cashier (G3).
+  const hasFee = clearanceHasFee(requestType);
 
   return (
     <form
@@ -113,14 +116,14 @@ export function AdvanceClearanceForm({ requestId }: { requestId: string }) {
       <input type="hidden" name="request_id" value={requestId} />
 
       <select name="status" defaultValue="verifying" className={inputClass}>
-        {NEXT_STATUSES.map((status) => (
+        {NEXT_STATUSES.filter((status) => hasFee || status.value !== "fee_pending").map((status) => (
           <option key={status.value} value={status.value}>
             {status.label}
           </option>
         ))}
       </select>
 
-      <input name="or_number" maxLength={60} placeholder="OR no." className={inputClass} />
+      {hasFee && <input name="or_number" maxLength={60} placeholder="OR no." className={inputClass} />}
       <input
         name="certificate_number"
         maxLength={60}

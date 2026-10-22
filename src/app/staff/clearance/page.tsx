@@ -239,7 +239,7 @@ function Queue({
 
               {canAct && (
                 <div className="mt-3 border-t border-border pt-3">
-                  <AdvanceClearanceForm requestId={request.id} />
+                  <AdvanceClearanceForm requestId={request.id} requestType={request.request_type} />
                 </div>
               )}
             </li>

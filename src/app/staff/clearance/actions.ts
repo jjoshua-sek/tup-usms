@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { sanitizeText } from "@/lib/utils/sanitize";
+import { clearanceHasFee } from "@/lib/osa/clearance-fee";
 
 interface Result {
   ok?: boolean;
@@ -238,6 +239,20 @@ export async function advanceClearance(formData: FormData): Promise<Result> {
   });
   if (!parsed.success) return { error: "Invalid update." };
 
+  const db = loose(createAdminClient());
+
+  // Only the Good Moral certificate is paid for at the Cashier (G3).
+  const { data: typeRow } = await db
+    .from("clearance_requests")
+    .select("request_type")
+    .eq("id", parsed.data.request_id)
+    .maybeSingle();
+  const requestType = (typeRow as { request_type: string } | null)?.request_type;
+  if (!requestType) return { error: "Request not found." };
+  if (!clearanceHasFee(requestType) && (parsed.data.status === "fee_pending" || parsed.data.or_number)) {
+    return { error: "Only the Good Moral certificate has a Cashier fee. Mark this one ready for pickup instead." };
+  }
+
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = { status: parsed.data.status };
 
@@ -259,7 +274,6 @@ export async function advanceClearance(formData: FormData): Promise<Result> {
     patch.verification_notes = sanitizeText(parsed.data.note, 500);
   }
 
-  const db = loose(createAdminClient());
   const { error } = await db
     .from("clearance_requests")
     .update(patch)

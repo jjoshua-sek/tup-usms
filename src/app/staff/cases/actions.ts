@@ -419,10 +419,12 @@ const scheduleSchema = z.object({
 });
 
 /**
- * Turns a proposed slot into an actual hearing, pending the complainant's
- * approval. The professor approves the date *before* the student is told —
- * that ordering is the requirement, and it's enforced by the status ladder
- * rather than by convention.
+ * Sets the hearing on a proposed slot and sends the summons with it.
+ *
+ * The OSA sets the date (checklist C1): there is no complainant approval
+ * step. The slot already comes from both parties' schedules and the notice
+ * period, and the officer who set it is recorded (date_set_by, migration
+ * 00038), which is the due-process evidence the approval used to be.
  */
 export async function scheduleHearingFromProposal(formData: FormData): Promise<Result> {
   const staff = await getStaffContext();
@@ -454,17 +456,50 @@ export async function scheduleHearingFromProposal(formData: FormData): Promise<R
   } | null;
   if (!proposal) return { error: "That slot is no longer available." };
 
-  const { error } = await db.from("case_hearings").insert({
-    case_id: proposal.case_id,
-    hearing_type: parsed.data.hearing_type,
-    scheduled_start: proposal.proposed_start,
-    scheduled_end: proposal.proposed_end,
-    venue: sanitizeText(parsed.data.venue, 120),
-    status: "awaiting_complainant",
-    proposed_by: "system",
-  });
+  const { data: caseRow } = await db
+    .from("violation_cases")
+    .select("case_number, status, students(user_id)")
+    .eq("id", proposal.case_id)
+    .maybeSingle();
+  const violationCase = caseRow as {
+    case_number: string;
+    status: CaseStatus;
+    students: { user_id: string } | null;
+  } | null;
+  if (!violationCase) return { error: "Case not found." };
 
-  if (error) return { error: "Could not create the hearing." };
+  const now = new Date().toISOString();
+  const venue = sanitizeText(parsed.data.venue, 120);
+  const { data: inserted, error } = await db
+    .from("case_hearings")
+    .insert({
+      case_id: proposal.case_id,
+      hearing_type: parsed.data.hearing_type,
+      scheduled_start: proposal.proposed_start,
+      scheduled_end: proposal.proposed_end,
+      venue,
+      status: "student_notified",
+      proposed_by: "system",
+      date_set_by: staff.staffId,
+      date_set_at: now,
+      student_notified_at: now,
+      notified_via_portal: true,
+      notified_via_email: true,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    // Before 00038: no date_set_* columns, and the old constraint refuses a
+    // summons without a complainant's approval.
+    const code = (error as { code?: string }).code ?? "";
+    return {
+      error: ["PGRST204", "42703", "23514"].includes(code)
+        ? "Setting hearing dates needs migration 00038. Ask the administrator to run it."
+        : "Could not create the hearing.",
+    };
+  }
+  const hearingId = (inserted as { id: string }).id;
 
   await db
     .from("hearing_slot_proposals")
@@ -481,17 +516,32 @@ export async function scheduleHearingFromProposal(formData: FormData): Promise<R
     actorId: staff.userId,
     actorLabel: staff.fullName,
     eventType: "status_changed",
-    summary: `Meeting pencilled in for ${formatManilaDateTime(proposal.proposed_start)}, awaiting the complainant's approval.`,
+    summary: `${staff.fullName} set the meeting for ${formatManilaDateTime(proposal.proposed_start)}.`,
     details: { rationale: proposal.rationale },
   });
 
   await logAuditEvent(staff.userId, "hearing_scheduled", "case_hearings", {
     case_id: proposal.case_id,
+    hearing_id: hearingId,
+  });
+
+  await announceSummons(db, staff, {
+    hearingId,
+    caseId: proposal.case_id,
+    start: proposal.proposed_start,
+    venue,
+    caseNumber: violationCase.case_number,
+    caseStatus: violationCase.status,
+    studentUserId: violationCase.students?.user_id ?? null,
   });
 
   revalidatePath(`/staff/cases/${proposal.case_id}`);
   revalidatePath("/staff/hearings");
-  return { ok: true, message: "Slot reserved. Ask the complainant to approve it." };
+  revalidatePath("/staff/calendar");
+  return {
+    ok: true,
+    message: "Hearing set. The student has been summoned through the portal and by email. Let the complainant know the date.",
+  };
 }
 
 /**
@@ -586,22 +636,10 @@ export async function notifyStudentOfHearing(hearingId: string): Promise<Result>
   } | null;
   if (!hearing) return { error: "Hearing not found." };
 
+  // Only hearings scheduled before the OSA set dates itself (00038) wait here.
   if (hearing.status !== "complainant_approved") {
-    return {
-      error:
-        "The complainant has to approve the date first — that approval is what the summons rests on.",
-    };
+    return { error: "This hearing is not waiting for a summons." };
   }
-
-  // This string is emailed as the summons, so the hour must be the campus
-  // hour, not the server's.
-  const when = formatManila(hearing.scheduled_start, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 
   const { error } = await db
     .from("case_hearings")
@@ -615,45 +653,79 @@ export async function notifyStudentOfHearing(hearingId: string): Promise<Result>
 
   if (error) return { error: "Could not send the summons." };
 
-  const studentUserId = hearing.violation_cases?.students?.user_id;
-  if (studentUserId) {
-    await db.rpc("create_notification", {
-      p_user_id: studentUserId,
-      p_type: "hearing_scheduled",
-      p_title: "You have a meeting with the Office of Student Affairs",
-      p_body: `${when} at ${hearing.venue}, regarding case ${hearing.violation_cases?.case_number}. Please open the portal and confirm you've seen this.`,
-      p_priority: "high",
-      p_channels: ["in_app", "email"],
-      p_action_url: "/appointments",
-      p_action_label: "View and acknowledge",
-      p_entity_type: "case_hearing",
-      p_entity_id: hearingId,
-    });
-  }
-
-  await db
-    .from("violation_cases")
-    .update({ status: "summons_sent" })
-    .eq("id", hearing.case_id);
-
-  await addTimelineEntry(db, {
+  await announceSummons(db, staff, {
+    hearingId,
     caseId: hearing.case_id,
-    actorId: staff.userId,
-    actorLabel: staff.fullName,
-    eventType: "student_notified",
-    summary: `Summons sent for ${when} at ${hearing.venue}.`,
-    fromStatus: hearing.violation_cases?.status ?? null,
-    toStatus: "summons_sent",
-  });
-
-  await logAuditEvent(staff.userId, "hearing_notified", "case_hearings", {
-    hearing_id: hearingId,
-    case_id: hearing.case_id,
+    start: hearing.scheduled_start,
+    venue: hearing.venue,
+    caseNumber: hearing.violation_cases?.case_number ?? "",
+    caseStatus: hearing.violation_cases?.status ?? null,
+    studentUserId: hearing.violation_cases?.students?.user_id ?? null,
   });
 
   revalidatePath(`/staff/cases/${hearing.case_id}`);
   revalidatePath("/staff/hearings");
   return { ok: true, message: "Summons sent through the portal and by email." };
+}
+
+/**
+ * Everything that follows a recorded summons: the student's notice (portal
+ * and email), the case moving to summons_sent, the timeline and the audit.
+ */
+async function announceSummons(
+  db: ReturnType<typeof loose>,
+  staff: NonNullable<Awaited<ReturnType<typeof getStaffContext>>>,
+  hearing: {
+    hearingId: string;
+    caseId: string;
+    start: string;
+    venue: string;
+    caseNumber: string;
+    caseStatus: CaseStatus | null;
+    studentUserId: string | null;
+  },
+): Promise<void> {
+  // This string is emailed as the summons, so the hour must be the campus
+  // hour, not the server's.
+  const when = formatManila(hearing.start, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  if (hearing.studentUserId) {
+    await db.rpc("create_notification", {
+      p_user_id: hearing.studentUserId,
+      p_type: "hearing_scheduled",
+      p_title: "You have a meeting with the Office of Student Affairs",
+      p_body: `${when} at ${hearing.venue}, regarding case ${hearing.caseNumber}. Please open the portal and confirm you've seen this.`,
+      p_priority: "high",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/appointments",
+      p_action_label: "View and acknowledge",
+      p_entity_type: "case_hearing",
+      p_entity_id: hearing.hearingId,
+    });
+  }
+
+  await db.from("violation_cases").update({ status: "summons_sent" }).eq("id", hearing.caseId);
+
+  await addTimelineEntry(db, {
+    caseId: hearing.caseId,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "student_notified",
+    summary: `Summons sent for ${when} at ${hearing.venue}.`,
+    fromStatus: hearing.caseStatus,
+    toStatus: "summons_sent",
+  });
+
+  await logAuditEvent(staff.userId, "hearing_notified", "case_hearings", {
+    hearing_id: hearing.hearingId,
+    case_id: hearing.caseId,
+  });
 }
 
 const apologyReviewSchema = z.object({

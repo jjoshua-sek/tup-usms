@@ -154,7 +154,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                   className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
                 >
                   {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                  Reserve
+                  Set date and summon
                 </Button>
               </form>
             )}

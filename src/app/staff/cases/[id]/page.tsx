@@ -395,8 +395,8 @@ export default async function StaffCaseDetailPage({
 
                     {hearing.status === "awaiting_complainant" && (
                       <p className="mt-2 text-[11px] text-muted-foreground">
-                        The student is not told about this date until the complainant
-                        approves it.
+                        Set the old way, before the OSA set dates itself: the student is told
+                        once this date is approved.
                       </p>
                     )}
                   </li>

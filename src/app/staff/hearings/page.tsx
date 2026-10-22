@@ -88,29 +88,30 @@ export default async function StaffHearingsPage() {
       isUpcoming(h.scheduled_end) &&
       ["student_notified", "student_acknowledged", "confirmed"].includes(h.status),
   );
+  const unconfirmed = upcoming.filter((h) => h.status === "student_notified");
 
   return (
     <div>
       <PageHeader
         breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Hearings" }]}
         title="Hearings"
-        description="Meeting dates waiting on an approval, a summons, or the day itself."
+        description="Meeting dates the OSA has set, and whether each student has confirmed the summons."
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <StatsCard
-          label="Awaiting complainant"
-          value={awaitingApproval.length}
-          icon={Gavel}
-          iconTone={awaitingApproval.length > 0 ? "warn" : "neutral"}
-          trend="Professor must approve the date"
+          label="Not yet confirmed"
+          value={unconfirmed.length}
+          icon={Send}
+          iconTone={unconfirmed.length > 0 ? "warn" : "neutral"}
+          trend="Summoned; the student has not confirmed"
         />
         <StatsCard
-          label="Ready to notify"
-          value={awaitingNotice.length}
-          icon={Send}
-          iconTone={awaitingNotice.length > 0 ? "warn" : "neutral"}
-          trend="Approved but no summons sent"
+          label="Confirmed"
+          value={upcoming.length - unconfirmed.length}
+          icon={Gavel}
+          iconTone="neutral"
+          trend="The student confirmed the summons"
         />
         <StatsCard
           label="Upcoming"
@@ -124,18 +125,18 @@ export default async function StaffHearingsPage() {
         <EmptyState
           icon={CalendarClock}
           title="No hearings scheduled"
-          description="Open a case and run the scheduler to propose a meeting time that fits both the complainant's and the student's schedules."
+          description="Open a case, find meeting times that fit both parties' schedules, and set one. The summons goes out with it."
         />
       ) : (
         <div className="space-y-8">
           <Group
-            title="Waiting for the complainant to approve"
+            title="Set the old way: waiting for the complainant"
             hearings={awaitingApproval}
             staffId={staff.staffId}
             isOsa={staff.isOsa}
           />
           <Group
-            title="Approved — summons not sent"
+            title="Set the old way: summons not sent"
             hearings={awaitingNotice}
             staffId={staff.staffId}
             isOsa={staff.isOsa}

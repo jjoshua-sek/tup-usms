@@ -41,6 +41,8 @@ type AuditAction =
   | "student_record_viewed"
   // A report downloaded as a file leaves STARS, so who took it is logged.
   | "report_exported"
+  // Attendance sheets from the colleges or the Registrar (migration 00043).
+  | "attendance_imported"
   // Account provisioning (migration 00021)
   | "account_created"
   | "enrollment_imported"

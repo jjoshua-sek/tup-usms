@@ -7,6 +7,13 @@ import { z } from "zod";
 
 import type { NotificationType } from "@/lib/notifications/policy";
 import { getStaffContext } from "@/lib/osa/staff-context";
+import {
+  MINOR_PROCESSES,
+  MINOR_PROCESS_META,
+  apologyResolutionPath,
+  canChooseMinorProcess,
+  minorProcessPlan,
+} from "@/lib/osa/minor-process";
 import { announceSummons, createHearingWithSummons } from "@/lib/osa/summons";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import {
@@ -687,11 +694,14 @@ export async function reviewApologyLetter(formData: FormData): Promise<Result> {
   if (error) return { error: "Could not save the review." };
 
   if (parsed.data.decision === "accept") {
+    // "*" so this still works before migration 00039 adds minor_process.
+    const { data: caseRow } = await db.from("violation_cases").select("*").eq("id", letter.case_id).maybeSingle();
+    const path = apologyResolutionPath((caseRow as { minor_process?: string | null } | null)?.minor_process);
     await db
       .from("violation_cases")
       .update({
         status: "closed",
-        resolution_path: "counselling_apology",
+        resolution_path: path,
         closed_at: now,
       })
       .eq("id", letter.case_id);
@@ -701,7 +711,7 @@ export async function reviewApologyLetter(formData: FormData): Promise<Result> {
       actorId: staff.userId,
       actorLabel: staff.fullName,
       eventType: "apology_accepted",
-      summary: `Apology letter accepted; case closed on the counselling + apology path.${parsed.data.notes ? ` ${parsed.data.notes}` : ""}`,
+      summary: `Apology letter accepted; case closed on the ${path === "apology_only" ? "apology-only" : "counselling + apology"} path.${parsed.data.notes ? ` ${parsed.data.notes}` : ""}`,
       fromStatus: letter.violation_cases?.status ?? null,
       toStatus: "closed",
     });
@@ -1332,6 +1342,125 @@ export async function recordEscalationOutcome(formData: FormData): Promise<Resul
   return { ok: true, message: "Outcome recorded." };
 }
 
+const minorProcessSchema = z.object({
+  case_id: z.string().uuid(),
+  process: z.enum(MINOR_PROCESSES),
+  warning: z.string().trim().max(1000).optional().or(z.literal("")),
+});
+
+/**
+ * The officer's choice for a minor case (checklist A4): counselling then an
+ * apology letter (the default), an apology letter only, or a written
+ * warning that closes the case. The student is told whatever is asked of
+ * them, or that the case is closed.
+ */
+export async function chooseMinorProcess(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can decide how a case is handled." };
+
+  const parsed = minorProcessSchema.safeParse({
+    case_id: formData.get("case_id"),
+    process: formData.get("process"),
+    warning: formData.get("warning") ?? "",
+  });
+  if (!parsed.success) return { error: "Choose how the case is handled." };
+  const { process } = parsed.data;
+  const warning = parsed.data.warning ? sanitizeText(parsed.data.warning, 1000) : "";
+  if (process === "warning_only" && warning.length < 10) {
+    return { error: "Write the warning. The student reads it, and it stays on their record." };
+  }
+
+  const db = loose(createAdminClient());
+  const { data: caseRow } = await db
+    .from("violation_cases")
+    .select("id, case_number, classification, status, students(user_id)")
+    .eq("id", parsed.data.case_id)
+    .maybeSingle();
+  const violationCase = caseRow as {
+    id: string;
+    case_number: string;
+    classification: string;
+    status: CaseStatus;
+    students: { user_id: string } | null;
+  } | null;
+  if (!violationCase) return { error: "Case not found." };
+  if (!canChooseMinorProcess(violationCase)) {
+    return { error: "This can only be chosen for an open minor case before the apology stage." };
+  }
+
+  const plan = minorProcessPlan(process);
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = { minor_process: process };
+  if (plan.nextStatus) patch.status = plan.nextStatus;
+  if (plan.nextStatus === "closed") {
+    patch.closed_at = now;
+    patch.resolution_path = plan.resolutionPath;
+    patch.sanction_applied = plan.sanctionApplied;
+    patch.resolution_notes = warning;
+  }
+
+  const { error } = await db.from("violation_cases").update(patch).eq("id", violationCase.id);
+  if (error) {
+    return {
+      error: ["PGRST204", "42703", "23514"].includes((error as { code?: string }).code ?? "")
+        ? "Choosing how a minor case is handled needs migration 00039. Ask the administrator to run it."
+        : "Could not save the choice.",
+    };
+  }
+
+  const label = MINOR_PROCESS_META[process].label;
+  await addTimelineEntry(db, {
+    caseId: violationCase.id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "status_changed",
+    summary:
+      process === "warning_only"
+        ? `Closed with a written warning: ${warning}`
+        : `Handled as: ${label.toLowerCase()}.`,
+    fromStatus: violationCase.status,
+    toStatus: plan.nextStatus ?? violationCase.status,
+    details: { minor_process: process },
+  });
+
+  const studentUserId = violationCase.students?.user_id;
+  if (studentUserId && process !== "counselling_apology") {
+    await db.rpc("create_notification", {
+      p_user_id: studentUserId,
+      p_type: process === "warning_only" ? "sanction_applied" : "apology_required",
+      p_title: process === "warning_only" ? "A written warning was recorded" : "Write your apology letter",
+      p_body:
+        process === "warning_only"
+          ? `Case ${violationCase.case_number} is closed with a written warning from the OSA: ${warning}`
+          : `Case ${violationCase.case_number} closes once you submit a written apology and the OSA accepts it. No counselling session is needed.`,
+      p_priority: process === "warning_only" ? "normal" : "high",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/violations",
+      p_action_label: "Open my violations",
+      p_entity_type: "violation_case",
+      p_entity_id: violationCase.id,
+    });
+  }
+
+  await logAuditEvent(staff.userId, "case_updated", "violation_cases", {
+    case_id: violationCase.id,
+    minor_process: process,
+    to_status: plan.nextStatus,
+  });
+
+  revalidatePath(`/staff/cases/${violationCase.id}`);
+  revalidatePath("/staff/cases");
+  return {
+    ok: true,
+    message:
+      process === "warning_only"
+        ? "Closed with a written warning. The student has been told."
+        : process === "apology_only"
+          ? "The student has been asked for an apology letter."
+          : "Recorded. Schedule the counselling session with Find meeting times.",
+  };
+}
+
 const statusSchema = z.object({
   case_id: z.string().uuid(),
   status: z.enum(CASE_STATUSES),
@@ -1353,21 +1482,33 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
 
   const { data: currentRow } = await db
     .from("violation_cases")
-    .select("status, case_number, students(user_id)")
+    .select("status, case_number, resolution_path, students(user_id)")
     .eq("id", parsed.data.case_id)
     .maybeSingle();
 
   const current = currentRow as {
     status: CaseStatus;
     case_number: string;
+    resolution_path: string | null;
     students: { user_id: string } | null;
   } | null;
   const fromStatus = current?.status ?? null;
+
+  // The database refuses a closed case with no resolution path
+  // (closed_requires_resolution), so dismissing records it, and closing
+  // needs one already set by the outcome that ended the case.
+  if (parsed.data.status === "closed" && !current?.resolution_path) {
+    return {
+      error:
+        "Close a case through its outcome (an accepted apology letter, a written warning, a settlement) or dismiss it.",
+    };
+  }
 
   const patch: Record<string, unknown> = { status: parsed.data.status };
   if (["closed", "dismissed"].includes(parsed.data.status)) {
     patch.closed_at = new Date().toISOString();
   }
+  if (parsed.data.status === "dismissed") patch.resolution_path = "dismissed";
   if (parsed.data.note) patch.resolution_notes = sanitizeText(parsed.data.note, 1000);
 
   const { error } = await db

@@ -59,6 +59,8 @@ import {
   formatManilaLongDate,
   formatManilaMonthDay,
 } from "@/lib/utils/time";
+import { MinorProcessForm } from "@/components/cases/minor-process-form";
+import { canChooseMinorProcess, minorProcessOf } from "@/lib/osa/minor-process";
 import {
   CASE_STATUS_META,
   HEARING_STATUS_LABELS,
@@ -169,6 +171,8 @@ interface CaseDetail {
   incident_location: string | null;
   description: string;
   resolution_path: string | null;
+  /** Migration 00039; absent until it runs. */
+  minor_process?: string | null;
   sanction_applied: string | null;
   resolution_notes: string | null;
   complainant_name: string | null;
@@ -211,7 +215,8 @@ export default async function StaffCaseDetailPage({
   const { data: caseData } = await db
     .from("violation_cases")
     .select(
-      "id, case_number, classification, status, incident_date, incident_time, incident_location, description, resolution_path, sanction_applied, resolution_notes, complainant_name, complainant_staff_id, created_at, students(id, first_name, last_name, student_number, program, year_level), violation_types(code, name, handbook_reference)",
+      // "*" so minor_process (migration 00039) is read once it exists.
+      "*, students(id, first_name, last_name, student_number, program, year_level), violation_types(code, name, handbook_reference)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -478,6 +483,18 @@ export default async function StaffCaseDetailPage({
                   ))}
                 </ul>
               )}
+            </section>
+          )}
+
+          {/* How a minor case is handled (checklist A4) */}
+          {staff.isOsa && canChooseMinorProcess(violationCase) && (
+            <section className="rounded-xl border border-border bg-card p-5">
+              <h2 className="mb-1 font-display text-base font-semibold">How this minor case is handled</h2>
+              <p className="mb-3 text-[13px] text-muted-foreground">
+                Counselling then an apology letter is the usual process. For a light first offense, an apology
+                letter alone or a written warning may be enough.
+              </p>
+              <MinorProcessForm caseId={violationCase.id} current={minorProcessOf(violationCase.minor_process)} />
             </section>
           )}
 

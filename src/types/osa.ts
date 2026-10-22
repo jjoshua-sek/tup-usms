@@ -95,6 +95,8 @@ export const CASE_STATUS_META: Record<
 
 export type ResolutionPath =
   | "counselling_apology"
+  | "apology_only"
+  | "warning_only"
   | "mediation_settlement"
   | "pic_sdb"
   | "codi_referral"

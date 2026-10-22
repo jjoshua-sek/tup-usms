@@ -334,6 +334,16 @@ function compare(
 // Evaluation
 // ============================================================
 
+/**
+ * The database spells the grade criterion 'gpa' (its CHECK in 00009 allows
+ * no other), while this engine reads 'gwa', TUP's own term. Without this, a
+ * scholarship's grade requirement always came back "not on file", for every
+ * applicant and every scholar.
+ */
+export function normalizeCriterionKey(key: string): CriterionKey {
+  return (key === "gpa" ? "gwa" : key) as CriterionKey;
+}
+
 export function evaluateScholarship(
   scholarshipId: string,
   criteria: ScholarshipCriterion[],
@@ -343,7 +353,9 @@ export function evaluateScholarship(
   const failed: CriterionResult[] = [];
   const indeterminate: CriterionResult[] = [];
 
-  const ordered = [...criteria].sort((a, b) => a.display_order - b.display_order);
+  const ordered = [...criteria]
+    .map((criterion) => ({ ...criterion, criterion_key: normalizeCriterionKey(criterion.criterion_key) }))
+    .sort((a, b) => a.display_order - b.display_order);
 
   for (const c of ordered) {
     const actual = resolveStudentValue(c.criterion_key, profile);

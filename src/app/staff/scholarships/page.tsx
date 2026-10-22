@@ -9,6 +9,9 @@ import { ApplicationStatusForm } from "@/components/scholarships/application-sta
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
+import { buildStudentEligibilityProfile } from "@/lib/scholarships/build-profile";
+import type { ScholarshipCriterion } from "@/lib/scholarships/evaluate-eligibility";
+import { RETENTION_META, checkRetention } from "@/lib/scholarships/retention";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { formatManilaMonthDay } from "@/lib/utils/time";
@@ -34,6 +37,7 @@ const STATUS_TONE: Record<string, Tone> = {
 
 interface ApplicationRow {
   id: string;
+  scholarship_id: string;
   status: string;
   school_year: string;
   semester: string | null;
@@ -79,7 +83,7 @@ export default async function StaffScholarshipsPage() {
     db
       .from("scholarship_applications")
       .select(
-        "id, status, school_year, semester, created_at, endorsement_notes, rejection_reason, students(id, first_name, last_name, student_number, program), scholarships(name, sponsor_name)",
+        "id, scholarship_id, status, school_year, semester, created_at, endorsement_notes, rejection_reason, students(id, first_name, last_name, student_number, program), scholarships(name, sponsor_name)",
       )
       .order("created_at", { ascending: false })
       .limit(200),
@@ -102,6 +106,31 @@ export default async function StaffScholarshipsPage() {
   );
   const awarded = applications.filter((application) => application.status === "awarded");
 
+  // Scholars after the award (checklist F3): do they still meet the grade
+  // and conduct requirements, on their latest verified grades?
+  const scholarIds = [...new Set(awarded.map((a) => a.students?.id).filter((id): id is string => Boolean(id)))].slice(0, 100);
+  const [{ data: criteriaRows }, { data: snapshotRows }, profiles] = await Promise.all([
+    awarded.length
+      ? db.from("scholarship_criteria").select("*").in("scholarship_id", [...new Set(awarded.map((a) => a.scholarship_id))])
+      : Promise.resolve({ data: [] }),
+    scholarIds.length
+      ? db.from("academic_snapshots").select("student_id, school_year, semester, term_sequence").in("student_id", scholarIds).order("term_sequence", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    Promise.all(scholarIds.map((id) => buildStudentEligibilityProfile(db, id))),
+  ]);
+  const criteriaFor = (scholarshipId: string) =>
+    ((criteriaRows as ScholarshipCriterion[] | null) ?? []).filter((c) => c.scholarship_id === scholarshipId);
+  const gradesTerm = new Map<string, string>();
+  for (const row of (snapshotRows as Array<{ student_id: string; school_year: string; semester: string }> | null) ?? []) {
+    if (!gradesTerm.has(row.student_id)) gradesTerm.set(row.student_id, `${row.semester}, ${row.school_year}`);
+  }
+  const profileOf = new Map(profiles.map((profile) => [profile.student_id, profile]));
+  const scholars = awarded
+    .filter((a) => a.students && profileOf.has(a.students.id))
+    .map((a) => ({ application: a, retention: checkRetention(a.scholarship_id, criteriaFor(a.scholarship_id), profileOf.get(a.students!.id)!) }))
+    .sort((x, y) => ["at_risk", "unknown", "keeps"].indexOf(x.retention.status) - ["at_risk", "unknown", "keeps"].indexOf(y.retention.status));
+  const atRisk = scholars.filter((s) => s.retention.status === "at_risk").length;
+
   return (
     <div>
       <PageHeader
@@ -118,7 +147,13 @@ export default async function StaffScholarshipsPage() {
           icon={HandHeart}
           iconTone={pending.length > 0 ? "warn" : "neutral"}
         />
-        <StatsCard label="Awarded" value={awarded.length} icon={Trophy} iconTone="success" />
+        <StatsCard
+          label="Awarded"
+          value={awarded.length}
+          icon={Trophy}
+          iconTone={atRisk > 0 ? "warn" : "success"}
+          trend={atRisk > 0 ? `${atRisk} at risk of losing it` : "All keep their requirements"}
+        />
         <StatsCard
           label="Total slots"
           value={active.reduce((sum, s) => sum + (s.slots_available ?? 0), 0)}
@@ -192,6 +227,43 @@ export default async function StaffScholarshipsPage() {
           </div>
         )}
       </section>
+
+      {/* Scholars after the award (checklist F3) */}
+      {scholars.length > 0 && (
+        <section className="mb-8">
+          <h2 className="font-display text-lg font-semibold tracking-tight">Scholars</h2>
+          <p className="mb-3 text-[13px] text-muted-foreground">
+            Awarded students checked against the grade and conduct requirements they must keep, on their latest verified grades.
+          </p>
+          <ul className="space-y-2">
+            {scholars.map(({ application, retention }) => (
+              <li key={application.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link href={`/staff/students/${application.students!.id}`} className="text-[13px] font-semibold text-tup-maroon-600 underline-offset-2 hover:underline">
+                    {application.students!.first_name} {application.students!.last_name}
+                  </Link>
+                  <span className="font-mono text-[11px] text-muted-foreground">{application.students!.student_number}</span>
+                  <span className="text-[12px] text-muted-foreground">· {application.scholarships?.name ?? "Scholarship"}</span>
+                  <ToneBadge label={RETENTION_META[retention.status].label} tone={RETENTION_META[retention.status].tone} />
+                </div>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  {retention.summary}
+                  {gradesTerm.get(application.students!.id) ? ` Grades from ${gradesTerm.get(application.students!.id)}.` : ""}
+                </p>
+                {retention.failing.length > 0 && (
+                  <ul className="ml-4 mt-1 list-disc text-[12px]">
+                    {retention.failing.map((f) => (
+                      <li key={f.description}>
+                        {f.description}: now <strong>{f.actual}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Applications */}
       <section>

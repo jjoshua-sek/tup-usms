@@ -3,6 +3,7 @@ import "server-only";
 import type { LooseClient } from "@/lib/supabase/loose";
 
 import type { StudentEligibilityProfile } from "./evaluate-eligibility";
+import { latestOfEach } from "./snapshot-figures";
 
 /**
  * Assembles the facts the eligibility rule engine needs about one student.
@@ -40,7 +41,7 @@ export async function buildStudentEligibilityProfile(
       .select("gwa, units_enrolled, units_failed, scholastic_status, term_sequence")
       .eq("student_id", studentId)
       .order("term_sequence", { ascending: false })
-      .limit(1),
+      .limit(6),
     db
       .from("violation_cases")
       .select("classification, status")
@@ -63,12 +64,15 @@ export async function buildStudentEligibilityProfile(
     address_province: string | null;
   } | null) ?? null;
 
-  const snapshot = ((snapshotRows as Array<{
+  // Each figure from the latest term that has it. A verified COR for the
+  // current term makes a snapshot with units but no grades yet; taking the
+  // latest row whole would hide the previous term's verified GWA.
+  const snapshot = latestOfEach((snapshotRows as Array<{
     gwa: number | null;
     units_enrolled: number | null;
     units_failed: number | null;
     scholastic_status: string | null;
-  }> | null) ?? [])[0];
+  }> | null) ?? []);
 
   const cases = (caseRows as Array<{ classification: string; status: string }> | null) ?? [];
 
@@ -102,3 +106,4 @@ export async function buildStudentEligibilityProfile(
     has_active_scholarship: ((awardRows as unknown[] | null) ?? []).length > 0,
   };
 }
+

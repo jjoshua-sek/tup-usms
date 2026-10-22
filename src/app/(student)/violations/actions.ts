@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { canFileAppeal, checkGrounds, manilaToday } from "@/lib/osa/appeal-filing";
+import { notifyOsaStaff } from "@/lib/osa/notify-osa";
 import { resolveAppealRoute, type PenaltyBasis } from "@/lib/osa/sanctions";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -326,21 +327,15 @@ export async function fileAppeal(formData: FormData): Promise<Result> {
   });
 
   // Every OSA officer and the OSA head: whoever is at the office forwards it.
-  const { data: staffRows } = await db.from("staff").select("user_id").in("role_type", ["osa_head", "osa_officer"]).not("user_id", "is", null);
-  for (const row of (staffRows as Array<{ user_id: string }> | null) ?? []) {
-    await db.rpc("create_notification", {
-      p_user_id: row.user_id,
-      p_type: "appeal_filed",
-      p_title: `Appeal filed in case ${caseNumber}`,
-      p_body: `The student filed an appeal through STARS. Forward it to the ${route.bodyLabel}, which decides it.`,
-      p_priority: "high",
-      p_channels: ["in_app", "email"],
-      p_action_url: `/staff/cases/${appeal.case_id}`,
-      p_action_label: "Open the case",
-      p_entity_type: "violation_case",
-      p_entity_id: appeal.case_id,
-    });
-  }
+  await notifyOsaStaff(db, {
+    type: "appeal_filed",
+    title: `Appeal filed in case ${caseNumber}`,
+    body: `The student filed an appeal through STARS. Forward it to the ${route.bodyLabel}, which decides it.`,
+    actionUrl: `/staff/cases/${appeal.case_id}`,
+    actionLabel: "Open the case",
+    entityType: "violation_case",
+    entityId: appeal.case_id,
+  });
 
   revalidatePath("/violations");
   revalidatePath(`/staff/cases/${appeal.case_id}`);

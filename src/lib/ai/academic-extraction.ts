@@ -40,6 +40,7 @@ export const extractionSchema = z.object({
   school_year: nullableString(20),
   semester: nullableString(30),
   program: nullableString(120),
+  college: nullableString(20),
   year_level: nullableString(30),
   gwa: z.number().min(1).max(5).nullable(),
   units_enrolled: z.number().min(0).max(60).nullable(),
@@ -69,7 +70,7 @@ export const EXTRACTION_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: [
-    "student_number", "student_name", "school_year", "semester", "program", "year_level", "gwa",
+    "student_number", "student_name", "school_year", "semester", "program", "college", "year_level", "gwa",
     "units_enrolled", "units_passed", "units_failed", "scholastic_status", "subjects",
     "field_confidence", "overall_confidence", "notes",
   ],
@@ -79,6 +80,7 @@ export const EXTRACTION_JSON_SCHEMA = {
     school_year: nullable("string", "Formatted as 2026-2027."),
     semester: nullable("string", "One of: 1st Semester, 2nd Semester, Summer."),
     program: nullable("string"),
+    college: nullable("string", "The college code printed on a Certificate of Registration, such as COS or COE. Null when none is printed."),
     year_level: nullable("string"),
     gwa: nullable(
       "number",
@@ -205,6 +207,7 @@ export function toExtractedAcademicData(raw: AcademicExtraction): ExtractedAcade
     school_year: clean(raw.school_year),
     semester: clean(raw.semester),
     program: clean(raw.program),
+    college: clean(raw.college),
     year_level: clean(raw.year_level),
     gwa: clean(raw.gwa),
     units_enrolled: clean(raw.units_enrolled),

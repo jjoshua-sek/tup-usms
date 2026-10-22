@@ -582,6 +582,8 @@ export interface ExtractedAcademicData {
   school_year?: string;
   semester?: string;
   program?: string;
+  /** College code printed on a COR (e.g. COS); migration 00042. */
+  college?: string;
   year_level?: string;
   gwa?: number;
   units_enrolled?: number;

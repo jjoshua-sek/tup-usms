@@ -39,6 +39,8 @@ type AuditAction =
   // as much as who changed something; this page aggregates discipline, risk
   // and clearance in one view, so opening it is logged.
   | "student_record_viewed"
+  // A report downloaded as a file leaves STARS, so who took it is logged.
+  | "report_exported"
   // Account provisioning (migration 00021)
   | "account_created"
   | "enrollment_imported"

@@ -18,6 +18,7 @@ const ratingSlip = {
   school_year: "2025-2026",
   semester: "1st Semester",
   program: "BS Information Technology",
+  college: null,
   year_level: "3rd Year",
   gwa: 1.75,
   units_enrolled: 9,
@@ -122,7 +123,7 @@ describe("PDF text", () => {
 describe("the units recheck", () => {
   // As the AI first read a real ERS COR: title numbers taken as units.
   const misread = {
-    student_number: null, student_name: null, school_year: null, semester: null, program: null, year_level: null,
+    student_number: null, student_name: null, school_year: null, semester: null, program: null, college: null, year_level: null,
     gwa: null, units_enrolled: 9, units_passed: null, units_failed: null, scholastic_status: null,
     subjects: [
       { subject_code: "IT413-M", description: "IT Capstone & Research 1", units: 1, grade: null, schedule: [] },

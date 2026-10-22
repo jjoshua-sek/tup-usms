@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { runAcademicExtraction } from "@/lib/ai/run-extraction";
 import { unitsFromGrades } from "@/lib/documents/integrity";
+import { normalizeCollege } from "@/lib/osa/college-report";
 import { readStampedScan } from "@/lib/documents/scan-stamped";
 import { compareWithScan, type ScanComparison } from "@/lib/documents/stamped-scan";
 import { getStaffContext } from "@/lib/osa/staff-context";
@@ -176,6 +177,14 @@ async function verifyDocument(input: {
     : await db.from("academic_snapshots").insert(snapshot);
 
   if (error) return { error: "Verified the document, but the term snapshot failed to save." };
+
+  // A verified COR also says which college the student is in (I5, reports
+  // per college). Before migration 00042 there is no column; nothing breaks.
+  const college = normalizeCollege(document.extracted_data?.college);
+  if (document.document_type === "certificate_of_registration" && college) {
+    const { error: collegeError } = await db.from("students").update({ college }).eq("id", document.student_id);
+    if (collegeError) console.error("[documents] college not saved", collegeError.message);
+  }
 
   // A verified COR carries the student's class times. Turning them into busy
   // blocks here is what lets the hearing scheduler avoid booking a meeting

@@ -3,6 +3,7 @@ import {
   Award,
   ClipboardCheck,
   DoorOpen,
+  Download,
   Gavel,
   IdCard,
   Scale,
@@ -14,6 +15,8 @@ import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { getCurrentTerm } from "@/lib/access/term";
+import { buildCollegeReport, totalRow } from "@/lib/osa/college-report";
+import { loadCollegeReportInput } from "@/lib/osa/college-report-data";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { featuresToInputs, loadActiveRiskModel, loadRiskFeatures } from "@/lib/risk/load";
 import { scoreStudent } from "@/lib/risk/score";
@@ -109,6 +112,8 @@ export default async function StaffReportsPage() {
     loadRiskFeatures(db, { limit: 500 }),
   ]);
 
+  const collegeRows = buildCollegeReport(await loadCollegeReportInput(db, term, termStartIso));
+
   const cases =
     (caseRows as Array<{ classification: string; status: CaseStatus; created_at: string }> | null) ??
     [];
@@ -194,6 +199,75 @@ export default async function StaffReportsPage() {
         />
       </Section>
 
+      {/* Per college (checklist I5) */}
+      <section className="mt-8">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-display text-lg font-semibold tracking-tight">By college</h2>
+            <p className="text-[12px] text-muted-foreground">
+              Counts only. A college comes from the student&apos;s verified COR; without one, from their program.
+            </p>
+          </div>
+          <a href="/staff/reports/export" className={csvLinkClass}>
+            <Download className="h-3.5 w-3.5" /> All colleges (CSV)
+          </a>
+        </div>
+        {collegeRows.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            No students on file yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-border bg-card">
+            <table className="w-full min-w-[760px] text-[13px] tabular-nums">
+              <thead className="border-b border-border bg-muted/40 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-medium">College</th>
+                  <th className="px-3 py-2 text-right font-medium">Students</th>
+                  <th className="px-3 py-2 text-right font-medium">Cases (term)</th>
+                  <th className="px-3 py-2 text-right font-medium">Open cases</th>
+                  <th className="px-3 py-2 text-right font-medium">Concerns (term)</th>
+                  <th className="px-3 py-2 text-right font-medium">IDs validated</th>
+                  <th className="px-3 py-2 text-right font-medium">Clearances</th>
+                  <th className="px-3 py-2 text-right font-medium">High risk</th>
+                  <th className="px-3 py-2" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {[...collegeRows, totalRow(collegeRows)].map((row) => {
+                  const isTotal = row.college === "Total";
+                  return (
+                    <tr key={row.college} className={isTotal ? "bg-muted/30 font-semibold" : undefined}>
+                      <td className="px-3 py-2">
+                        {row.college}
+                        {row.estimated > 0 && (
+                          <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">
+                            ({row.estimated} by program)
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right">{row.students}</td>
+                      <td className="px-3 py-2 text-right">{row.casesThisTerm}</td>
+                      <td className="px-3 py-2 text-right">{row.openCases}</td>
+                      <td className="px-3 py-2 text-right">{row.concernsThisTerm}</td>
+                      <td className="px-3 py-2 text-right">{row.idsValidated}</td>
+                      <td className="px-3 py-2 text-right">{row.clearancesIssued}</td>
+                      <td className="px-3 py-2 text-right">{row.highRisk}</td>
+                      <td className="px-3 py-2 text-right">
+                        {!isTotal && (
+                          <a href={`/staff/reports/export?college=${encodeURIComponent(row.college)}`} className={csvLinkClass}>
+                            <Download className="h-3 w-3" /> CSV
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {/* Case pipeline */}
       <section className="mt-8">
         <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
@@ -239,6 +313,9 @@ export default async function StaffReportsPage() {
     </div>
   );
 }
+
+const csvLinkClass =
+  "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-tup-maroon-600 transition-colors hover:bg-muted";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

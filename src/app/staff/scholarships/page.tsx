@@ -114,7 +114,13 @@ export default async function StaffScholarshipsPage() {
       ? db.from("scholarship_criteria").select("*").in("scholarship_id", [...new Set(awarded.map((a) => a.scholarship_id))])
       : Promise.resolve({ data: [] }),
     scholarIds.length
-      ? db.from("academic_snapshots").select("student_id, school_year, semester, term_sequence").in("student_id", scholarIds).order("term_sequence", { ascending: false })
+      ? db
+          .from("academic_snapshots")
+          .select("student_id, school_year, semester, term_sequence")
+          .in("student_id", scholarIds)
+          // The term the GWA comes from: a COR's term has units but no grades.
+          .not("gwa", "is", null)
+          .order("term_sequence", { ascending: false })
       : Promise.resolve({ data: [] }),
     Promise.all(scholarIds.map((id) => buildStudentEligibilityProfile(db, id))),
   ]);
@@ -248,7 +254,9 @@ export default async function StaffScholarshipsPage() {
                 </div>
                 <p className="mt-1 text-[12px] text-muted-foreground">
                   {retention.summary}
-                  {gradesTerm.get(application.students!.id) ? ` Grades from ${gradesTerm.get(application.students!.id)}.` : ""}
+                  {gradesTerm.get(application.students!.id)
+                    ? ` GWA from ${gradesTerm.get(application.students!.id)}.`
+                    : " No verified rating slip on file yet."}
                 </p>
                 {retention.failing.length > 0 && (
                   <ul className="ml-4 mt-1 list-disc text-[12px]">
@@ -258,6 +266,11 @@ export default async function StaffScholarshipsPage() {
                       </li>
                     ))}
                   </ul>
+                )}
+                {retention.status === "at_risk" && retention.unchecked.length > 0 && (
+                  <p className="mt-1 text-[12px] text-muted-foreground">
+                    Not checked yet, for want of verified grades: {retention.unchecked.join("; ")}.
+                  </p>
                 )}
               </li>
             ))}

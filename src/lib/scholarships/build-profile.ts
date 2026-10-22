@@ -87,8 +87,9 @@ export async function buildStudentEligibilityProfile(
     department: student?.department ?? null,
     scholastic_status: snapshot?.scholastic_status ?? null,
 
-    major_violation_count: cases.filter((c) => c.classification === "major").length,
-    minor_violation_count: cases.filter((c) => c.classification === "minor").length,
+    // A dismissed complaint was not substantiated: it is not a violation on record.
+    major_violation_count: cases.filter((c) => c.classification === "major" && c.status !== "dismissed").length,
+    minor_violation_count: cases.filter((c) => c.classification === "minor" && c.status !== "dismissed").length,
     open_case_count: cases.filter(
       (c) => !["closed", "dismissed"].includes(c.status),
     ).length,

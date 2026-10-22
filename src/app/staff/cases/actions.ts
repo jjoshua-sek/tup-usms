@@ -116,8 +116,9 @@ export async function getStudentTrackRecord(studentId: string): Promise<{
 
   return {
     record: {
-      minor: rows.filter((row) => row.classification === "minor").length,
-      major: rows.filter((row) => row.classification === "major").length,
+      // A dismissed complaint is not a violation on record.
+      minor: rows.filter((row) => row.classification === "minor" && row.status !== "dismissed").length,
+      major: rows.filter((row) => row.classification === "major" && row.status !== "dismissed").length,
       open: rows.filter((row) => !["closed", "dismissed"].includes(row.status)).length,
       lastIncidentDate: rows[0]?.incident_date ?? null,
     },

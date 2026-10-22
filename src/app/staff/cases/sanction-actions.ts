@@ -10,8 +10,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { sanitizeText } from "@/lib/utils/sanitize";
-import { formatManilaDateTime, parseManilaDateTime } from "@/lib/utils/time";
+import { parseManilaDateTime } from "@/lib/utils/time";
 import type { CaseStatus } from "@/types/osa";
+import { createHearingWithSummons } from "@/lib/osa/summons";
 
 /**
  * Sanctions, community service, non-appearance and appeals.
@@ -541,35 +542,25 @@ export async function scheduleHearingManually(formData: FormData): Promise<Resul
   const end = new Date(start.getTime() + parsed.data.duration_minutes * 60_000);
   const db = loose(createAdminClient());
 
-  const { error } = await db.from("case_hearings").insert({
-    case_id: parsed.data.case_id,
-    hearing_type: parsed.data.hearing_type,
-    scheduled_start: start.toISOString(),
-    scheduled_end: end.toISOString(),
-    venue: sanitizeText(parsed.data.venue, 120),
-    status: "awaiting_complainant",
-    proposed_by: "staff",
-  });
-
-  if (error) return { error: "Could not create the hearing." };
-
-  await addCaseTimelineEntry(db, {
+  // The OSA sets the date and the summons goes with it (checklist C1).
+  const created = await createHearingWithSummons(db, staff, {
     caseId: parsed.data.case_id,
-    actorId: staff.userId,
-    actorLabel: staff.fullName,
-    eventType: "status_changed",
-    summary: `Meeting booked by hand for ${formatManilaDateTime(start)} at ${parsed.data.venue}.${parsed.data.reason ? ` Reason: ${parsed.data.reason}` : ""}`,
-    details: { proposed_by: "staff" },
+    hearingType: parsed.data.hearing_type,
+    start: start.toISOString(),
+    end: end.toISOString(),
+    venue: sanitizeText(parsed.data.venue, 120),
+    proposedBy: "staff",
+    note: parsed.data.reason ? sanitizeText(parsed.data.reason, 300) : null,
   });
-
-  await logAuditEvent(staff.userId, "hearing_scheduled", "case_hearings", {
-    case_id: parsed.data.case_id,
-    manual: true,
-  });
+  if ("error" in created) return { error: created.error };
 
   revalidatePath(`/staff/cases/${parsed.data.case_id}`);
   revalidatePath("/staff/hearings");
-  return { ok: true, message: "Booked. The complainant still has to approve the date." };
+  revalidatePath("/staff/calendar");
+  return {
+    ok: true,
+    message: "Hearing set. The student has been summoned through the portal and by email. Let the complainant know the date.",
+  };
 }
 
 // ============================================================

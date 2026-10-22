@@ -1,7 +1,8 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { checkDocumentIntegrity } from "@/lib/documents/integrity";
+import { checkDocumentIntegrity, printedTerm, type IntegrityCheck } from "@/lib/documents/integrity";
+import type { ExtractedAcademicData } from "@/types/osa";
 import { readPdfFacts } from "@/lib/documents/pdf-facts";
 import { loose } from "@/lib/supabase/loose";
 
@@ -36,13 +37,15 @@ export async function runAcademicExtraction(
 
   const { data: documentRow } = await db
     .from("academic_documents")
-    .select("id, student_id, file_path, mime_type, document_type, processing_status")
+    .select("id, student_id, school_year, semester, file_path, mime_type, document_type, processing_status")
     .eq("id", documentId)
     .maybeSingle();
 
   const document = documentRow as {
     id: string;
     student_id: string;
+    school_year: string;
+    semester: string;
     file_path: string;
     mime_type: string;
     document_type: "certificate_of_registration" | "rating_slip" | "transcript";
@@ -132,6 +135,8 @@ export async function runAcademicExtraction(
         student,
         pdf: await readPdfFacts(bytes),
       });
+      const termCheck = await fileUnderPrintedTerm(db, document, outcome.data);
+      if (termCheck) checks.unshift(termCheck);
       const { error } = await db.from("academic_documents").update({ integrity_checks: checks }).eq("id", document.id);
       // Before migration 00037 the column does not exist; nothing is lost.
       if (error) console.error("[extraction] integrity checks not saved", error.message);
@@ -141,4 +146,54 @@ export async function runAcademicExtraction(
   }
 
   return { ok: true, confidence: outcome.confidence };
+}
+
+/**
+ * Files a document under the term printed on it when that differs from the
+ * term chosen at upload. The upload form starts on the current term, but a
+ * rating slip is for the term before: one left at the default put a GWA in
+ * a term that had not happened yet (found on 2026-10-22). Not done when the
+ * student already has that document for the printed term; then the officer
+ * is told instead.
+ */
+async function fileUnderPrintedTerm(
+  db: ReturnType<typeof loose>,
+  document: { id: string; student_id: string; document_type: string; school_year: string; semester: string },
+  data: ExtractedAcademicData,
+): Promise<IntegrityCheck | null> {
+  const printed = printedTerm(data.school_year, data.semester);
+  if (!printed) return null;
+  if (printed.schoolYear === document.school_year && printed.semester === document.semester) {
+    return { code: "term", status: "pass", detail: `The term printed on it matches: ${printed.semester}, ${printed.schoolYear}.` };
+  }
+  const uploadedAs = `${document.semester}, ${document.school_year}`;
+  const printedAs = `${printed.semester}, ${printed.schoolYear}`;
+  const { data: clash } = await db
+    .from("academic_documents")
+    .select("id")
+    .eq("student_id", document.student_id)
+    .eq("document_type", document.document_type)
+    .eq("school_year", printed.schoolYear)
+    .eq("semester", printed.semester)
+    .neq("id", document.id)
+    .maybeSingle();
+  if (clash) {
+    return {
+      code: "term",
+      status: "warn",
+      detail: `Uploaded as ${uploadedAs}, but it says ${printedAs}, and the student already has one for that term. Reject this one.`,
+    };
+  }
+  const { error } = await db
+    .from("academic_documents")
+    .update({ school_year: printed.schoolYear, semester: printed.semester })
+    .eq("id", document.id);
+  if (error) {
+    return { code: "term", status: "warn", detail: `Uploaded as ${uploadedAs}, but it says ${printedAs}. Check the term before verifying.` };
+  }
+  return {
+    code: "term",
+    status: "pass",
+    detail: `Filed under ${printedAs}, the term printed on it (it was uploaded as ${uploadedAs}).`,
+  };
 }

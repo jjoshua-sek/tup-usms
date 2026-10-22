@@ -19,6 +19,7 @@ import {
   verifyAcademicDocument,
 } from "@/app/staff/documents/actions";
 import { Button } from "@/components/ui/button";
+import { unitsFromGrades } from "@/lib/documents/integrity";
 import { assessScholasticStanding } from "@/lib/osa/sanctions";
 import type { ExtractedAcademicData } from "@/types/osa";
 
@@ -167,6 +168,8 @@ export function DocumentReviewForms({
   }
 
   const isCor = documentType === "certificate_of_registration";
+  // ERS rating slips print no units passed/failed: worked out from the grades.
+  const gradeUnits = isCor ? {} : unitsFromGrades(extracted?.subjects);
 
   // The handbook defines probation and dismissal by figures, so the standing
   // can be computed rather than typed — and the reasons shown, so the officer
@@ -242,7 +245,7 @@ export function DocumentReviewForms({
                 type="number"
                 min="0"
                 max="60"
-                defaultValue={extracted?.units_passed ?? ""}
+                defaultValue={extracted?.units_passed ?? gradeUnits.passed ?? ""}
                 className={inputClass}
               />
             </label>
@@ -253,7 +256,7 @@ export function DocumentReviewForms({
                 type="number"
                 min="0"
                 max="60"
-                defaultValue={extracted?.units_failed ?? ""}
+                defaultValue={extracted?.units_failed ?? gradeUnits.failed ?? ""}
                 className={inputClass}
               />
             </label>

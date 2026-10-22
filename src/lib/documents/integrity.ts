@@ -16,7 +16,7 @@ import type { ExtractedAcademicData } from "@/types/osa";
 export type CheckStatus = "pass" | "warn" | "skip";
 
 export interface IntegrityCheck {
-  code: "student_number" | "student_name" | "gwa" | "units" | "grade_scale" | "pdf_source" | "pdf_revisions";
+  code: "student_number" | "student_name" | "term" | "gwa" | "units" | "grade_scale" | "pdf_source" | "pdf_revisions";
   status: CheckStatus;
   detail: string;
 }
@@ -183,6 +183,19 @@ export function unitsFromGrades(subjects: ExtractedAcademicData["subjects"]): { 
     else if (grade === "5.00") failed += subject.units;
   }
   return any ? { passed, failed } : {};
+}
+
+/**
+ * The term printed on a document, as STARS stores terms: "2025-2026" and
+ * "1st Semester" / "2nd Semester" / "Summer". ERS prints "Second", the
+ * COR "First"; anything unclear gives null.
+ */
+export function printedTerm(schoolYear: string | null | undefined, semester: string | null | undefined): { schoolYear: string; semester: string } | null {
+  const year = schoolYear?.trim().match(/^(\d{4})\s*[-–]\s*(\d{4})$/);
+  if (!year || Number(year[2]) !== Number(year[1]) + 1) return null;
+  const text = semester?.trim().toLowerCase() ?? "";
+  const term = /sum/.test(text) ? "Summer" : /^(1st|first)\b/.test(text) ? "1st Semester" : /^(2nd|second)\b/.test(text) ? "2nd Semester" : null;
+  return term ? { schoolYear: `${year[1]}-${year[2]}`, semester: term } : null;
 }
 
 /** True when the file's first bytes say PDF, whatever its name (ERS saves rating slips as .php). */

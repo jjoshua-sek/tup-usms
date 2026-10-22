@@ -127,7 +127,16 @@ async function verifyDocument(input: {
   } | null;
   if (!document) return { error: "Document not found." };
 
-  const corrected = input.figures;
+  // ERS rating slips print no "units passed/failed"; left blank, the
+  // scholarship check "no failing grades" could never be answered. Work them
+  // out from the grades when the officer did not type them.
+  const fromGrades =
+    document.document_type === "rating_slip" ? unitsFromGrades(document.extracted_data?.subjects) : {};
+  const corrected: VerifiedFigures = {
+    ...input.figures,
+    units_passed: input.figures.units_passed ?? fromGrades.passed,
+    units_failed: input.figures.units_failed ?? fromGrades.failed,
+  };
 
   const { error: verifyError } = await updateDocument(
     db,

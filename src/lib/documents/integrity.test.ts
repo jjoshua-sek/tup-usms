@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checkDocumentIntegrity, computeGwa, countPdfRevisions, isPdfBytes, normalizeGrade, normalizeSubjectCode, unitsFromGrades, type PdfFacts } from "./integrity";
+import { checkDocumentIntegrity, computeGwa, countPdfRevisions, isPdfBytes, normalizeGrade, normalizeSubjectCode, printedTerm, unitsFromGrades, type PdfFacts } from "./integrity";
 
 // The real 2nd Sem 2025-2026 rating slip from ERS, as read.
 const slip = {
@@ -96,5 +96,20 @@ describe("helpers", () => {
     expect(isPdfBytes(new TextEncoder().encode("<?php echo"))).toBe(false);
     expect(countPdfRevisions(pdf)).toBe(1);
     expect(countPdfRevisions(new TextEncoder().encode("%PDF-1.3\n%%EOF\nupdate\n%%EOF\n"))).toBe(2);
+  });
+});
+
+describe("printedTerm", () => {
+  it("reads the term as ERS prints it", () => {
+    expect(printedTerm("2025-2026", "Second")).toEqual({ schoolYear: "2025-2026", semester: "2nd Semester" });
+    expect(printedTerm("2026 - 2027", "First")).toEqual({ schoolYear: "2026-2027", semester: "1st Semester" });
+    expect(printedTerm("2025-2026", "2nd Semester")).toEqual({ schoolYear: "2025-2026", semester: "2nd Semester" });
+    expect(printedTerm("2025-2026", "Summer")?.semester).toBe("Summer");
+  });
+
+  it("gives nothing for an unclear term", () => {
+    expect(printedTerm("2627", "First")).toBeNull();
+    expect(printedTerm("2025-2027", "First")).toBeNull();
+    expect(printedTerm("2025-2026", null)).toBeNull();
   });
 });

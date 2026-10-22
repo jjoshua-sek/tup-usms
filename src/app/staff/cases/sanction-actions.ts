@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { COUNT_BASES, PENALTY_BASES, appealWindow, prescribeMinorSanction, resolveAppealRoute } from "@/lib/osa/sanctions";
+import { COUNT_BASES, PENALTY_BASES, appealWindow, prescribeMinorSanction, resolveAppealRoute, type PenaltyBasis } from "@/lib/osa/sanctions";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -755,4 +755,85 @@ export async function recordAppealOutcome(formData: FormData): Promise<Result> {
 
   revalidatePath(`/staff/cases/${appeal.case_id}`);
   return { ok: true, message: "Saved." };
+}
+
+const forwardSchema = z.object({
+  appeal_id: z.string().uuid(),
+  external_reference: z.string().trim().max(80).optional().or(z.literal("")),
+});
+
+/**
+ * The OSA passes a filed appeal on to the body that decides it (checklist
+ * B5). Recorded so the case shows when it left the OSA, and the student is
+ * told where it went.
+ */
+export async function forwardAppeal(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can forward an appeal." };
+
+  const parsed = forwardSchema.safeParse({
+    appeal_id: formData.get("appeal_id"),
+    external_reference: formData.get("external_reference") ?? "",
+  });
+  if (!parsed.success) return { error: "Invalid appeal." };
+
+  const db = loose(createAdminClient());
+  const { data: appealRow } = await db
+    .from("case_appeals")
+    .select("*, violation_cases(case_number, students(user_id))")
+    .eq("id", parsed.data.appeal_id)
+    .maybeSingle();
+  const appeal = appealRow as {
+    id: string;
+    case_id: string;
+    status: string;
+    penalty_basis: PenaltyBasis;
+    forwarded_at?: string | null;
+    violation_cases: { case_number: string; students: { user_id: string } | null } | null;
+  } | null;
+  if (!appeal) return { error: "Appeal record not found." };
+  if (!(await staffCanSeeCase(appeal.case_id))) return { error: CASE_NOT_VISIBLE };
+  if (appeal.status !== "filed") return { error: "Only a filed appeal can be forwarded." };
+  if (appeal.forwarded_at) return { error: "This appeal was already forwarded." };
+
+  const route = resolveAppealRoute(appeal.penalty_basis);
+  const { error } = await db
+    .from("case_appeals")
+    .update({
+      forwarded_at: new Date().toISOString(),
+      forwarded_by: staff.staffId,
+      ...(parsed.data.external_reference ? { external_reference: parsed.data.external_reference } : {}),
+    })
+    .eq("id", appeal.id);
+  if (error) return { error: "Could not record the forwarding." };
+
+  await addCaseTimelineEntry(db, {
+    caseId: appeal.case_id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: "note_added",
+    summary: `Appeal forwarded to the ${route.bodyLabel}${parsed.data.external_reference ? ` (${parsed.data.external_reference})` : ""}.`,
+    details: { appeal_id: appeal.id, appellate_body: route.appellateBody },
+  });
+
+  const studentUserId = appeal.violation_cases?.students?.user_id;
+  if (studentUserId) {
+    await db.rpc("create_notification", {
+      p_user_id: studentUserId,
+      p_type: "appeal_forwarded",
+      p_title: "Your appeal was forwarded",
+      p_body: `The OSA forwarded your appeal in case ${appeal.violation_cases?.case_number ?? ""} to the ${route.bodyLabel}, which will decide it.`,
+      p_priority: "normal",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/violations",
+      p_action_label: "Open my violations",
+      p_entity_type: "violation_case",
+      p_entity_id: appeal.case_id,
+    });
+  }
+
+  await logAuditEvent(staff.userId, "case_updated", "case_appeals", { appeal_id: appeal.id, forwarded: true });
+  revalidatePath(`/staff/cases/${appeal.case_id}`);
+  revalidatePath("/violations");
+  return { ok: true, message: `Forwarded to the ${route.bodyLabel}. The student has been told.` };
 }

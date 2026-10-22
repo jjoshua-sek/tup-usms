@@ -1,3 +1,4 @@
+import { FileAppealForm } from "@/components/violations/file-appeal-form";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
@@ -60,6 +61,9 @@ interface AppealSummary {
   status: "window_open" | "filed" | "decided" | "lapsed" | "withdrawn";
   outcome: string | null;
   outcome_notes: string | null;
+  filed_on?: string | null;
+  /** Migration 00041; absent until it runs. */
+  forwarded_at?: string | null;
 }
 
 interface CaseWithApologies extends ViolationCaseWithRelations {
@@ -153,7 +157,7 @@ export default async function ViolationsPage() {
   const { data: caseRows } = await db
     .from("violation_cases")
     .select(
-      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction), apology_letters(id, review_status, submitted_at, reviewer_notes, file_path), case_settlements(id, terms, student_obligations, compliance_deadline, student_signed_at, complainant_signed_at, osa_witnessed_at, is_complied), community_service_assignments(id, offense_sequence, hours_required, hours_completed, deadline, service_detail, status), case_appeals(id, penalty_basis, appellate_body, notice_received_on, appeal_deadline, status, outcome, outcome_notes)",
+      "id, case_number, classification, status, incident_date, incident_location, description, sanction_applied, resolution_notes, created_at, closed_at, violation_types(code, name, handbook_reference, typical_sanction), apology_letters(id, review_status, submitted_at, reviewer_notes, file_path), case_settlements(id, terms, student_obligations, compliance_deadline, student_signed_at, complainant_signed_at, osa_witnessed_at, is_complied), community_service_assignments(id, offense_sequence, hours_required, hours_completed, deadline, service_detail, status), case_appeals(*)",
     )
     .eq("student_id", student.id)
     .order("incident_date", { ascending: false });
@@ -397,7 +401,8 @@ export default async function ViolationsPage() {
                             <strong>{route.bodyLabel}</strong> until{" "}
                             <strong>{formatManilaLongDate(appeal.appeal_deadline)}</strong> &mdash;{" "}
                             {route.days} days from when you received the Notice of Decision.
-                            File it with that office; the OSA does not decide appeals.
+                            File it here with the OSA, which forwards it to that office; the OSA does
+                            not decide appeals.
                             {route.furtherRecourse ? ` ${route.furtherRecourse}` : ""}
                           </>
                         ) : appeal.status === "lapsed" ? (
@@ -412,11 +417,16 @@ export default async function ViolationsPage() {
                           </>
                         ) : (
                           <>
-                            Appeal filed with the {route.bodyLabel}. You will be told the
-                            outcome.
+                            Appeal filed with the OSA
+                            {appeal.filed_on ? ` on ${formatManilaLongDate(appeal.filed_on)}` : ""}.{" "}
+                            {appeal.forwarded_at
+                              ? `It was forwarded to the ${route.bodyLabel} on ${formatManilaLongDate(appeal.forwarded_at)}.`
+                              : `The OSA forwards it to the ${route.bodyLabel}.`}{" "}
+                            You will be told the outcome.
                           </>
                         )}
                       </p>
+                      {open && <FileAppealForm appealId={appeal.id} bodyLabel={route.bodyLabel} />}
                       <p className="mt-1 text-[10px] text-muted-foreground">
                         {route.handbookReference}
                       </p>

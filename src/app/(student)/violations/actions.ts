@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { canFileAppeal, checkGrounds, manilaToday } from "@/lib/osa/appeal-filing";
+import { resolveAppealRoute, type PenaltyBasis } from "@/lib/osa/sanctions";
+import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -238,4 +241,108 @@ export async function signSettlement(settlementId: string): Promise<Result> {
     ok: true,
     message: "Recorded. Keep to what was agreed and the OSA will close the case.",
   };
+}
+
+const appealSchema = z.object({
+  appeal_id: z.string().uuid(),
+  grounds: z.string().max(6000),
+});
+
+/**
+ * The student files their appeal with the OSA (checklist B5). The OSA
+ * forwards it to the body Sec. 9 names for the sanction; filing here is what
+ * stops the ten-day clock from running out on them.
+ *
+ * Ownership is checked through the student's own session (RLS shows them
+ * only their own appeals); the write is then made by the server, since
+ * students have no write policy on case_appeals.
+ */
+export async function fileAppeal(formData: FormData): Promise<Result> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You are signed out." };
+
+  const limit = checkRateLimit({ identifier: `appeal-file:${user.id}`, maxRequests: 5, windowSeconds: 3600 });
+  if (!limit.success) return { error: "Too many attempts. Please try again later." };
+
+  const parsed = appealSchema.safeParse({ appeal_id: formData.get("appeal_id"), grounds: formData.get("grounds") ?? "" });
+  if (!parsed.success) return { error: "Write your appeal first." };
+  const grounds = checkGrounds(parsed.data.grounds);
+  if (!grounds.ok) return { error: grounds.reason };
+
+  const { data: appealRow } = await loose(supabase)
+    .from("case_appeals")
+    .select("id, case_id, status, penalty_basis, notice_received_on, appellate_body, violation_cases(case_number)")
+    .eq("id", parsed.data.appeal_id)
+    .maybeSingle();
+  const appeal = appealRow as {
+    id: string;
+    case_id: string;
+    status: string;
+    penalty_basis: string;
+    notice_received_on: string;
+    appellate_body: string;
+    violation_cases: { case_number: string } | null;
+  } | null;
+  if (!appeal) return { error: "That appeal is not yours." };
+
+  const allowed = canFileAppeal({ status: appeal.status, penaltyBasis: appeal.penalty_basis, noticeReceivedOn: appeal.notice_received_on });
+  if (!allowed.ok) return { error: allowed.reason };
+
+  const db = loose(createAdminClient());
+  const filedOn = manilaToday();
+  const { data: updated, error } = await db
+    .from("case_appeals")
+    .update({
+      status: "filed",
+      filed_on: filedOn,
+      grounds: sanitizeText(grounds.text, 5000),
+      filed_by_student: true,
+    })
+    .eq("id", appeal.id)
+    .eq("status", "window_open")
+    .select("id");
+  if (error) {
+    return {
+      error: ["PGRST204", "42703"].includes((error as { code?: string }).code ?? "")
+        ? "Appeals cannot be filed online yet. File it at the OSA in person."
+        : "Your appeal was not saved. Please try again.",
+    };
+  }
+  if (((updated as unknown[] | null) ?? []).length === 0) return { error: "This appeal was already filed." };
+
+  const route = resolveAppealRoute(appeal.penalty_basis as PenaltyBasis);
+  const caseNumber = appeal.violation_cases?.case_number ?? "";
+
+  await addCaseTimelineEntry(db, {
+    caseId: appeal.case_id,
+    actorId: user.id,
+    actorLabel: "The student",
+    eventType: "note_added",
+    summary: `The student filed an appeal with the OSA on ${filedOn}, for the ${route.bodyLabel}.`,
+    details: { appeal_id: appeal.id, appellate_body: appeal.appellate_body },
+  });
+
+  // Every OSA officer and the OSA head: whoever is at the office forwards it.
+  const { data: staffRows } = await db.from("staff").select("user_id").in("role_type", ["osa_head", "osa_officer"]).not("user_id", "is", null);
+  for (const row of (staffRows as Array<{ user_id: string }> | null) ?? []) {
+    await db.rpc("create_notification", {
+      p_user_id: row.user_id,
+      p_type: "appeal_filed",
+      p_title: `Appeal filed in case ${caseNumber}`,
+      p_body: `The student filed an appeal through STARS. Forward it to the ${route.bodyLabel}, which decides it.`,
+      p_priority: "high",
+      p_channels: ["in_app", "email"],
+      p_action_url: `/staff/cases/${appeal.case_id}`,
+      p_action_label: "Open the case",
+      p_entity_type: "violation_case",
+      p_entity_id: appeal.case_id,
+    });
+  }
+
+  revalidatePath("/violations");
+  revalidatePath(`/staff/cases/${appeal.case_id}`);
+  return { ok: true, message: `Appeal filed with the OSA. It will be forwarded to the ${route.bodyLabel}, which decides it.` };
 }

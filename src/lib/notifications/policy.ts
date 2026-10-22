@@ -36,6 +36,8 @@ export const NOTIFICATION_TYPES = [
   "sanction_applied",
   "case_escalated",
   "appeal_window_opened",
+  "appeal_filed",
+  "appeal_forwarded",
   // Scheduling
   "schedule_proposed",
   "schedule_approval_needed",
@@ -127,6 +129,8 @@ export const ALWAYS_DELIVER: ReadonlySet<NotificationType> = new Set([
   "case_resolved",
   "case_escalated",
   "appeal_window_opened",
+  "appeal_filed",
+  "appeal_forwarded",
   "clearance_on_hold",
 ]);
 

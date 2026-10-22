@@ -60,6 +60,7 @@ import {
   formatManilaMonthDay,
 } from "@/lib/utils/time";
 import { AssignOfficerForm } from "@/components/cases/assign-officer-form";
+import { ForwardAppealForm } from "@/components/cases/forward-appeal-form";
 import { MinorProcessForm } from "@/components/cases/minor-process-form";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canChooseMinorProcess, minorProcessOf } from "@/lib/osa/minor-process";
@@ -129,6 +130,10 @@ interface AppealRow {
   outcome_notes: string | null;
   decided_on: string | null;
   external_reference: string | null;
+  /** Migration 00041; absent until it runs. */
+  grounds?: string | null;
+  filed_by_student?: boolean;
+  forwarded_at?: string | null;
 }
 
 const APPEAL_TONE: Record<AppealRow["status"], Tone> = {
@@ -684,6 +689,27 @@ export default async function StaffCaseDetailPage({
                               : ""}
                           </span>
                         </p>
+
+                        {appeal.grounds && (
+                          <div className="mt-2 rounded-md border border-border p-2 text-[12px]">
+                            <p className="mb-1 font-semibold">
+                              The student&apos;s appeal{appeal.filed_by_student ? ", filed through STARS" : ""}
+                            </p>
+                            <p className="whitespace-pre-wrap text-muted-foreground">{appeal.grounds}</p>
+                          </div>
+                        )}
+
+                        {appeal.status === "filed" &&
+                          (appeal.forwarded_at ? (
+                            <p className="mt-2 text-[12px] text-muted-foreground">
+                              Forwarded {formatManilaLongDate(appeal.forwarded_at)}. Record the decision below when it comes back.
+                            </p>
+                          ) : (
+                            <ForwardAppealForm
+                              appealId={appeal.id}
+                              bodyLabel={resolveAppealRoute(appeal.penalty_basis as PenaltyBasis).bodyLabel}
+                            />
+                          ))}
 
                         {appeal.outcome && (
                           <p className="mt-2 rounded-md bg-muted p-2 text-[12px]">

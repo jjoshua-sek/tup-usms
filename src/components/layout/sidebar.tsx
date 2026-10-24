@@ -142,17 +142,20 @@ const adminSection: NavSection = {
 
 interface SidebarProps {
   role: "student" | "staff" | "admin";
+  /** A Registrar / UITC account sees only Accounts (I1). */
+  accountsOnly?: boolean;
   /** Optional per-route badge counts for sidebar items (e.g. { "/concerns": 3 }) */
   badges?: Record<string, number>;
   open?: boolean;
   onClose?: () => void;
 }
 
-export function Sidebar({ role, badges, open, onClose }: SidebarProps) {
+export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const sections =
-    role === "student"
+  const sections = accountsOnly
+    ? [{ label: "Registrar / UITC", items: adminSection.items }]
+    : role === "student"
       ? studentSections
       : role === "admin"
         ? [...staffSections, adminSection]

@@ -79,11 +79,13 @@ const RESET_STATUS: Record<string, { label: string; tone: Tone }> = {
  */
 export default async function AccountsPage() {
   const staff = await getStaffContext();
-  if (!staff?.isAdmin) {
+  // Administrators, and the Registrar / UITC for student accounts only (I1).
+  const isAdmin = Boolean(staff?.isAdmin);
+  if (!staff || (!isAdmin && staff.role !== "registrar")) {
     return (
       <RestrictedNotice
         title="Accounts"
-        audience="Creating and importing accounts is limited to system administrators."
+        audience="Creating and importing accounts is limited to system administrators and the Registrar / UITC."
       />
     );
   }
@@ -103,7 +105,10 @@ export default async function AccountsPage() {
 
   const invitations = (data as InvitationRow[] | null) ?? [];
 
-  const { data: staffData, error: staffError } = await db
+  // The staff list is for administrators; the Registrar / UITC never sees it.
+  const { data: staffData, error: staffError } = !isAdmin
+    ? { data: [], error: null }
+    : await db
     .from("staff")
     .select("id, user_id, full_name, role_type, position")
     .order("full_name", { ascending: true });
@@ -126,7 +131,11 @@ export default async function AccountsPage() {
       <PageHeader
         breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Accounts" }]}
         title="Accounts"
-        description="Enroll students from a list, create a single account, and follow every sign-in link sent."
+        description={
+          isAdmin
+            ? "Enroll students from a list, create a single account, and follow every sign-in link sent."
+            : "Enroll students from the Registrar's list or create one student account, and follow every sign-in link sent."
+        }
       />
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -151,7 +160,7 @@ export default async function AccountsPage() {
             <h2 className="font-display text-[15px] font-semibold tracking-tight">Create one account</h2>
           </header>
           <div className="px-5 py-4">
-            <CreateAccountForm />
+            <CreateAccountForm allowStaff={isAdmin} />
           </div>
         </section>
       </div>
@@ -229,7 +238,7 @@ export default async function AccountsPage() {
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         {RESENDABLE.has(row.status) && <ResendInvitationButton invitationId={row.id} />}
-                        {RESETTABLE.has(row.status) && !needsMigration && (
+                        {isAdmin && RESETTABLE.has(row.status) && !needsMigration && (
                           <ResetPasswordButton invitationId={row.id} />
                         )}
                       </td>
@@ -242,6 +251,7 @@ export default async function AccountsPage() {
         )}
       </section>
 
+      {isAdmin && (
       <section className="mt-6 rounded-xl border border-border bg-card">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3">
           <h2 className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight">
@@ -309,6 +319,7 @@ export default async function AccountsPage() {
           </div>
         )}
       </section>
+      )}
     </div>
   );
 }

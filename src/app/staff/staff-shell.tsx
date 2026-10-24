@@ -7,6 +7,8 @@ interface StaffShellProps {
   userName: string;
   userSubtitle?: string;
   role: "staff" | "admin";
+  /** A Registrar / UITC account sees only Accounts (I1). */
+  accountsOnly?: boolean;
   notificationCount: number;
   sidebarBadges?: Record<string, number>;
   idleMinutes: number;
@@ -17,6 +19,7 @@ export function StaffShell({
   userName,
   userSubtitle,
   role,
+  accountsOnly,
   notificationCount,
   sidebarBadges,
   idleMinutes,
@@ -24,6 +27,7 @@ export function StaffShell({
   return (
     <AppShell
       role={role}
+      accountsOnly={accountsOnly}
       idleMinutes={idleMinutes}
       userName={userName}
       userSubtitle={userSubtitle}

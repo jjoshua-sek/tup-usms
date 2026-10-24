@@ -10,6 +10,8 @@ import { TupHeader } from "./tup-header";
 interface AppShellProps {
   children: React.ReactNode;
   role: "student" | "staff" | "admin";
+  /** A Registrar / UITC account sees only Accounts (I1). */
+  accountsOnly?: boolean;
   userName?: string;
   userAvatar?: string;
   /** Short role line shown under the name in the header (e.g. "BSIT · 4th Year") */
@@ -44,6 +46,7 @@ interface AppShellProps {
 export function AppShell({
   children,
   role,
+  accountsOnly,
   userName,
   userSubtitle,
   photoIsProvisional,
@@ -72,6 +75,7 @@ export function AppShell({
       <div className="flex flex-1 lg:grid lg:grid-cols-[240px_1fr]">
         <Sidebar
           role={role}
+          accountsOnly={accountsOnly}
           badges={sidebarBadges}
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}

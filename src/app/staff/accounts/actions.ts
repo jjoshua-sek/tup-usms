@@ -31,7 +31,17 @@ async function requireAdmin() {
   return staff?.isAdmin ? staff : null;
 }
 
+/**
+ * Student accounts: an administrator, or a Registrar / UITC account (OSA
+ * checklist I1). Staff accounts and password resets stay with administrators.
+ */
+async function requireStudentAccounts() {
+  const staff = await getStaffContext();
+  return staff && (staff.isAdmin || staff.role === "registrar") ? staff : null;
+}
+
 const NOT_ADMIN = "Only an administrator can create accounts.";
+const NOT_ACCOUNTS = "Only an administrator or the Registrar / UITC can create student accounts.";
 const MAX_FILE_BYTES = 1_000_000;
 const CHUNK_SIZE = 25;
 
@@ -58,7 +68,7 @@ export interface PreviewResult {
  * Writes nothing: the admin sees every problem before any account exists.
  */
 export async function previewEnrollment(formData: FormData): Promise<PreviewResult> {
-  if (!(await requireAdmin())) return { error: NOT_ADMIN };
+  if (!(await requireStudentAccounts())) return { error: NOT_ACCOUNTS };
 
   const file = formData.get("file");
   const pasted = formData.get("csv");
@@ -125,8 +135,8 @@ export async function importEnrollmentChunk(input: {
   batchId: string;
   records: unknown[];
 }): Promise<{ error?: string; results?: ImportRowResult[] }> {
-  const staff = await requireAdmin();
-  if (!staff) return { error: NOT_ADMIN };
+  const staff = await requireStudentAccounts();
+  if (!staff) return { error: NOT_ACCOUNTS };
 
   if (!z.string().uuid().safeParse(input.batchId).success) return { error: "Invalid import." };
   if (!Array.isArray(input.records) || input.records.length > CHUNK_SIZE) {
@@ -162,7 +172,7 @@ export async function importEnrollmentChunk(input: {
 
 /** A fresh id for one import, so its invitations can be found together. */
 export async function startEnrollmentImport(): Promise<{ error?: string; batchId?: string; maxRows?: number }> {
-  if (!(await requireAdmin())) return { error: NOT_ADMIN };
+  if (!(await requireStudentAccounts())) return { error: NOT_ACCOUNTS };
   return { batchId: randomUUID(), maxRows: MAX_ROWS };
 }
 
@@ -196,8 +206,8 @@ interface Result {
  * late enrollee, or a new staff member — without going near the database.
  */
 export async function createAccount(formData: FormData): Promise<Result> {
-  const staff = await requireAdmin();
-  if (!staff) return { error: NOT_ADMIN };
+  const staff = await requireStudentAccounts();
+  if (!staff) return { error: NOT_ACCOUNTS };
 
   const kind = formData.get("kind");
 
@@ -240,6 +250,8 @@ export async function createAccount(formData: FormData): Promise<Result> {
   }
 
   if (kind === "staff") {
+    // Staff accounts carry access to case and counselling records: administrators only.
+    if (!staff.isAdmin) return { error: NOT_ADMIN };
     const parsed = staffSchema.safeParse({
       login_id: formData.get("login_id"),
       full_name: formData.get("full_name"),
@@ -287,8 +299,8 @@ export async function createAccount(formData: FormData): Promise<Result> {
  * new token replaces the old one, so whatever was sent before stops working.
  */
 export async function resendInvitation(invitationId: string): Promise<Result> {
-  const staff = await requireAdmin();
-  if (!staff) return { error: NOT_ADMIN };
+  const staff = await requireStudentAccounts();
+  if (!staff) return { error: NOT_ACCOUNTS };
   if (!z.string().uuid().safeParse(invitationId).success) return { error: "Invitation not found." };
 
   const { data, error } = await loose(await createClient())

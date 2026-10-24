@@ -82,6 +82,7 @@ export default async function StaffLayout({
       // place every page's permission check reads — not from the login
       // role, which only decides entry to /staff.
       role={staffData?.role_type === "admin" ? "admin" : "staff"}
+      accountsOnly={staffData?.role_type === "registrar"}
       notificationCount={unreadCount || 0}
       sidebarBadges={sidebarBadges}
       idleMinutes={idleLimitMinutes("staff")}

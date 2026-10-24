@@ -41,7 +41,7 @@ export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
   pic_member: "PIC Member",
   sdb_member: "SDB Member",
   codi_member: "CODI Member",
-  registrar: "Registrar",
+  registrar: "Registrar / UITC",
   cashier: "Cashier",
   security_guard: "Security Guard",
   admin: "Administrator",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   MessageSquare,
   AlertTriangle,
@@ -12,6 +13,7 @@ import {
 
 import { modelLabel } from "@/lib/ai/concern-summary";
 import { aiConfigured, aiModels } from "@/lib/ai/groq-core";
+import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
@@ -58,6 +60,10 @@ function timeAgo(dateString: string): string {
 }
 
 export default async function StaffDashboardPage() {
+  // A Registrar / UITC account works only on Accounts (I1); the OSA overview is not theirs.
+  const staffContext = await getStaffContext();
+  if (staffContext?.role === "registrar") redirect("/staff/accounts");
+
   const supabase = await createClient();
   const {
     data: { user },

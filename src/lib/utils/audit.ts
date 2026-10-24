@@ -43,6 +43,8 @@ type AuditAction =
   | "report_exported"
   // Attendance sheets from the colleges or the Registrar (migration 00043).
   | "attendance_imported"
+  // Retention periods recorded on the DPO's instruction (migration 00047).
+  | "retention_changed"
   // Account provisioning (migration 00021)
   | "account_created"
   | "enrollment_imported"

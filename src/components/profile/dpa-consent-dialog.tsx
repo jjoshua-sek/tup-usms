@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Shield, Lock, Eye, FileCheck, ChevronRight } from "lucide-react";
 
 import {
@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { APP_NAME } from "@/lib/brand";
+import { DEFAULT_RETENTION, describeRecordRetention, readRetention } from "@/lib/settings/retention";
+import { createClient } from "@/lib/supabase/client";
 
 interface DpaConsentDialogProps {
   /**
@@ -54,10 +56,27 @@ export function DpaConsentDialog({
   onAccept,
 }: DpaConsentDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  // The period the DPO set (I4), read when the notice opens; the team's
+  // default (5 years) shows until then, or if it cannot be read.
+  const [retention, setRetention] = useState(DEFAULT_RETENTION);
 
   // Controlled when the caller supplies `open`; otherwise self-managed.
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    void createClient()
+      .from("system_settings")
+      .select("key, value")
+      .then(({ data }) => {
+        if (active) setRetention(readRetention(data as Array<{ key: string; value: unknown }> | null));
+      });
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   const setOpen = (next: boolean) => {
     if (!isControlled) setInternalOpen(next);
@@ -150,8 +169,8 @@ export function DpaConsentDialog({
 
           <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-xs">
             <p>
-              <strong>Data retention:</strong> 5 years after graduation, then
-              archived per CHED requirements.
+              <strong>Data retention:</strong> {describeRecordRetention(retention)}, as set by the
+              university&apos;s Data Protection Officer, then archived per CHED requirements.
             </p>
             <p>
               <strong>Security:</strong> Row-level access controls, encrypted

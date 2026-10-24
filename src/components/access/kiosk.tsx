@@ -86,6 +86,7 @@ export function GateKiosk() {
 
   const [gate, setGate] = useState<GateConfig | null>(null);
   const [termLabel, setTermLabel] = useState("");
+  const [accessLogDays, setAccessLogDays] = useState(180);
   const [online, setOnline] = useState(true);
   const [result, setResult] = useState<KioskScanResult | null>(null);
   const [clock, setClock] = useState<string | null>(null);
@@ -168,9 +169,10 @@ export function GateKiosk() {
   // ---------------------------------------------------------------
   // Pairing
   // ---------------------------------------------------------------
-  const applyHeartbeat = useCallback((payload: { gate: GateConfig; term?: { label?: string } }) => {
+  const applyHeartbeat = useCallback((payload: { gate: GateConfig; term?: { label?: string }; accessLogDays?: number }) => {
     setGate(payload.gate);
     if (payload.term?.label) setTermLabel(payload.term.label);
+    if (typeof payload.accessLogDays === "number") setAccessLogDays(payload.accessLogDays);
   }, []);
 
   const heartbeat = useCallback(
@@ -186,7 +188,7 @@ export function GateKiosk() {
           return { ok: false, message: body?.error ?? "This device key was rejected." };
         }
 
-        applyHeartbeat((await response.json()) as { gate: GateConfig; term?: { label?: string } });
+        applyHeartbeat((await response.json()) as { gate: GateConfig; term?: { label?: string }; accessLogDays?: number });
         return { ok: true };
       } catch {
         return { ok: false, message: `Cannot reach the ${APP_NAME} server.` };
@@ -623,7 +625,7 @@ export function GateKiosk() {
               <AlertTriangle className="h-3 w-3" /> {relayNote}
             </span>
           )}
-          <span>Access logs are retained for 180 days · RA 10173</span>
+          <span>Access logs are retained for {accessLogDays} days · RA 10173</span>
         </span>
       </div>
 

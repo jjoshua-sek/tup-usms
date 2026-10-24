@@ -15,6 +15,7 @@ import { RequestValidationButton } from "@/components/id/request-validation-butt
 import { PageHeader } from "@/components/shared/page-header";
 import { formatInstitutionalQrPayload } from "@/lib/access/payload";
 import { getCurrentTerm, hasExpired } from "@/lib/access/term";
+import { describeAccessLogRetention, readRetention } from "@/lib/settings/retention";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { formatManilaMonthDayTime } from "@/lib/utils/time";
@@ -113,7 +114,7 @@ export default async function DigitalIdPage() {
   const db = loose(supabase);
   const term = getCurrentTerm();
 
-  const [{ data: validationRaw }, { data: eventsRaw }] = await Promise.all([
+  const [{ data: validationRaw }, { data: eventsRaw }, { data: settingRows }] = await Promise.all([
     db
       .from("id_validations")
       .select(
@@ -129,7 +130,10 @@ export default async function DigitalIdPage() {
       .eq("student_id", student.id)
       .order("occurred_at", { ascending: false })
       .limit(8),
+    // The period the DPO set (I4); the defaults until migration 00047 runs.
+    db.from("system_settings").select("key, value"),
   ]);
+  const retention = readRetention(settingRows as Array<{ key: string; value: unknown }> | null);
 
   const validation = (validationRaw as ValidationRow | null) ?? null;
   const events = (eventsRaw as AccessEventRow[] | null) ?? [];
@@ -373,7 +377,7 @@ export default async function DigitalIdPage() {
         <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
           <strong className="text-foreground">Data minimization:</strong> a gate scan reveals
           only your first name, initial, masked student number and photo — never your contact
-          details, grades, or disciplinary record. Access logs are kept for 180 days and are
+          details, grades, or disciplinary record. Access logs are kept for {describeAccessLogRetention(retention)} and are
           visible to you here, in line with RA 10173 §11 and your right to be informed.
         </p>
       </section>

@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { AccountActivity } from "@/components/settings/account-activity";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
 import { EmailPreferencesForm } from "@/components/settings/email-preferences-form";
+import { RetentionForm } from "@/components/settings/retention-form";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DEFAULT_PREFERENCES, type NotificationPreferences } from "@/lib/notifications/policy";
+import { describeAccessLogRetention, describeRecordRetention, readRetention } from "@/lib/settings/retention";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { STAFF_ROLE_LABELS, type StaffRole } from "@/types/osa";
@@ -32,7 +34,7 @@ export default async function StaffSettingsPage() {
   if (!user) redirect("/login");
 
   const db = loose(supabase);
-  const [{ data: staffRow }, { data: preferenceRow }] = await Promise.all([
+  const [{ data: staffRow }, { data: preferenceRow }, { data: settingRows }] = await Promise.all([
     db
       .from("staff")
       .select("full_name, department, position, office, role_type, institutional_email")
@@ -43,11 +45,15 @@ export default async function StaffSettingsPage() {
       .select("email_enabled, scholarship_alerts, guidance_reminders, announcements")
       .eq("user_id", user.id)
       .maybeSingle(),
+    // Until migration 00047 runs this fails, and the defaults show.
+    db.from("system_settings").select("key, value"),
   ]);
+  const retention = readRetention(settingRows as Array<{ key: string; value: unknown }> | null);
 
   const staff = staffRow as StaffRecord | null;
   const preferences = (preferenceRow as NotificationPreferences | null) ?? DEFAULT_PREFERENCES;
   const loginId = user.email?.split("@")[0]?.toUpperCase() ?? "—";
+  const isAdminUser = staff?.role_type === "admin";
 
   const details: Array<[string, string]> = [
     ["Name", staff?.full_name ?? "—"],
@@ -102,6 +108,36 @@ export default async function StaffSettingsPage() {
           </CardHeader>
           <CardContent>
             <EmailPreferencesForm initial={preferences} categories={false} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Record retention (set by the DPO)</CardTitle>
+            <CardDescription>
+              How long STARS keeps records, as the Data Protection Officer decides. Students see these periods in the
+              consent notice and on their Digital ID page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isAdminUser ? (
+              <RetentionForm current={retention} />
+            ) : (
+              <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+                <div>
+                  <dt className="text-[12px] text-muted-foreground">Student records</dt>
+                  <dd className="font-medium">{describeRecordRetention(retention)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[12px] text-muted-foreground">Gate scan logs</dt>
+                  <dd className="font-medium">{describeAccessLogRetention(retention)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[12px] text-muted-foreground">DPO reference</dt>
+                  <dd className="font-medium">{retention.dpoReference ?? "Not yet issued"}</dd>
+                </div>
+              </dl>
+            )}
           </CardContent>
         </Card>
 

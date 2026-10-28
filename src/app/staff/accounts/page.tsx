@@ -79,13 +79,13 @@ const RESET_STATUS: Record<string, { label: string; tone: Tone }> = {
  */
 export default async function AccountsPage() {
   const staff = await getStaffContext();
-  // Administrators, and the Registrar / UITC for student accounts only (I1).
+  // Administrators, and UITC for student accounts only (I1).
   const isAdmin = Boolean(staff?.isAdmin);
   if (!staff || (!isAdmin && staff.role !== "registrar")) {
     return (
       <RestrictedNotice
         title="Accounts"
-        audience="Creating and importing accounts is limited to system administrators and the Registrar / UITC."
+        audience="Creating and importing accounts is limited to system administrators and UITC."
       />
     );
   }
@@ -105,7 +105,7 @@ export default async function AccountsPage() {
 
   const invitations = (data as InvitationRow[] | null) ?? [];
 
-  // The staff list is for administrators; the Registrar / UITC never sees it.
+  // The staff list is for administrators; UITC never sees it.
   const { data: staffData, error: staffError } = !isAdmin
     ? { data: [], error: null }
     : await db

@@ -10,7 +10,7 @@ import { TupHeader } from "./tup-header";
 interface AppShellProps {
   children: React.ReactNode;
   role: "student" | "staff" | "admin";
-  /** A Registrar / UITC account sees only Accounts (I1). */
+  /** A UITC account sees only Accounts (I1). */
   accountsOnly?: boolean;
   userName?: string;
   userAvatar?: string;

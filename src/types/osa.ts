@@ -41,7 +41,9 @@ export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
   pic_member: "PIC Member",
   sdb_member: "SDB Member",
   codi_member: "CODI Member",
-  registrar: "Registrar / UITC",
+  // Stored as `registrar` (00006, 00046). The OSA head: the OSA and UITC create
+  // student accounts, not the Registrar (checklist I1/I6).
+  registrar: "UITC",
   cashier: "Cashier",
   security_guard: "Security Guard",
   admin: "Administrator",

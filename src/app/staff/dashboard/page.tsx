@@ -60,7 +60,7 @@ function timeAgo(dateString: string): string {
 }
 
 export default async function StaffDashboardPage() {
-  // A Registrar / UITC account works only on Accounts (I1); the OSA overview is not theirs.
+  // A UITC account works only on Accounts (I1); the OSA overview is not theirs.
   const staffContext = await getStaffContext();
   if (staffContext?.role === "registrar") redirect("/staff/accounts");
 

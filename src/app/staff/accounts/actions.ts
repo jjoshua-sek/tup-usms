@@ -32,7 +32,7 @@ async function requireAdmin() {
 }
 
 /**
- * Student accounts: an administrator, or a Registrar / UITC account (OSA
+ * Student accounts: an administrator, or a UITC account (OSA
  * checklist I1). Staff accounts and password resets stay with administrators.
  */
 async function requireStudentAccounts() {
@@ -41,7 +41,7 @@ async function requireStudentAccounts() {
 }
 
 const NOT_ADMIN = "Only an administrator can create accounts.";
-const NOT_ACCOUNTS = "Only an administrator or the Registrar / UITC can create student accounts.";
+const NOT_ACCOUNTS = "Only an administrator or UITC can create student accounts.";
 const MAX_FILE_BYTES = 1_000_000;
 const CHUNK_SIZE = 25;
 

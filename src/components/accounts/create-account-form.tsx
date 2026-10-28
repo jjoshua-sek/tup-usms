@@ -19,7 +19,7 @@ const YEAR_LEVELS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year"]
  * person — the fallback when the student has no working email. Staff always
  * get a password, handed over in person.
  */
-/** allowStaff: administrators only; the Registrar / UITC creates student accounts (I1). */
+/** allowStaff: administrators only; UITC creates student accounts (I1). */
 export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean } = {}) {
   const [kind, setKind] = useState<"student" | "staff">("student");
   const [delivery, setDelivery] = useState<"link" | "password">("link");

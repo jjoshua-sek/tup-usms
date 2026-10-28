@@ -7,7 +7,7 @@ interface StaffShellProps {
   userName: string;
   userSubtitle?: string;
   role: "staff" | "admin";
-  /** A Registrar / UITC account sees only Accounts (I1). */
+  /** A UITC account sees only Accounts (I1). */
   accountsOnly?: boolean;
   notificationCount: number;
   sidebarBadges?: Record<string, number>;

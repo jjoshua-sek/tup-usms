@@ -21,6 +21,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
 import { formatManila, manilaWallClock } from "@/lib/utils/time";
 import { RECEIVED_VIA_LABEL, receivedVia } from "@/lib/concerns/intake";
+import { concernCategoryLabel } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
   title: "Concern Review",
@@ -43,6 +44,11 @@ interface ConcernDetail {
   /** Migration 00036; absent until it runs. */
   received_via?: string;
   referred_by?: string | null;
+  /** Migration 00050: a complaint against a student (category "Complaint"). */
+  respondent_name?: string | null;
+  respondent_details?: string | null;
+  incident_date?: string | null;
+  incident_location?: string | null;
   /** Migration 00023; absent until it runs. */
   ai_summary_status?: "pending" | "done" | "failed";
   ai_summary_error?: string | null;
@@ -173,6 +179,18 @@ export default async function StaffConcernDetailPage({
 
   const attachments = await listConcernAttachments(loose(supabase), id);
 
+  // A student's complaint against a student (checklist A3): the case filed from it, if any.
+  const isComplaint = concern.category === "Complaint";
+  let filedCase: { id: string; case_number: string } | null = null;
+  if (isComplaint) {
+    const { data: caseRow } = await loose(supabase)
+      .from("violation_cases")
+      .select("id, case_number")
+      .eq("source_concern_id", id)
+      .maybeSingle();
+    filedCase = (caseRow as { id: string; case_number: string } | null) ?? null;
+  }
+
   const student = concern.students;
   const studentName = student
     ? `${student.first_name} ${student.last_name}`
@@ -293,7 +311,7 @@ export default async function StaffConcernDetailPage({
                 <span>
                   Category:{" "}
                   <strong className="text-foreground font-medium">
-                    {concern.category}
+                    {concernCategoryLabel(concern.category)}
                   </strong>
                 </span>
                 <span className="flex items-center gap-1">
@@ -319,6 +337,43 @@ export default async function StaffConcernDetailPage({
               </Link>
             )}
           </div>
+
+          {/* A complaint against a student: who, when, and the case it became */}
+          {isComplaint && (
+            <div className="mb-6 flex flex-wrap items-start justify-between gap-3 rounded-md border border-amber-300 bg-amber-50/60 p-4 text-[13px] dark:border-amber-800 dark:bg-amber-950/20">
+              <dl className="grid min-w-0 gap-x-6 gap-y-1 sm:grid-cols-2">
+                <div>
+                  <dt className="text-[11px] text-muted-foreground">Complaint against</dt>
+                  <dd className="font-medium">
+                    {concern.respondent_name ?? "—"}
+                    {concern.respondent_details ? ` · ${concern.respondent_details}` : ""}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] text-muted-foreground">When and where</dt>
+                  <dd className="font-medium">
+                    {concern.incident_date ?? "—"}
+                    {concern.incident_location ? ` · ${concern.incident_location}` : ""}
+                  </dd>
+                </div>
+              </dl>
+              {filedCase ? (
+                <Link
+                  href={`/staff/cases/${filedCase.id}`}
+                  className="shrink-0 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted"
+                >
+                  Filed as {filedCase.case_number} →
+                </Link>
+              ) : (
+                <Link
+                  href={`/staff/cases/new?from_concern=${id}`}
+                  className="shrink-0 rounded-md bg-tup-maroon-600 px-3 py-2 text-xs font-medium text-white hover:bg-tup-maroon-700"
+                >
+                  File a case from this complaint
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* Side-by-side concern panels */}
           <div className="grid md:grid-cols-2 gap-4 mb-6">

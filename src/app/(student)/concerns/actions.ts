@@ -53,11 +53,15 @@ export async function submitConcern(formData: FormData): Promise<ActionResult> {
     category: formData.get("category"),
     subject_line: formData.get("subject_line"),
     body_text: formData.get("body_text"),
+    respondent_name: formData.get("respondent_name") ?? "",
+    respondent_details: formData.get("respondent_details") ?? "",
+    incident_date: formData.get("incident_date") ?? "",
+    incident_location: formData.get("incident_location") ?? "",
   });
 
   if (!parsed.success) {
     return {
-      error: "Please check your input.",
+      error: parsed.error.issues[0]?.message ?? "Please check your input.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -68,6 +72,16 @@ export async function submitConcern(formData: FormData): Promise<ActionResult> {
     subject_line: sanitizeText(parsed.data.subject_line, 200),
     body_text: sanitizeText(parsed.data.body_text, 10000),
   };
+  // A complaint against a student names who and when (checklist A3, 00050).
+  const complaint =
+    parsed.data.category === "Complaint"
+      ? {
+          respondent_name: sanitizeText(parsed.data.respondent_name ?? "", 120),
+          respondent_details: parsed.data.respondent_details ? sanitizeText(parsed.data.respondent_details, 200) : null,
+          incident_date: parsed.data.incident_date,
+          incident_location: parsed.data.incident_location ? sanitizeText(parsed.data.incident_location, 120) : null,
+        }
+      : {};
 
   // Look up student record
   const { data: studentRaw } = await supabase
@@ -94,13 +108,20 @@ export async function submitConcern(formData: FormData): Promise<ActionResult> {
       subject_line: sanitized.subject_line,
       body_text: sanitized.body_text,
       status: "pending",
+      ...complaint,
     })
     .select("id")
     .single();
 
   if (error) {
     console.error("Concern insert failed:", error);
-    return { error: "Failed to submit concern. Please try again." };
+    const code = (error as { code?: string }).code ?? "";
+    return {
+      error:
+        sanitized.category === "Complaint" && ["PGRST204", "42703", "23514"].includes(code)
+          ? "Complaints against a student need migration 00050. Please tell the OSA."
+          : "Failed to submit concern. Please try again.",
+    };
   }
 
   const concernId = (insertedRaw as { id: string }).id;

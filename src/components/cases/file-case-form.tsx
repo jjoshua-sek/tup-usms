@@ -36,12 +36,23 @@ export interface ViolationTypeOption {
   in_handbook?: boolean;
 }
 
+/** A student's complaint (checklist A3) the OSA is filing as a case. */
+export interface ComplaintSource {
+  concernId: string;
+  respondentName: string;
+  respondentDetails: string | null;
+  incidentDate: string | null;
+  incidentLocation: string | null;
+  description: string;
+}
+
 interface FileCaseFormProps {
   violationTypes: ViolationTypeOption[];
   /** Faculty file as faculty; OSA can also file on the office's own motion. */
   defaultComplainantType: "faculty" | "staff" | "osa_initiated";
   canFileOsaInitiated: boolean;
   filerName: string;
+  fromComplaint?: ComplaintSource | null;
 }
 
 const COMPLAINANT_TYPES = [
@@ -57,11 +68,15 @@ export function FileCaseForm({
   defaultComplainantType,
   canFileOsaInitiated,
   filerName,
+  fromComplaint = null,
 }: FileCaseFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [query, setQuery] = useState("");
+  // From a complaint, the search starts on the surname the student gave: the
+  // search matches one name field at a time, so a full name finds nothing.
+  const complaintSurname = (fromComplaint?.respondentName ?? "").trim().split(/\s+/).pop() ?? "";
+  const [query, setQuery] = useState(complaintSurname);
   const [matches, setMatches] = useState<StudentMatch[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<StudentMatch | null>(null);
@@ -107,6 +122,18 @@ export function FileCaseForm({
     },
     [],
   );
+
+  // A complaint names the student in words; show the records that match it.
+  useEffect(() => {
+    if (complaintSurname.length < 2) return;
+    let cancelled = false;
+    void searchStudentsForCase(complaintSurname).then((result) => {
+      if (!cancelled) setMatches(result.students ?? []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [complaintSurname]);
 
   const pickStudent = (student: StudentMatch) => {
     setSelected(student);
@@ -157,6 +184,14 @@ export function FileCaseForm({
       {/* 1. Who */}
       <section className="rounded-xl border border-border bg-card p-5">
         <SectionHeading step={1} title="Who is the complaint against?" />
+
+        {fromComplaint && (
+          <p className="mb-3 rounded-lg bg-muted p-3 text-[12px] leading-relaxed">
+            The student&rsquo;s complaint names <strong>{fromComplaint.respondentName}</strong>
+            {fromComplaint.respondentDetails ? ` (${fromComplaint.respondentDetails})` : ""}. Pick the matching
+            student record below; search by number or surname if it is not listed.
+          </p>
+        )}
 
         {selected ? (
           <div className="rounded-lg border border-border p-3">
@@ -367,7 +402,13 @@ export function FileCaseForm({
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <label className="block space-y-1">
             <span className="text-xs font-medium">Date of incident</span>
-            <input type="date" name="incident_date" required className={inputClass} />
+            <input
+              type="date"
+              name="incident_date"
+              required
+              defaultValue={fromComplaint?.incidentDate ?? undefined}
+              className={inputClass}
+            />
           </label>
           <label className="block space-y-1">
             <span className="text-xs font-medium">Time (optional)</span>
@@ -378,6 +419,7 @@ export function FileCaseForm({
             <input
               name="incident_location"
               maxLength={120}
+              defaultValue={fromComplaint?.incidentLocation ?? undefined}
               placeholder="e.g. Room 304, Main Bldg."
               className={inputClass}
             />
@@ -394,6 +436,7 @@ export function FileCaseForm({
             rows={6}
             minLength={30}
             maxLength={5000}
+            defaultValue={fromComplaint?.description.slice(0, 5000)}
             placeholder="Describe what you observed: what the student did, when, who else was present, and anything already said to them about it. Stick to what you saw yourself."
             className={inputClass}
           />
@@ -401,6 +444,12 @@ export function FileCaseForm({
             The student will see this description when the case reaches them. Write it as
             something you would be comfortable reading aloud at a hearing.
           </span>
+          {fromComplaint && (
+            <span className="block text-[11px] font-medium text-amber-800">
+              Copied from the complaint. Take out the complainant&rsquo;s name and anything that identifies them,
+              unless they agreed to be named.
+            </span>
+          )}
         </label>
       </section>
 
@@ -408,6 +457,18 @@ export function FileCaseForm({
       <section className="rounded-xl border border-border bg-card p-5">
         <SectionHeading step={3} title="Who is filing?" />
 
+        {fromComplaint ? (
+          <>
+            <input type="hidden" name="source_concern_id" value={fromComplaint.concernId} />
+            <input type="hidden" name="complainant_type" value="student" />
+            <p className="text-[12px] leading-relaxed text-muted-foreground">
+              Filed for the student who complained. The case names them only as &ldquo;a student&rdquo;; who they
+              are stays on their concern, which only they and OSA staff can read. They are told in their concern
+              that the case was filed. You are recorded as the filer, and the OSA sets the hearing date.
+            </p>
+          </>
+        ) : (
+        <>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block space-y-1">
             <span className="text-xs font-medium">Filing as</span>
@@ -442,9 +503,11 @@ export function FileCaseForm({
         </div>
 
         <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-          You are recorded as the filer either way. If a meeting is scheduled, you approve
-          the date before the student is summoned — nothing is sent to them on filing.
+          You are recorded as the filer either way, and nothing is sent to the student on filing. If you are
+          faculty and a meeting is scheduled, you approve the date before the student is summoned.
         </p>
+        </>
+        )}
       </section>
 
       <div className="flex flex-wrap justify-end gap-2">

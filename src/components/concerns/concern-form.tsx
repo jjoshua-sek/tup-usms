@@ -137,7 +137,8 @@ export function ConcernForm({ trigger }: ConcernFormProps) {
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {CONCERN_CATEGORIES.map((cat) => (
+                {/* A complaint needs who and when; it is filed from the full form on /concerns/new. */}
+                {CONCERN_CATEGORIES.filter((cat) => cat !== "Complaint").map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {cat}
                   </SelectItem>

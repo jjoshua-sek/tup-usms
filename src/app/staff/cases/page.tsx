@@ -67,8 +67,19 @@ export default async function StaffCasesPage({
     return (
       <RestrictedNotice
         title="Cases"
-        audience="The case queue is for OSA officers and committee members (PIC, SDB, CODI)."
-      />
+        audience="The case queue is for OSA officers and committee members (PIC, SDB, CODI). Any staff member can still file a complaint against a student."
+      >
+        {/* Checklist A3: students and any staff may file, against students only. */}
+        {staff && (
+          <Link
+            href="/staff/cases/new"
+            className={buttonVariants({ size: "sm", className: "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700" })}
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            File a complaint
+          </Link>
+        )}
+      </RestrictedNotice>
     );
   }
 

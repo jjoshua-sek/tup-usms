@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, Send, Upload, X } from "lucide-react";
 
 import {
+  concernCategoryLabel,
   concernSchema,
   CONCERN_CATEGORIES,
   type ConcernInput,
@@ -79,11 +80,17 @@ export function ConcernFormInline() {
       category: undefined,
       subject_line: "",
       body_text: "",
+      respondent_name: "",
+      respondent_details: "",
+      incident_date: "",
+      incident_location: "",
     },
   });
 
   const bodyText = watch("body_text") || "";
   const subjectLine = watch("subject_line") || "";
+  // Checklist A3: a student may complain about another student.
+  const isComplaint = watch("category") === "Complaint";
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files ?? []);
@@ -125,6 +132,12 @@ export function ConcernFormInline() {
       formData.append("category", data.category);
       formData.append("subject_line", data.subject_line);
       formData.append("body_text", data.body_text);
+      if (data.category === "Complaint") {
+        formData.append("respondent_name", data.respondent_name ?? "");
+        formData.append("respondent_details", data.respondent_details ?? "");
+        formData.append("incident_date", data.incident_date ?? "");
+        formData.append("incident_location", data.incident_location ?? "");
+      }
 
       const result = await submitConcern(formData);
 
@@ -203,7 +216,7 @@ export function ConcernFormInline() {
             <SelectContent>
               {CONCERN_CATEGORIES.map((cat) => (
                 <SelectItem key={cat} value={cat}>
-                  {cat}
+                  {concernCategoryLabel(cat)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -221,6 +234,44 @@ export function ConcernFormInline() {
           </p>
         </Field>
       </div>
+
+      {isComplaint && (
+        <div className="space-y-4 rounded-md border border-border bg-muted/40 p-4">
+          <p className="text-xs text-muted-foreground">
+            A complaint against another student. The OSA reviews it and decides whether to file a case. If it does,
+            the case names you only as &ldquo;a student&rdquo;, and you can follow it here in your concern.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Who is it against?" required error={errors.respondent_name?.message}>
+              <Input
+                placeholder="Their full name"
+                maxLength={120}
+                disabled={isPending}
+                {...register("respondent_name")}
+              />
+            </Field>
+            <Field label="Student number, program or section" helper="If you know it" error={errors.respondent_details?.message}>
+              <Input
+                placeholder="e.g. BSIT 3-A"
+                maxLength={200}
+                disabled={isPending}
+                {...register("respondent_details")}
+              />
+            </Field>
+            <Field label="When did it happen?" required error={errors.incident_date?.message}>
+              <Input type="date" disabled={isPending} {...register("incident_date")} />
+            </Field>
+            <Field label="Where?" helper="Optional" error={errors.incident_location?.message}>
+              <Input
+                placeholder="e.g. IT building, 3rd floor"
+                maxLength={120}
+                disabled={isPending}
+                {...register("incident_location")}
+              />
+            </Field>
+          </div>
+        </div>
+      )}
 
       {/* Subject */}
       <Field

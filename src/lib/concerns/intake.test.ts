@@ -38,6 +38,10 @@ describe("staffConcernSchema", () => {
   it("refuses a malformed student number", () => {
     expect(staffConcernSchema.safeParse({ ...walkIn, student_number: "2023-5047" }).success).toBe(false);
   });
+
+  it("never records a complaint against a student: staff file those as cases", () => {
+    expect(staffConcernSchema.safeParse({ ...walkIn, category: "Complaint" }).success).toBe(false);
+  });
 });
 
 describe("receivedVia", () => {

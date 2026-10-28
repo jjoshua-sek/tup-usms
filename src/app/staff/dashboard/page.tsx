@@ -20,6 +20,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { cn } from "@/lib/utils";
 import { formatManilaLongDate, startOfManilaDay } from "@/lib/utils/time";
+import { concernCategoryLabel } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
   title: "Overview",
@@ -356,7 +357,7 @@ function ActivityRow({ concern }: { concern: ConcernRow }) {
         <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
           {studentName} ·{" "}
           <span className="font-mono">{concern.students?.student_number}</span>{" "}
-          · {concern.category}
+          · {concernCategoryLabel(concern.category)}
         </p>
       </div>
       <div className="text-[10px] text-muted-foreground font-mono shrink-0">

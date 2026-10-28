@@ -7,7 +7,7 @@ import { Loader2, Save } from "lucide-react";
 
 import { recordConcern } from "@/app/staff/concerns/actions";
 import { RECEIVED_VIA_LABEL, STAFF_RECEIVED_VIA, type ReceivedVia } from "@/lib/concerns/intake";
-import { CONCERN_CATEGORIES } from "@/lib/validations/concern";
+import { STAFF_CONCERN_CATEGORIES } from "@/lib/validations/concern";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -104,7 +104,7 @@ export function StaffConcernForm() {
           <option value="" disabled>
             Select a category
           </option>
-          {CONCERN_CATEGORIES.map((category) => (
+          {STAFF_CONCERN_CATEGORIES.map((category) => (
             <option key={category} value={category}>
               {category}
             </option>

@@ -22,6 +22,7 @@ import {
   CONCERN_CATEGORIES,
   CONCERN_STATUSES,
   URGENCY_LEVELS as URGENCY_KEYS,
+  concernCategoryLabel,
 } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
@@ -175,7 +176,7 @@ export default async function StaffConcernsPage({
             current={filterCategory}
             options={[
               { value: "all", label: "All" },
-              ...CONCERN_CATEGORIES.map((c) => ({ value: c, label: c })),
+              ...CONCERN_CATEGORIES.map((c) => ({ value: c, label: concernCategoryLabel(c) })),
             ]}
             paramKey="category"
             currentParams={params}
@@ -236,7 +237,7 @@ export default async function StaffConcernsPage({
                         <StatusBadge status={concern.status} />
                         <UrgencyBadge level={concern.urgency_level} />
                         <Badge variant="secondary" className="h-5 text-[10px]">
-                          {concern.category}
+                          {concernCategoryLabel(concern.category)}
                         </Badge>
                         {receivedVia(concern.received_via) !== "online" && (
                           <Badge variant="outline" className="h-5 text-[10px]">

@@ -30,6 +30,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatManilaDateTime } from "@/lib/utils/time";
 import { RECEIVED_VIA_LABEL, receivedVia } from "@/lib/concerns/intake";
+import { concernCategoryLabel } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
   title: "Concern Detail",
@@ -197,7 +198,7 @@ export default async function ConcernDetailPage({
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={concern.status} />
             <UrgencyBadge level={concern.urgency_level} />
-            <Badge variant="secondary">{concern.category}</Badge>
+            <Badge variant="secondary">{concernCategoryLabel(concern.category)}</Badge>
           </div>
 
           <div>

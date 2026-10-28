@@ -45,6 +45,7 @@ import {
   type ClearanceStatus,
   type IdValidationStatus,
 } from "@/types/osa";
+import { concernCategoryLabel } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
   title: "Student Record",
@@ -725,7 +726,7 @@ export default async function StaffStudentRecordPage({
                             {concern.subject_line}
                           </Link>
                           <p className="mt-0.5 text-[11px] text-muted-foreground">
-                            {concern.category} · {humanize(concern.status)}
+                            {concernCategoryLabel(concern.category)} · {humanize(concern.status)}
                             {concern.urgency_level ? ` · ${concern.urgency_level} urgency` : ""} ·{" "}
                             {formatManilaDate(concern.created_at)}
                           </p>

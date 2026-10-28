@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatManilaDate } from "@/lib/utils/time";
+import { concernCategoryLabel } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
   title: "My Concerns",
@@ -201,7 +202,7 @@ export default async function ConcernsPage() {
                         <StatusBadge status={concern.status} />
                         <UrgencyBadge level={concern.urgency_level} />
                         <Badge variant="secondary" className="h-5 text-[10px]">
-                          {concern.category}
+                          {concernCategoryLabel(concern.category)}
                         </Badge>
                       </div>
 

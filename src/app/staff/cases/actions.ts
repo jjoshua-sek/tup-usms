@@ -145,7 +145,12 @@ const fileCaseSchema = z.object({
     .trim()
     .min(30, { message: "Describe what happened in at least a couple of sentences." })
     .max(5000),
+  /** A student's complaint (a concern, category "Complaint") this case is filed from (checklist A3). */
+  source_concern_id: z.string().uuid().optional().or(z.literal("")),
 });
+
+/** How the case names a student complainant: their identity stays on the concern. */
+const STUDENT_COMPLAINANT = "A student (complaint received through Concerns)";
 
 /**
  * Files a complaint (requirement #4).
@@ -185,10 +190,35 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     incident_time: formData.get("incident_time") ?? "",
     incident_location: formData.get("incident_location") ?? "",
     description: formData.get("description") ?? "",
+    source_concern_id: formData.get("source_concern_id") ?? "",
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+
+  // Filing from a student's complaint (checklist A3) is the OSA's step: it
+  // identifies the student complained about and decides there is a case.
+  const sourceConcernId = parsed.data.source_concern_id || null;
+  let sourceConcern: { id: string; student_user_id: string | null } | null = null;
+  if (sourceConcernId) {
+    if (!staff.isOsa) return { error: "Only OSA staff can file a case from a student's complaint." };
+    const { data: concernRow } = await loose(createAdminClient())
+      .from("concerns")
+      .select("id, category, students(user_id)")
+      .eq("id", sourceConcernId)
+      .maybeSingle();
+    const concern = concernRow as { id: string; category: string; students: { user_id: string } | null } | null;
+    if (!concern || concern.category !== "Complaint") return { error: "That complaint was not found." };
+    const { data: existing } = await loose(createAdminClient())
+      .from("violation_cases")
+      .select("case_number")
+      .eq("source_concern_id", sourceConcernId)
+      .maybeSingle();
+    if (existing) {
+      return { error: `A case was already filed from this complaint: ${(existing as { case_number: string }).case_number}.` };
+    }
+    sourceConcern = { id: concern.id, student_user_id: concern.students?.user_id ?? null };
   }
 
   // An incident cannot have happened tomorrow. Midnight is Manila midnight:
@@ -251,11 +281,21 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     .from("violation_cases")
     .insert({
       student_id: student.id,
-      complainant_staff_id: parsed.data.complainant_type === "osa_initiated" ? null : staff.staffId,
-      complainant_type: parsed.data.complainant_type,
-      complainant_name:
-        parsed.data.complainant_name?.trim() ||
-        (parsed.data.complainant_type === "osa_initiated" ? "OSA-initiated" : staff.fullName),
+      ...(sourceConcern
+        ? {
+            // The complainant is the student who filed the concern, not this officer.
+            complainant_staff_id: null,
+            complainant_type: "student",
+            complainant_name: STUDENT_COMPLAINANT,
+            source_concern_id: sourceConcern.id,
+          }
+        : {
+            complainant_staff_id: parsed.data.complainant_type === "osa_initiated" ? null : staff.staffId,
+            complainant_type: parsed.data.complainant_type,
+            complainant_name:
+              parsed.data.complainant_name?.trim() ||
+              (parsed.data.complainant_type === "osa_initiated" ? "OSA-initiated" : staff.fullName),
+          }),
       violation_type_id: violationType.id,
       classification: isConfidential ? "confidential" : violationType.default_classification,
       ...(needsClassification ? { classification_pending: true } : {}),
@@ -275,17 +315,28 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     .select("id, case_number")
     .maybeSingle();
 
-  if (error) return { error: "Could not file the case. Please try again." };
+  if (error) {
+    return {
+      error:
+        sourceConcern && ["PGRST204", "42703"].includes((error as { code?: string }).code ?? "")
+          ? "Filing from a student's complaint needs migration 00050. Ask the administrator to run it."
+          : "Could not file the case. Please try again.",
+    };
+  }
 
   const created = inserted as { id: string; case_number: string } | null;
   if (!created) return { error: "The case was not created." };
+
+  if (sourceConcern) await tellComplainantOfCase(staff.userId, sourceConcern, created.case_number);
 
   await addTimelineEntry(db, {
     caseId: created.id,
     actorId: staff.userId,
     actorLabel: staff.fullName,
     eventType: "case_filed",
-    summary: `${staff.fullName} filed a complaint for ${violationType.name} (${violationType.code}).`,
+    summary: sourceConcern
+      ? `${staff.fullName} filed a student's complaint, received through Concerns, for ${violationType.name} (${violationType.code}).`
+      : `${staff.fullName} filed a complaint for ${violationType.name} (${violationType.code}).`,
     toStatus: isConfidential ? "referred_codi" : "filed",
     details: {
       violation_code: violationType.code,
@@ -320,6 +371,35 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
           ? `Filed as ${created.case_number}. The OSA classifies it as minor or major after review.`
           : `Filed as ${created.case_number}.`,
   };
+}
+
+/**
+ * Tells the student who complained that a case was filed: a reply on their
+ * concern thread, the concern moved to in review, and a notification. Their
+ * name is on the concern only, never on the case the other student can read.
+ */
+async function tellComplainantOfCase(
+  staffUserId: string,
+  concern: { id: string; student_user_id: string | null },
+  caseNumber: string,
+): Promise<void> {
+  const db = loose(createAdminClient());
+  const message = `The OSA has filed case ${caseNumber} from your complaint and will handle it from here. The case does not show your name to the student. The OSA will contact you here if you are needed, for example for a hearing.`;
+  await db.from("concern_responses").insert({ concern_id: concern.id, responder_id: staffUserId, response_text: message });
+  await db.from("concerns").update({ status: "in_review" }).eq("id", concern.id).eq("status", "pending");
+  if (concern.student_user_id) {
+    await db.rpc("create_notification", {
+      p_user_id: concern.student_user_id,
+      p_type: "general",
+      p_title: "The OSA filed a case from your complaint",
+      p_body: message,
+      p_priority: "normal",
+      p_channels: ["in_app", "email"],
+      p_action_url: `/concerns/${concern.id}`,
+      p_action_label: "Open your complaint",
+    });
+  }
+  revalidatePath(`/staff/concerns/${concern.id}`);
 }
 
 /**

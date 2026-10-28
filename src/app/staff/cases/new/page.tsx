@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import {
   FileCaseForm,
+  type ComplaintSource,
   type ViolationTypeOption,
 } from "@/components/cases/file-case-form";
 import { EmptyState } from "@/components/osa/empty-state";
@@ -23,8 +24,16 @@ export const metadata: Metadata = {
  * process document is explicit that the office also acts on its own
  * observation. The RLS policy ("staff files cases") says the same thing in
  * SQL, so this page is a convenience over the rule, not the rule itself.
+ *
+ * Students complain through Concerns (category "Complaint"); the OSA opens
+ * this page from that concern (?from_concern=) to file the case for them
+ * (the OSA head's review of the checklist, A3).
  */
-export default async function FileCasePage() {
+export default async function FileCasePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from_concern?: string }>;
+}) {
   const staff = await getStaffContext();
   if (!staff) {
     return (
@@ -52,6 +61,33 @@ export default async function FileCasePage() {
     in_handbook: type.in_handbook ?? true,
   }));
 
+  // Filing a student's complaint (checklist A3): the OSA's step, read through
+  // the officer's own access, which already covers concerns.
+  const { from_concern: fromConcernId } = await searchParams;
+  let fromComplaint: ComplaintSource | null = null;
+  if (staff.isOsa && fromConcernId && /^[0-9a-f-]{36}$/i.test(fromConcernId)) {
+    const { data: concernRow } = await db.from("concerns").select("*").eq("id", fromConcernId).maybeSingle();
+    const concern = concernRow as {
+      id: string;
+      category: string;
+      body_text: string;
+      respondent_name?: string | null;
+      respondent_details?: string | null;
+      incident_date?: string | null;
+      incident_location?: string | null;
+    } | null;
+    if (concern?.category === "Complaint" && concern.respondent_name) {
+      fromComplaint = {
+        concernId: concern.id,
+        respondentName: concern.respondent_name,
+        respondentDetails: concern.respondent_details ?? null,
+        incidentDate: concern.incident_date ?? null,
+        incidentLocation: concern.incident_location ?? null,
+        description: concern.body_text,
+      };
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -77,6 +113,7 @@ export default async function FileCasePage() {
             defaultComplainantType={staff.role === "faculty" ? "faculty" : "staff"}
             canFileOsaInitiated={staff.isOsa}
             filerName={staff.fullName}
+            fromComplaint={fromComplaint}
           />
         </div>
       )}

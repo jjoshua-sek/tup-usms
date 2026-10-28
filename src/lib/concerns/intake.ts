@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { STUDENT_NUMBER } from "@/lib/accounts/enrollment";
-import { concernSchema } from "@/lib/validations/concern";
+import { STAFF_CONCERN_CATEGORIES, concernFields } from "@/lib/validations/concern";
 
 /**
  * Concerns the OSA records for a student who raised one some other way than
@@ -31,8 +31,12 @@ export function receivedVia(value: unknown): ReceivedVia {
   return (RECEIVED_VIA as readonly unknown[]).includes(value) ? (value as ReceivedVia) : "online";
 }
 
-export const staffConcernSchema = concernSchema
+export const staffConcernSchema = concernFields
   .extend({
+    // A complaint from staff is filed as a case, not recorded as a concern.
+    category: z.enum(STAFF_CONCERN_CATEGORIES, {
+      message: "Please select a concern category",
+    }),
     student_number: z
       .string()
       .trim()

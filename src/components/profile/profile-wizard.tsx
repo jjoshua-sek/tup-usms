@@ -23,7 +23,6 @@ interface WizardStudentData {
   birth_place?: string | null;
   gender?: string | null;
   citizenship?: string | null;
-  religion?: string | null;
   civil_status?: string | null;
   cellphone?: string | null;
   email_address?: string | null;
@@ -140,7 +139,6 @@ export function ProfileWizard({
             birth_place: initialData.birth_place ?? "",
             gender: initialData.gender as "Male" | "Female" | "Other" | "Prefer not to say" | undefined,
             citizenship: initialData.citizenship ?? "FILIPINO",
-            religion: initialData.religion ?? "",
             civil_status: (initialData.civil_status ?? "") as "Single" | "Married" | "Widowed" | "Separated" | "" | undefined,
             cellphone: initialData.cellphone ?? "",
             email_address: initialData.email_address ?? defaultEmail,

@@ -77,7 +77,6 @@ export function Step1Personal({
       birth_place: initialData?.birth_place ?? "",
       gender: initialData?.gender,
       citizenship: initialData?.citizenship ?? "FILIPINO",
-      religion: initialData?.religion ?? "",
       civil_status: initialData?.civil_status ?? "",
       cellphone: initialData?.cellphone ?? "",
       email_address: initialData?.email_address ?? defaultEmail ?? "",
@@ -257,9 +256,6 @@ export function Step1Personal({
               </Field>
               <Field label="Citizenship" error={errors.citizenship?.message}>
                 <Input {...register("citizenship")} disabled={isPending} />
-              </Field>
-              <Field label="Religion" error={errors.religion?.message}>
-                <Input {...register("religion")} disabled={isPending} />
               </Field>
             </div>
           </div>

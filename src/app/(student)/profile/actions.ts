@@ -184,7 +184,6 @@ export async function saveProfileStep1(formData: FormData): Promise<ActionResult
     birth_place: data.birth_place ? sanitizeText(data.birth_place, 200) : null,
     gender: data.gender,
     citizenship: data.citizenship,
-    religion: data.religion ? sanitizeText(data.religion, 100) : null,
     // Empty string violates the CHECK constraint, which permits NULL or a
     // value from the allowed set — never ''.
     civil_status: data.civil_status || null,

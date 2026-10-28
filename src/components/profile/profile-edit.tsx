@@ -45,7 +45,6 @@ interface StudentProfile {
   birth_place: string | null;
   gender: string;
   citizenship: string;
-  religion: string | null;
   civil_status: string | null;
   height_cm: number | null;
   weight_lbs: number | null;
@@ -232,7 +231,6 @@ export function ProfileEdit({ student }: ProfileEditProps) {
           {student.civil_status && (
             <Field label="Civil Status" value={student.civil_status} />
           )}
-          {student.religion && <Field label="Religion" value={student.religion} />}
           <Field label="Email" value={student.email_address} />
           {student.cellphone && <Field label="Cellphone" value={student.cellphone} />}
         </FieldGrid>

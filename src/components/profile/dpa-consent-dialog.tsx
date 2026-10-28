@@ -121,7 +121,7 @@ export function DpaConsentDialog({
             icon={FileCheck}
             title="Data we collect"
             items={[
-              "Identity: name, birth date, gender, citizenship, religion",
+              "Identity: name, birth date, gender, citizenship",
               "Contact: address, phone number, email address",
               "Academic: program, year level, grades, evaluations",
               "Family background: financial support, beneficiary statuses (PWD, IP, Listahanan)",

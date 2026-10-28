@@ -27,7 +27,6 @@ export const profileStep1Schema = z.object({
     message: "Please select your gender",
   }),
   citizenship: z.string().default("FILIPINO"),
-  religion: z.string().max(100).optional().or(z.literal("")),
   // Civil status: accept any of the enum values OR empty string (= "skipped")
   civil_status: z
     .string()

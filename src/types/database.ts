@@ -155,7 +155,6 @@ export interface Student {
   birth_place: string | null;
   gender: string;
   citizenship: string;
-  religion: string | null;
   civil_status: string | null;
   height_cm: number | null;
   weight_lbs: number | null;

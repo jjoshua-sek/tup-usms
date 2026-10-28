@@ -54,7 +54,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Data minimisation (RA 10173): the profile is limited to what an officer
- * acts on. Birth date, home address, religion, physical measurements and
+ * acts on. Birth date, home address, physical measurements and
  * family details are on the students row but are not selected here — every
  * column rendered is a column disclosed on every view of this page. The
  * list lives in lib/students/columns.ts, where a test checks it against

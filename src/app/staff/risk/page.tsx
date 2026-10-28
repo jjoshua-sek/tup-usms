@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, AlertTriangle, CircleHelp, TrendingUp, Upload } from "lucide-react";
+import { Activity, AlertTriangle, CircleHelp, TrendingUp } from "lucide-react";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
@@ -113,14 +113,7 @@ export default async function StaffRiskPage({
         breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "At-Risk" }]}
         title="At-Risk Students"
         description={`Scored against ${model.version_label}. Every factor below is the model's own contribution, not a guess.`}
-      >
-        <Link
-          href="/staff/risk/attendance"
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
-        >
-          <Upload className="h-4 w-4" /> Import attendance
-        </Link>
-      </PageHeader>
+      />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard

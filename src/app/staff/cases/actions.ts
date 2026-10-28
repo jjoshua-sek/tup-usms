@@ -15,6 +15,7 @@ import {
   minorProcessPlan,
 } from "@/lib/osa/minor-process";
 import { CASE_NOT_VISIBLE, staffCanSeeCase } from "@/lib/osa/case-access";
+import { CLASSIFIABLE, CLASSIFY_FIRST, canClassify, isClassificationPending } from "@/lib/osa/classification";
 import { announceSummons, createHearingWithSummons } from "@/lib/osa/summons";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import {
@@ -150,9 +151,10 @@ const fileCaseSchema = z.object({
  * Files a complaint (requirement #4).
  *
  * Three things are decided here rather than left to the filer:
- *   - the classification comes from the violation type, not from a dropdown
- *     the complainant can talk themselves into; OSA can reclassify later,
- *     and that reclassification is recorded
+ *   - the classification comes from the violation type, as the Student
+ *     Manual sets it, not from a dropdown the complainant can talk themselves
+ *     into; only an offense the Manual does not list (OTH-01) is classified
+ *     by the OSA afterwards, in classifyCase (checklist A2)
  *   - a type marked `auto_route_codi` (harassment and the like) is filed as
  *     confidential and disappears from the general OSA queue immediately,
  *     per the OSA process document
@@ -199,11 +201,14 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
 
   const db = loose(createAdminClient());
 
-  const { data: typeRow } = await db
-    .from("violation_types")
-    .select("id, code, name, default_classification, auto_route_codi, is_active")
-    .eq("id", parsed.data.violation_type_id)
-    .maybeSingle();
+  const TYPE_COLUMNS = "id, code, name, default_classification, auto_route_codi, is_active";
+  const loadType = (columns: string) =>
+    db.from("violation_types").select(columns).eq("id", parsed.data.violation_type_id).maybeSingle();
+  // in_handbook arrives with 00049; before it, every type is a Manual offense.
+  let { data: typeRow, error: typeError } = await loadType(`${TYPE_COLUMNS}, in_handbook`);
+  if (typeError && ["PGRST204", "42703"].includes((typeError as { code?: string }).code ?? "")) {
+    ({ data: typeRow, error: typeError } = await loadType(TYPE_COLUMNS));
+  }
 
   const violationType = typeRow as {
     id: string;
@@ -212,10 +217,15 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     default_classification: "minor" | "major" | "confidential";
     auto_route_codi: boolean;
     is_active: boolean;
+    in_handbook?: boolean;
   } | null;
   if (!violationType || !violationType.is_active) {
     return { error: "That offense type is no longer available." };
   }
+
+  // Checklist A2: the Student Manual classifies first. An offense it does not
+  // list waits for an OSA officer to classify it (classifyCase).
+  const needsClassification = violationType.in_handbook === false;
 
   // Checklist A7: CODI takes what the law sends it (auto_route_codi:
   // sexual harassment, gender-based violence); any other confidential type
@@ -248,6 +258,7 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
         (parsed.data.complainant_type === "osa_initiated" ? "OSA-initiated" : staff.fullName),
       violation_type_id: violationType.id,
       classification: isConfidential ? "confidential" : violationType.default_classification,
+      ...(needsClassification ? { classification_pending: true } : {}),
       // A restricted case is visible only to the OSA head, the admin and its
       // officer, so the filer, when an OSA officer, takes it on.
       ...(isRestricted && staff.isOsa ? { assigned_officer_id: staff.staffId } : {}),
@@ -278,7 +289,11 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
     toStatus: isConfidential ? "referred_codi" : "filed",
     details: {
       violation_code: violationType.code,
-      classification: isConfidential ? "confidential" : violationType.default_classification,
+      classification: needsClassification
+        ? "to be classified by the OSA"
+        : isConfidential
+          ? "confidential"
+          : violationType.default_classification,
       routed_to_codi: isConfidential,
       restricted: isRestricted,
     },
@@ -301,7 +316,9 @@ export async function fileCase(formData: FormData): Promise<Result & { caseId?: 
       ? `Filed as ${created.case_number} and routed to CODI. It will not appear in the general case queue.`
       : isRestricted
         ? `Filed as ${created.case_number}, restricted: only the OSA head, the administrator and ${staff.isOsa ? "you, as its officer," : "the officer the OSA head assigns"} can see it.`
-        : `Filed as ${created.case_number}.`,
+        : needsClassification
+          ? `Filed as ${created.case_number}. The OSA classifies it as minor or major after review.`
+          : `Filed as ${created.case_number}.`,
   };
 }
 
@@ -440,12 +457,11 @@ const scheduleSchema = z.object({
 });
 
 /**
- * Sets the hearing on a proposed slot and sends the summons with it.
- *
- * The OSA sets the date (checklist C1): there is no complainant approval
- * step. The slot already comes from both parties' schedules and the notice
- * period, and the officer who set it is recorded (date_set_by, migration
- * 00038), which is the due-process evidence the approval used to be.
+ * Sets the hearing on a proposed slot. The slot already comes from both
+ * parties' schedules and the notice period, and the officer who set it is
+ * recorded (date_set_by, 00038). A faculty complainant then approves it
+ * before the summons goes out (checklist C1); otherwise the summons goes
+ * with it.
  */
 export async function scheduleHearingFromProposal(formData: FormData): Promise<Result> {
   const staff = await getStaffContext();
@@ -502,15 +518,21 @@ export async function scheduleHearingFromProposal(formData: FormData): Promise<R
   revalidatePath(`/staff/cases/${proposal.case_id}`);
   revalidatePath("/staff/hearings");
   revalidatePath("/staff/calendar");
-  return {
-    ok: true,
-    message: "Hearing set. The student has been summoned through the portal and by email. Let the complainant know the date.",
-  };
+  return { ok: true, message: hearingSetMessage(created.awaitingApproval) };
+}
+
+/** What the officer is told after setting a date. */
+function hearingSetMessage(awaitingApproval: boolean): string {
+  return awaitingApproval
+    ? "Date proposed. The faculty complainant has been asked to approve it; the student is summoned once they do."
+    : "Hearing set. The student has been summoned through the portal and by email. Let the complainant know the date.";
 }
 
 /**
- * Complainant (or the OSA head acting on a written approval) confirms the
- * date. Only after this does the student hear anything.
+ * The faculty complainant approves the date the OSA proposed (checklist C1),
+ * or the OSA approves it on their behalf, for instance on a written approval.
+ * The summons goes out in the same step: the approval is the last thing the
+ * student was waiting on.
  */
 export async function approveHearing(hearingId: string): Promise<Result> {
   const staff = await getStaffContext();
@@ -520,7 +542,9 @@ export async function approveHearing(hearingId: string): Promise<Result> {
 
   const { data: hearingRow } = await db
     .from("case_hearings")
-    .select("id, case_id, status, scheduled_start, violation_cases(complainant_staff_id)")
+    .select(
+      "id, case_id, status, scheduled_start, venue, hearing_type, violation_cases(case_number, status, complainant_staff_id, students(user_id))",
+    )
     .eq("id", hearingId)
     .maybeSingle();
 
@@ -529,7 +553,14 @@ export async function approveHearing(hearingId: string): Promise<Result> {
     case_id: string;
     status: string;
     scheduled_start: string;
-    violation_cases: { complainant_staff_id: string | null } | null;
+    venue: string;
+    hearing_type: string;
+    violation_cases: {
+      case_number: string;
+      status: CaseStatus;
+      complainant_staff_id: string | null;
+      students: { user_id: string } | null;
+    } | null;
   } | null;
   if (!hearing) return { error: "Hearing not found." };
 
@@ -542,14 +573,19 @@ export async function approveHearing(hearingId: string): Promise<Result> {
     return { error: "This date has already moved past approval." };
   }
 
+  const now = new Date().toISOString();
   const { error } = await db
     .from("case_hearings")
     .update({
-      status: "complainant_approved",
+      status: "student_notified",
       complainant_approved_by: staff.staffId,
-      complainant_approved_at: new Date().toISOString(),
+      complainant_approved_at: now,
+      student_notified_at: now,
+      notified_via_portal: true,
+      notified_via_email: true,
     })
-    .eq("id", hearingId);
+    .eq("id", hearingId)
+    .eq("status", "awaiting_complainant");
 
   if (error) return { error: "Could not record the approval." };
 
@@ -558,12 +594,26 @@ export async function approveHearing(hearingId: string): Promise<Result> {
     actorId: staff.userId,
     actorLabel: staff.fullName,
     eventType: "schedule_approved",
-    summary: `${staff.fullName} approved the meeting date.`,
+    summary: isComplainant
+      ? `${staff.fullName} approved the meeting date.`
+      : `${staff.fullName} approved the meeting date for the complainant.`,
+  });
+
+  await announceSummons(db, staff, {
+    hearingId,
+    caseId: hearing.case_id,
+    start: hearing.scheduled_start,
+    venue: hearing.venue,
+    caseNumber: hearing.violation_cases?.case_number ?? "",
+    caseStatus: hearing.violation_cases?.status ?? null,
+    studentUserId: hearing.violation_cases?.students?.user_id ?? null,
+    hearingType: hearing.hearing_type,
   });
 
   revalidatePath(`/staff/cases/${hearing.case_id}`);
   revalidatePath("/staff/hearings");
-  return { ok: true, message: "Approved. The student can now be notified." };
+  revalidatePath("/staff/calendar");
+  return { ok: true, message: "Approved. The student has been summoned through the portal and by email." };
 }
 
 /**
@@ -1387,20 +1437,23 @@ export async function chooseMinorProcess(formData: FormData): Promise<Result> {
   }
 
   const db = loose(createAdminClient());
+  // "*" so classification_pending (00049) is read once it exists.
   const { data: caseRow } = await db
     .from("violation_cases")
-    .select("id, case_number, classification, status, students(user_id)")
+    .select("*, students(user_id)")
     .eq("id", parsed.data.case_id)
     .maybeSingle();
   const violationCase = caseRow as {
     id: string;
     case_number: string;
     classification: string;
+    classification_pending?: boolean;
     status: CaseStatus;
     students: { user_id: string } | null;
   } | null;
   if (!violationCase) return { error: "Case not found." };
   if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
+  if (isClassificationPending(violationCase)) return { error: CLASSIFY_FIRST };
   if (!canChooseMinorProcess(violationCase)) {
     return { error: "This can only be chosen for an open minor case before the apology stage." };
   }
@@ -1476,6 +1529,90 @@ export async function chooseMinorProcess(formData: FormData): Promise<Result> {
           ? "The student has been asked for an apology letter."
           : "Recorded. Schedule the counselling session with Find meeting times.",
   };
+}
+
+const classifySchema = z.object({
+  case_id: z.string().uuid(),
+  classification: z.enum(CLASSIFIABLE, { message: "Choose minor or major." }),
+});
+
+/**
+ * Classifies a case whose offense the Student Manual does not list (checklist
+ * A2, migration 00049). The Manual's own offenses keep the classification
+ * their type gives them; this is the OSA's call only for the rest. Changing
+ * it later, while the case is open, is allowed and recorded the same way.
+ */
+export async function classifyCase(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff?.isOsa) return { error: "Only OSA staff can classify a case." };
+
+  const parsed = classifySchema.safeParse({
+    case_id: formData.get("case_id"),
+    classification: formData.get("classification"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Choose minor or major." };
+  const { classification } = parsed.data;
+
+  const db = loose(createAdminClient());
+  const { data: caseRow } = await db
+    .from("violation_cases")
+    .select("*, violation_types(code, in_handbook)")
+    .eq("id", parsed.data.case_id)
+    .maybeSingle();
+  const violationCase = caseRow as {
+    id: string;
+    case_number: string;
+    classification: string;
+    classification_pending?: boolean;
+    status: CaseStatus;
+    violation_types: { code: string; in_handbook?: boolean } | null;
+  } | null;
+  if (!violationCase) return { error: "Case not found." };
+  if (!(await staffCanSeeCase(parsed.data.case_id))) return { error: CASE_NOT_VISIBLE };
+  if (!canClassify({ in_handbook: violationCase.violation_types?.in_handbook, status: violationCase.status })) {
+    return { error: "The Student Manual classifies this offense, so it cannot be changed here." };
+  }
+
+  const pending = isClassificationPending(violationCase);
+  if (!pending && violationCase.classification === classification) {
+    return { ok: true, message: `Already classified as ${classification}.` };
+  }
+
+  const { error } = await db
+    .from("violation_cases")
+    .update({
+      classification,
+      classification_pending: false,
+      classified_by: staff.staffId,
+      classified_at: new Date().toISOString(),
+    })
+    .eq("id", violationCase.id);
+  if (error) {
+    return {
+      error: ["PGRST204", "42703"].includes((error as { code?: string }).code ?? "")
+        ? "Classifying a case needs migration 00049. Ask the administrator to run it."
+        : "Could not save the classification.",
+    };
+  }
+
+  await addTimelineEntry(db, {
+    caseId: violationCase.id,
+    actorId: staff.userId,
+    actorLabel: staff.fullName,
+    eventType: pending ? "classified" : "reclassified",
+    summary: pending
+      ? `${staff.fullName} classified this as a ${classification} offense (not listed in the Student Manual).`
+      : `${staff.fullName} changed the classification from ${violationCase.classification} to ${classification}.`,
+    details: { classification, previous: pending ? null : violationCase.classification },
+  });
+  await logAuditEvent(staff.userId, "case_updated", "violation_cases", {
+    case_id: violationCase.id,
+    classification,
+  });
+
+  revalidatePath(`/staff/cases/${violationCase.id}`);
+  revalidatePath("/staff/cases");
+  return { ok: true, message: `Classified as a ${classification} offense.` };
 }
 
 const assignOfficerSchema = z.object({

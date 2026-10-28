@@ -95,7 +95,7 @@ export default async function StaffHearingsPage() {
       <PageHeader
         breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Hearings" }]}
         title="Hearings"
-        description="Meeting dates the OSA has set, and whether each student has confirmed the summons."
+        description="Meeting dates the OSA has set, the ones waiting for a faculty complainant's approval, and whether each student has confirmed the summons."
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -125,12 +125,12 @@ export default async function StaffHearingsPage() {
         <EmptyState
           icon={CalendarClock}
           title="No hearings scheduled"
-          description="Open a case, find meeting times that fit both parties' schedules, and set one. The summons goes out with it."
+          description="Open a case, find meeting times that fit both parties' schedules, and set one. The summons goes out with it, or once a faculty complainant approves the date."
         />
       ) : (
         <div className="space-y-8">
           <Group
-            title="Set the old way: waiting for the complainant"
+            title="Waiting for the faculty complainant to approve"
             hearings={awaitingApproval}
             staffId={staff.staffId}
             isOsa={staff.isOsa}

@@ -8,6 +8,7 @@ import { ToneBadge } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { buttonVariants } from "@/components/ui/button";
+import { isClassificationPending } from "@/lib/osa/classification";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
@@ -37,6 +38,8 @@ const FILTERS = [
 
 interface CaseRow extends ViolationCaseWithRelations {
   apology_letters: Array<{ review_status: string }> | null;
+  /** Migration 00049: an offense outside the Student Manual the OSA has not classified yet. */
+  classification_pending?: boolean;
 }
 
 /** A letter sitting unread is work for the OSA, not for the student. */
@@ -78,7 +81,8 @@ export default async function StaffCasesPage({
   const { data: rows } = await db
     .from("violation_cases")
     .select(
-      "id, case_number, classification, status, incident_date, created_at, confidentiality, students(first_name, last_name, student_number, program), violation_types(code, name), apology_letters(review_status)",
+      // "*" so classification_pending (00049) is read once it exists.
+      "*, students(first_name, last_name, student_number, program), violation_types(code, name), apology_letters(review_status)",
     )
     .order("created_at", { ascending: false })
     .limit(300);
@@ -185,10 +189,14 @@ export default async function StaffCasesPage({
                         {violationCase.case_number}
                       </Link>
                       <div className="mt-0.5">
-                        <ToneBadge
-                          label={violationCase.classification}
-                          tone={CLASSIFICATION_TONE[violationCase.classification]}
-                        />
+                        {isClassificationPending(violationCase) ? (
+                          <ToneBadge label="to classify" tone="info" />
+                        ) : (
+                          <ToneBadge
+                            label={violationCase.classification}
+                            tone={CLASSIFICATION_TONE[violationCase.classification]}
+                          />
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-2.5">

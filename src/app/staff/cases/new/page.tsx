@@ -38,15 +38,19 @@ export default async function FileCasePage() {
   const supabase = await createClient();
   const db = loose(supabase);
 
-  const { data: typeRows } = await db
-    .from("violation_types")
-    .select(
-      "id, code, name, description, default_classification, handbook_reference, typical_sanction, auto_route_codi",
-    )
-    .eq("is_active", true)
-    .order("code", { ascending: true });
+  const TYPE_COLUMNS = "id, code, name, description, default_classification, handbook_reference, typical_sanction, auto_route_codi";
+  const loadTypes = (columns: string) =>
+    db.from("violation_types").select(columns).eq("is_active", true).order("code", { ascending: true });
+  // in_handbook arrives with 00049; until it runs, every type is a Manual offense.
+  let { data: typeRows, error: typeError } = await loadTypes(`${TYPE_COLUMNS}, in_handbook`);
+  if (typeError && ["PGRST204", "42703"].includes((typeError as { code?: string }).code ?? "")) {
+    ({ data: typeRows, error: typeError } = await loadTypes(TYPE_COLUMNS));
+  }
 
-  const violationTypes = (typeRows as ViolationTypeOption[] | null) ?? [];
+  const violationTypes = ((typeRows as ViolationTypeOption[] | null) ?? []).map((type) => ({
+    ...type,
+    in_handbook: type.in_handbook ?? true,
+  }));
 
   return (
     <div>

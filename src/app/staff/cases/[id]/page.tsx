@@ -60,7 +60,9 @@ import {
   formatManilaMonthDay,
 } from "@/lib/utils/time";
 import { AssignOfficerForm } from "@/components/cases/assign-officer-form";
+import { ClassifyCaseForm } from "@/components/cases/classify-case-form";
 import { ForwardAppealForm } from "@/components/cases/forward-appeal-form";
+import { canClassify, isClassificationPending } from "@/lib/osa/classification";
 import { MinorProcessForm } from "@/components/cases/minor-process-form";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canChooseMinorProcess, minorProcessOf } from "@/lib/osa/minor-process";
@@ -180,6 +182,8 @@ interface CaseDetail {
   resolution_path: string | null;
   /** Migration 00039; absent until it runs. */
   minor_process?: string | null;
+  /** Migration 00049; absent until it runs. */
+  classification_pending?: boolean;
   confidentiality: "normal" | "restricted" | "codi";
   assigned_officer_id: string | null;
   sanction_applied: string | null;
@@ -195,7 +199,7 @@ interface CaseDetail {
     program: string | null;
     year_level: string | null;
   } | null;
-  violation_types: { code: string; name: string; handbook_reference: string | null } | null;
+  violation_types: { code: string; name: string; handbook_reference: string | null; in_handbook?: boolean } | null;
 }
 
 /**
@@ -224,8 +228,8 @@ export default async function StaffCaseDetailPage({
   const { data: caseData } = await db
     .from("violation_cases")
     .select(
-      // "*" so minor_process (migration 00039) is read once it exists.
-      "*, students(id, first_name, last_name, student_number, program, year_level), violation_types(code, name, handbook_reference)",
+      // "*" so minor_process (00039), classification_pending and in_handbook (00049) are read once they exist.
+      "*, students(id, first_name, last_name, student_number, program, year_level), violation_types(*)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -234,6 +238,10 @@ export default async function StaffCaseDetailPage({
   // RLS also returns nothing for a case this staff member may not see, which
   // is the right answer for both "missing" and "not yours".
   if (!violationCase) notFound();
+
+  // Checklist A2: an offense outside the Student Manual is classified by the OSA.
+  const unlisted = violationCase.violation_types?.in_handbook === false;
+  const classificationPending = isClassificationPending(violationCase);
 
   // A restricted case (checklist A7): who holds it, and for the OSA head,
   // who else could. Staff names come from the service role, since staff
@@ -362,11 +370,33 @@ export default async function StaffCaseDetailPage({
                 {violationCase.incident_time ? ` · ${violationCase.incident_time}` : ""}
               </Detail>
               <Detail label="Location">{violationCase.incident_location ?? "—"}</Detail>
-              <Detail label="Classification">{violationCase.classification}</Detail>
+              <Detail label="Classification">
+                {classificationPending ? "To be classified by the OSA" : violationCase.classification}
+              </Detail>
               <Detail label="Handbook">
-                {violationCase.violation_types?.handbook_reference ?? "—"}
+                {violationCase.violation_types?.handbook_reference ?? (unlisted ? "Not in the Student Manual" : "—")}
               </Detail>
             </dl>
+
+            {staff.isOsa && canClassify({ in_handbook: violationCase.violation_types?.in_handbook, status: violationCase.status }) && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 text-[13px]">
+                <p className="min-w-0">
+                  {classificationPending ? (
+                    <>
+                      <span className="font-semibold">Classify this case.</span> The Student Manual does not list this
+                      offense, so the OSA decides whether it is minor or major. Hearings and the minor process wait
+                      until then.
+                    </>
+                  ) : (
+                    <>Not in the Student Manual: classified by the OSA as {violationCase.classification}.</>
+                  )}
+                </p>
+                <ClassifyCaseForm
+                  caseId={violationCase.id}
+                  current={classificationPending || violationCase.classification === "confidential" ? null : violationCase.classification}
+                />
+              </div>
+            )}
 
             {restricted && (
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50/60 p-3 text-[13px] dark:border-amber-800 dark:bg-amber-950/20">
@@ -438,8 +468,8 @@ export default async function StaffCaseDetailPage({
 
                     {hearing.status === "awaiting_complainant" && (
                       <p className="mt-2 text-[11px] text-muted-foreground">
-                        Set the old way, before the OSA set dates itself: the student is told
-                        once this date is approved.
+                        Waiting for the faculty complainant to approve this date. The student is
+                        summoned as soon as it is approved{staff.isOsa ? "; the OSA can approve it for them on a written approval" : ""}.
                       </p>
                     )}
                   </li>
@@ -525,7 +555,7 @@ export default async function StaffCaseDetailPage({
           )}
 
           {/* How a minor case is handled (checklist A4) */}
-          {staff.isOsa && canChooseMinorProcess(violationCase) && (
+          {staff.isOsa && canChooseMinorProcess(violationCase) && !classificationPending && (
             <section className="rounded-xl border border-border bg-card p-5">
               <h2 className="mb-1 font-display text-base font-semibold">How this minor case is handled</h2>
               <p className="mb-3 text-[13px] text-muted-foreground">
@@ -537,7 +567,7 @@ export default async function StaffCaseDetailPage({
           )}
 
           {/* Sanction ladder — Table of Offenses (Minor) */}
-          {staff.isOsa && violationCase.classification === "minor" && (
+          {staff.isOsa && violationCase.classification === "minor" && !classificationPending && (
             <section className="rounded-xl border border-border bg-card p-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 font-display text-base font-semibold">

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { CLASSIFY_FIRST, isClassificationPending } from "@/lib/osa/classification";
+import { needsComplainantApproval } from "@/lib/osa/hearing-approval";
 import type { StaffContext } from "@/lib/osa/staff-context";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
 import type { LooseClient } from "@/lib/supabase/loose";
@@ -8,11 +10,16 @@ import { formatManila, formatManilaDateTime } from "@/lib/utils/time";
 import type { CaseStatus } from "@/types/osa";
 
 /**
- * Setting a hearing date and summoning the student, in one step (OSA
- * checklist C1: the OSA sets the date; there is no complainant approval).
+ * Setting a hearing date, and summoning the student once the date stands.
  * Shared by the scheduler's proposals and by booking a date by hand, so the
  * two cannot drift apart. Not a "use server" module: these are internal
  * steps, never endpoints.
+ *
+ * The OSA head's review of the checklist (C1): a faculty complainant approves
+ * the date before the student is told (needsComplainantApproval). Their
+ * hearing waits at awaiting_complainant and they are asked to approve it;
+ * approveHearing then sends the summons. Every other hearing is summoned at
+ * once.
  */
 
 /** Codes meaning migration 00038 has not run: no date_set_* columns, or the old approval constraint. */
@@ -31,14 +38,32 @@ export async function createHearingWithSummons(
     /** For the timeline: why this time, or why it was set by hand. */
     note?: string | null;
   },
-): Promise<{ hearingId: string } | { error: string }> {
+): Promise<{ hearingId: string; awaitingApproval: boolean } | { error: string }> {
+  // "*" so classification_pending (00049) is read when it exists, without failing before it does.
   const { data: caseRow } = await db
     .from("violation_cases")
-    .select("case_number, status, students(user_id)")
+    .select("*, students(user_id)")
     .eq("id", hearing.caseId)
     .maybeSingle();
-  const violationCase = caseRow as { case_number: string; status: CaseStatus; students: { user_id: string } | null } | null;
+  const violationCase = caseRow as {
+    case_number: string;
+    status: CaseStatus;
+    complainant_staff_id: string | null;
+    complainant_name: string | null;
+    classification_pending?: boolean;
+    students: { user_id: string } | null;
+  } | null;
   if (!violationCase) return { error: "Case not found." };
+  if (isClassificationPending(violationCase)) return { error: CLASSIFY_FIRST };
+
+  const { data: complainantRow } = violationCase.complainant_staff_id
+    ? await db.from("staff").select("user_id, full_name, role_type").eq("id", violationCase.complainant_staff_id).maybeSingle()
+    : { data: null };
+  const complainant = complainantRow as { user_id: string; full_name: string; role_type: string } | null;
+  const awaitingApproval = needsComplainantApproval({
+    hearingType: hearing.hearingType,
+    complainantRole: complainant?.role_type ?? null,
+  });
 
   const now = new Date().toISOString();
   const { data: inserted, error } = await db
@@ -49,13 +74,13 @@ export async function createHearingWithSummons(
       scheduled_start: hearing.start,
       scheduled_end: hearing.end,
       venue: hearing.venue,
-      status: "student_notified",
+      status: awaitingApproval ? "awaiting_complainant" : "student_notified",
       proposed_by: hearing.proposedBy,
       date_set_by: staff.staffId,
       date_set_at: now,
-      student_notified_at: now,
-      notified_via_portal: true,
-      notified_via_email: true,
+      ...(awaitingApproval
+        ? {}
+        : { student_notified_at: now, notified_via_portal: true, notified_via_email: true }),
     })
     .select("id")
     .single();
@@ -72,17 +97,35 @@ export async function createHearingWithSummons(
     caseId: hearing.caseId,
     actorId: staff.userId,
     actorLabel: staff.fullName,
-    eventType: "status_changed",
-    summary: `${staff.fullName} set the meeting for ${formatManilaDateTime(hearing.start)} at ${hearing.venue}.${
+    eventType: awaitingApproval ? "slots_proposed" : "status_changed",
+    summary: `${staff.fullName} ${awaitingApproval ? "proposed" : "set"} the meeting for ${formatManilaDateTime(hearing.start)} at ${hearing.venue}.${
       hearing.proposedBy === "staff" && hearing.note ? ` Set by hand: ${hearing.note}` : ""
-    }`,
-    details: { proposed_by: hearing.proposedBy, rationale: hearing.note ?? null },
+    }${awaitingApproval ? ` Waiting for ${complainant?.full_name ?? "the complainant"} to approve the date.` : ""}`,
+    details: { proposed_by: hearing.proposedBy, rationale: hearing.note ?? null, awaiting_complainant: awaitingApproval },
   });
   await logAuditEvent(staff.userId, "hearing_scheduled", "case_hearings", {
     case_id: hearing.caseId,
     hearing_id: hearingId,
     manual: hearing.proposedBy === "staff",
+    awaiting_complainant: awaitingApproval,
   });
+
+  if (awaitingApproval && complainant) {
+    const when = formatManila(hearing.start, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+    await db.rpc("create_notification", {
+      p_user_id: complainant.user_id,
+      p_type: "schedule_approval_needed",
+      p_title: "Approve the hearing date for your complaint",
+      p_body: `The OSA proposes ${when} at ${hearing.venue} for case ${violationCase.case_number}. The student is summoned once you approve it.`,
+      p_priority: "high",
+      p_channels: ["in_app", "email"],
+      p_action_url: "/staff/hearings",
+      p_action_label: "Review the date",
+      p_entity_type: "case_hearing",
+      p_entity_id: hearingId,
+    });
+    return { hearingId, awaitingApproval: true };
+  }
 
   await announceSummons(db, staff, {
     hearingId,
@@ -94,7 +137,7 @@ export async function createHearingWithSummons(
     studentUserId: violationCase.students?.user_id ?? null,
     hearingType: hearing.hearingType,
   });
-  return { hearingId };
+  return { hearingId, awaitingApproval: false };
 }
 
 /**

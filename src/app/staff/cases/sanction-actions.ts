@@ -546,7 +546,7 @@ export async function scheduleHearingManually(formData: FormData): Promise<Resul
   const end = new Date(start.getTime() + parsed.data.duration_minutes * 60_000);
   const db = loose(createAdminClient());
 
-  // The OSA sets the date and the summons goes with it (checklist C1).
+  // The OSA sets the date; a faculty complainant approves it before the summons (checklist C1).
   const created = await createHearingWithSummons(db, staff, {
     caseId: parsed.data.case_id,
     hearingType: parsed.data.hearing_type,
@@ -563,7 +563,9 @@ export async function scheduleHearingManually(formData: FormData): Promise<Resul
   revalidatePath("/staff/calendar");
   return {
     ok: true,
-    message: "Hearing set. The student has been summoned through the portal and by email. Let the complainant know the date.",
+    message: created.awaitingApproval
+      ? "Date proposed. The faculty complainant has been asked to approve it; the student is summoned once they do."
+      : "Hearing set. The student has been summoned through the portal and by email. Let the complainant know the date.",
   };
 }
 

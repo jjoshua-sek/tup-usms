@@ -32,6 +32,8 @@ export interface ViolationTypeOption {
   handbook_reference: string | null;
   typical_sanction: string | null;
   auto_route_codi: boolean;
+  /** False only for OTH-01: the OSA classifies it after review (00049, checklist A2). */
+  in_handbook?: boolean;
 }
 
 interface FileCaseFormProps {
@@ -121,13 +123,17 @@ export function FileCaseForm({
   // types stay with the OSA as restricted cases (migration 00040).
   const routesToCodi = Boolean(selectedType?.auto_route_codi);
   const restricted = !routesToCodi && selectedType?.default_classification === "confidential";
+  // Checklist A2: the Manual classifies first; the OSA classifies what it does not list.
+  const unlisted = selectedType?.in_handbook === false;
 
+  const listed = violationTypes.filter((type) => type.in_handbook !== false);
   const grouped = {
-    minor: violationTypes.filter((type) => type.default_classification === "minor"),
-    major: violationTypes.filter((type) => type.default_classification === "major"),
-    confidential: violationTypes.filter(
+    minor: listed.filter((type) => type.default_classification === "minor"),
+    major: listed.filter((type) => type.default_classification === "major"),
+    confidential: listed.filter(
       (type) => type.default_classification === "confidential" || type.auto_route_codi,
     ),
+    unlisted: violationTypes.filter((type) => type.in_handbook === false),
   };
 
   const needsName = complainantType === "student" || complainantType === "external";
@@ -297,6 +303,15 @@ export function FileCaseForm({
                 ))}
               </optgroup>
             )}
+            {grouped.unlisted.length > 0 && (
+              <optgroup label="Not in the Student Manual">
+                {grouped.unlisted.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.code} — {type.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
 
@@ -333,12 +348,17 @@ export function FileCaseForm({
                   discuss it with other staff.
                 </span>
               </p>
+            ) : unlisted ? (
+              <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                The Student Manual does not list this, so the OSA classifies it as minor or major
+                after review, and decides the sanction.
+              </p>
             ) : (
               <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
                 <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                 Filed as a <strong className="mx-1">{selectedType.default_classification}</strong>
-                offense. The OSA may reclassify after review — that change is recorded in the
-                case history.
+                offense, as the Student Manual classifies it. The sanction is decided by the OSA.
               </p>
             )}
           </div>

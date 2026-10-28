@@ -1,8 +1,9 @@
 import "server-only";
 
+import { anonymizeText, nameTokens } from "@/lib/ai/anonymize";
 import { summarizeConcernText } from "@/lib/ai/summarize-concern";
 import { isMissingFunction } from "@/lib/supabase/errors";
-import { loose } from "@/lib/supabase/loose";
+import { loose, type LooseClient } from "@/lib/supabase/loose";
 import { sanitizeText } from "@/lib/utils/sanitize";
 
 /**
@@ -67,13 +68,17 @@ export async function summarizeConcerns(
 
   const rows = (data as ClaimedConcern[] | null) ?? [];
   report.claimed = rows.length;
+  if (rows.length === 0) return report;
+
+  // Checklist D4: the AI sees the concern without who is in it.
+  const names = await loadNameTokens(db);
 
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index];
     const result = await summarizeConcernText({
       category: row.category,
-      subject: sanitizeText(row.subject_line, 200),
-      body: sanitizeText(row.body_text, 10000),
+      subject: anonymizeText(sanitizeText(row.subject_line, 200), names),
+      body: anonymizeText(sanitizeText(row.body_text, 10000), names),
     });
 
     // An account problem (no credit, bad key) fails every concern alike.
@@ -131,4 +136,30 @@ export async function summarizeConcerns(
   }
 
   return report;
+}
+
+const PAGE = 1000;
+
+/**
+ * Every student's and staff member's name, as tokens for anonymizeText. Read
+ * a page at a time, since the API returns at most 1,000 rows per request.
+ * If a read fails, the patterns (titles, numbers, emails) still apply.
+ */
+async function loadNameTokens(db: LooseClient): Promise<Set<string>> {
+  const people: Array<{ first: string | null; last: string | null }> = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await db.from("students").select("first_name, last_name").range(from, from + PAGE - 1);
+    if (error) {
+      console.error("[concern summary] could not read student names", error);
+      break;
+    }
+    const page = (data as Array<{ first_name: string | null; last_name: string | null }> | null) ?? [];
+    people.push(...page.map((row) => ({ first: row.first_name, last: row.last_name })));
+    if (page.length < PAGE) break;
+  }
+  const { data: staffRows } = await db.from("staff").select("full_name");
+  for (const row of (staffRows as Array<{ full_name: string | null }> | null) ?? []) {
+    people.push({ first: row.full_name, last: null });
+  }
+  return nameTokens(people);
 }

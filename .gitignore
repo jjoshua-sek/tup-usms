@@ -44,3 +44,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# risk model training (ml/README.md)
+/ml/.venv/
+__pycache__/

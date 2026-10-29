@@ -35,6 +35,8 @@ type AuditAction =
   | "academic_doc_reviewed"
   | "id_validation_reviewed"
   | "intervention_created"
+  // Switching the risk model every score uses (migration 00053).
+  | "risk_model_activated"
   // Reads of a student's consolidated record. RA 10173 cares who *looked*
   // as much as who changed something; this page aggregates discipline, risk
   // and clearance in one view, so opening it is logged.

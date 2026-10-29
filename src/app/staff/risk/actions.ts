@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { featuresToInputs, loadActiveRiskModel, loadRiskFeatures } from "@/lib/risk/load";
+import { canChooseRiskModel } from "@/lib/risk/versions";
 import { scoreStudent } from "@/lib/risk/score";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
@@ -60,7 +61,7 @@ export async function createInterventionFromRisk(formData: FormData): Promise<Re
     const assessment = scoreStudent(featuresToInputs(features), model);
 
     // The demote trigger from 00011 flips any previous row to is_current = false.
-    const { data: inserted } = await db
+    const { data: inserted, error: assessmentError } = await db
       .from("risk_assessments")
       .insert({
         student_id: parsed.data.student_id,
@@ -88,11 +89,16 @@ export async function createInterventionFromRisk(formData: FormData): Promise<Re
         })),
         data_completeness: assessment.dataCompleteness,
         is_current: true,
-        trigger_reason: "staff_intervention",
+        // One of the reasons 00011 allows. This said "staff_intervention",
+        // which the check refused, so no assessment was ever stored.
+        trigger_reason: "manual_request",
       })
       .select("id")
       .maybeSingle();
 
+    if (assessmentError) {
+      console.error("risk assessment not stored", assessmentError.code, assessmentError.message);
+    }
     assessmentId = (inserted as { id: string } | null)?.id ?? null;
   }
 
@@ -116,6 +122,52 @@ export async function createInterventionFromRisk(formData: FormData): Promise<Re
   revalidatePath("/staff/risk");
   revalidatePath("/staff/interventions");
   return { ok: true, message: "Intervention opened." };
+}
+
+/**
+ * Makes another model version the one every score uses.
+ *
+ * The OSA head and the administrator only, as "admin manages models" (00013)
+ * allows: it changes every score on the At-Risk page at once.
+ * activate_risk_model() (migration 00053) switches in one transaction, so the
+ * page never finds no model or two.
+ */
+export async function activateRiskModel(formData: FormData): Promise<Result> {
+  const staff = await getStaffContext();
+  if (!staff || !canChooseRiskModel(staff.role)) {
+    return { error: "Only the OSA head or the administrator can change the active model." };
+  }
+
+  const versionId = z.string().uuid().safeParse(formData.get("version_id"));
+  if (!versionId.success) return { error: "Choose a model version." };
+
+  const db = loose(createAdminClient());
+  const { data: version } = await db
+    .from("risk_model_versions")
+    .select("version_label")
+    .eq("id", versionId.data)
+    .maybeSingle();
+  if (!version) return { error: "That model version no longer exists." };
+
+  const { error } = (await db.rpc("activate_risk_model", { p_version_id: versionId.data })) as {
+    error: { code?: string } | null;
+  };
+  if (error) {
+    // 42883 / PGRST202: the function is not there, so 00053 has not run.
+    if (error.code === "42883" || error.code === "PGRST202") {
+      return { error: "Run migration 00053 before switching models." };
+    }
+    return { error: "Could not switch the model." };
+  }
+
+  const label = (version as { version_label: string }).version_label;
+  await logAuditEvent(staff.userId, "risk_model_activated", "risk_model_versions", {
+    version_id: versionId.data,
+    version_label: label,
+  });
+
+  revalidatePath("/staff/risk");
+  return { ok: true, message: `Scores now use ${label}.` };
 }
 
 const updateSchema = z.object({

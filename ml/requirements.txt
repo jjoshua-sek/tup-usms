@@ -1,0 +1,6 @@
+# Training and evaluating the STARS risk model (python -m pip install -r requirements.txt)
+numpy==2.2.6
+pandas==2.2.3
+scipy==1.18.1
+scikit-learn==1.6.1
+matplotlib==3.10.3

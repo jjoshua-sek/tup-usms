@@ -1,0 +1,138 @@
+{
+  "version_label": "v2.0-synthetic",
+  "algorithm": "logistic_regression",
+  "coefficients": {
+    "gwa_risk": 6.346,
+    "gwa_delta": 0.0,
+    "failure_ratio": 1.4274,
+    "attendance_deficit": 0.0,
+    "violation_severity": 6.7221,
+    "open_cases": 0.8246,
+    "financial_stress": 0.3449,
+    "probationary": 0.942
+  },
+  "intercept": -4.4584,
+  "thresholds": {
+    "moderate": 0.141,
+    "high": 0.353,
+    "critical": 0.599
+  },
+  "feature_scaling": {
+    "gwa_risk": {
+      "method": "minmax",
+      "min": 1.0,
+      "max": 5.0,
+      "invert": false
+    },
+    "gwa_delta": {
+      "method": "clamp",
+      "min": -1.0,
+      "max": 1.0
+    },
+    "failure_ratio": {
+      "method": "identity",
+      "min": 0,
+      "max": 1
+    },
+    "attendance_deficit": {
+      "method": "identity",
+      "min": 0,
+      "max": 1,
+      "note": "not trained: no attendance data"
+    },
+    "violation_severity": {
+      "method": "saturating",
+      "scale": 10.0
+    },
+    "open_cases": {
+      "method": "saturating",
+      "scale": 3.0
+    }
+  },
+  "training_notes": "Logistic regression (L2, C=46.42, weights >= 0; evaluated with scikit-learn 1.6.1) trained on 3000 synthetic past students shaped like STARS records (ml/generate_synthetic.py) and tested on 1000 held out. NOT trained on TUP data: the metrics show the pipeline works, not real-world accuracy. Attendance has weight 0 because the OSA has no attendance data. Retrain on historical OSA outcome data with ml/train.py before relying on it.",
+  "trained_on_records": 3000,
+  "training_date": "2026-10-29",
+  "performance_metrics": {
+    "status": "trained_synthetic",
+    "note": "Trained and evaluated on synthetic students shaped like STARS records, not TUP data. Shows the pipeline works; not evidence of real-world accuracy.",
+    "auc_roc": 0.8311,
+    "pr_auc": 0.581,
+    "brier": 0.1196,
+    "accuracy": 0.678,
+    "precision": 0.3656,
+    "recall": 0.83,
+    "f1": 0.5076,
+    "confusion_matrix": {
+      "tn": 512,
+      "fp": 288,
+      "fn": 34,
+      "tp": 166
+    },
+    "threshold_basis": "moderate: highest cut with recall >= 0.80; high/critical: lowest cuts with precision >= 0.60/0.80; from out-of-fold training predictions",
+    "cv_auc_mean": 0.8101,
+    "cv_auc_sd": 0.0208,
+    "regularization_C": 46.415888,
+    "sign_constraint": "weights >= 0: every input is defined so a higher value means more risk",
+    "unconstrained": {
+      "coefficients": {
+        "gwa_risk": 6.5019,
+        "gwa_delta": -0.187,
+        "failure_ratio": 1.4172,
+        "violation_severity": 6.699,
+        "open_cases": 0.74,
+        "financial_stress": 0.3407,
+        "probationary": 0.8805
+      },
+      "auc_roc": 0.8307
+    },
+    "tiers": [
+      {
+        "tier": "critical",
+        "students": 62,
+        "share": 0.062,
+        "at_risk_rate": 0.7097
+      },
+      {
+        "tier": "high",
+        "students": 95,
+        "share": 0.095,
+        "at_risk_rate": 0.4842
+      },
+      {
+        "tier": "moderate",
+        "students": 297,
+        "share": 0.297,
+        "at_risk_rate": 0.2559
+      },
+      {
+        "tier": "low",
+        "students": 546,
+        "share": 0.546,
+        "at_risk_rate": 0.0623
+      }
+    ],
+    "baseline": {
+      "auc_roc": 0.8026,
+      "pr_auc": 0.5449,
+      "brier": 0.1729,
+      "accuracy": 0.605,
+      "precision": 0.3198,
+      "recall": 0.865,
+      "f1": 0.4669
+    },
+    "dataset": {
+      "source": "ml/generate_synthetic.py",
+      "students": 4000,
+      "train": 3000,
+      "test": 1000,
+      "prevalence": 0.2003,
+      "previous_term": "2nd Sem 2023-2024",
+      "current_term": "1st Sem 2024-2025",
+      "outcome_term": "2nd Sem 2024-2025",
+      "missing_current_gwa": 0.087,
+      "missing_previous_gwa": 0.2913
+    },
+    "parity_cases": 39,
+    "sklearn_version": "1.6.1"
+  }
+}

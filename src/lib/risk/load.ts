@@ -4,6 +4,7 @@ import type { LooseClient } from "@/lib/supabase/loose";
 import type { StudentRiskFeaturesRow } from "@/types/osa";
 
 import type { RawRiskInputs, RiskFeatureKey, RiskModel } from "./types";
+import type { RiskModelVersionRow } from "./versions";
 
 /**
  * Loads the model that inference should run against.
@@ -52,6 +53,15 @@ export async function loadActiveRiskModel(db: LooseClient): Promise<RiskModel | 
     threshold_critical: Number(row.threshold_critical),
     feature_scaling: row.feature_scaling,
   };
+}
+
+/** Every model version, newest first, for comparing them on the At-Risk page. */
+export async function loadRiskModelVersions(db: LooseClient): Promise<RiskModelVersionRow[]> {
+  const { data } = await db
+    .from("risk_model_versions")
+    .select("id, version_label, is_active, trained_on_records, training_date, performance_metrics")
+    .order("created_at", { ascending: false });
+  return (data as RiskModelVersionRow[] | null) ?? [];
 }
 
 const FEATURE_COLUMNS =

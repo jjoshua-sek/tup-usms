@@ -9,9 +9,16 @@ import { InterventionForm } from "@/components/risk/intervention-form";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
-import { featuresToInputs, loadActiveRiskModel, loadRiskFeatures } from "@/lib/risk/load";
+import { ActivateModelButton } from "@/components/risk/activate-model-button";
+import {
+  featuresToInputs,
+  loadActiveRiskModel,
+  loadRiskFeatures,
+  loadRiskModelVersions,
+} from "@/lib/risk/load";
 import { RISK_TIER_META, scoreStudent, suggestInterventions } from "@/lib/risk/score";
 import type { RiskTier } from "@/lib/risk/types";
+import { canChooseRiskModel, summarizeModelVersion } from "@/lib/risk/versions";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -28,6 +35,10 @@ const TIER_TONE: Record<RiskTier, Tone> = {
 };
 
 const TIERS: Array<RiskTier | "all"> = ["critical", "high", "moderate", "low", "all"];
+
+const COUNT = new Intl.NumberFormat("en-PH");
+const formatFigure = (value: number | null) => (value == null ? "—" : value.toFixed(3));
+const formatPercent = (value: number | null) => (value == null ? "—" : `${Math.round(value * 100)}%`);
 
 /**
  * The early warning list (the ML half of the thesis).
@@ -66,10 +77,14 @@ export default async function StaffRiskPage({
   const supabase = await createClient();
   const db = loose(supabase);
 
-  const [model, features] = await Promise.all([
+  const [model, features, versionRows] = await Promise.all([
     loadActiveRiskModel(db),
     loadRiskFeatures(db, { limit: 500 }),
+    loadRiskModelVersions(db),
   ]);
+  const versions = versionRows.map(summarizeModelVersion);
+  const activeVersion = versions.find((version) => version.active);
+  const canChoose = canChooseRiskModel(staff.role);
 
   if (!model) {
     return (
@@ -269,10 +284,69 @@ export default async function StaffRiskPage({
         </ul>
       )}
 
+      {versions.length > 0 && (
+        <section className="mt-6 rounded-xl border border-border bg-card p-5">
+          <h2 className="font-display text-[15px] font-semibold">Model versions</h2>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            Figures are from students held out of training: AUC is how well the model ranks
+            at-risk students above the rest (0.5 is chance, 1 is perfect); precision and recall
+            are at the moderate cut point.
+            {canChoose ? " Switching rescores every student at once." : ""}
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-[12px]">
+              <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr className="border-b border-border">
+                  <th className="py-2 pr-3 font-semibold">Version</th>
+                  <th className="py-2 pr-3 font-semibold">Weights from</th>
+                  <th className="py-2 pr-3 text-right font-semibold">AUC</th>
+                  <th className="py-2 pr-3 text-right font-semibold">Precision</th>
+                  <th className="py-2 pr-3 text-right font-semibold">Recall</th>
+                  <th className="py-2 text-right font-semibold" />
+                </tr>
+              </thead>
+              <tbody>
+                {versions.map((version) => (
+                  <tr key={version.id} className="border-b border-border last:border-0 align-top">
+                    <td className="py-2.5 pr-3">
+                      <span className="font-mono font-medium">{version.label}</span>
+                      {version.trainedAt && (
+                        <span className="block text-[11px] text-muted-foreground">
+                          {version.trainedOn
+                            ? `${COUNT.format(version.trainedOn)} students · `
+                            : ""}
+                          {version.trainedAt}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      {version.source}
+                      {version.caveat && (
+                        <span className="block text-[11px] text-muted-foreground">{version.caveat}</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatFigure(version.auc)}</td>
+                    <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatPercent(version.precision)}</td>
+                    <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatPercent(version.recall)}</td>
+                    <td className="py-2.5 text-right">
+                      {version.active ? (
+                        <ToneBadge label="In use" tone="success" />
+                      ) : canChoose ? (
+                        <ActivateModelButton versionId={version.id} label={version.label} />
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       <p className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed text-muted-foreground">
-        <strong className="text-foreground">On using these scores:</strong> the baseline
-        model&apos;s weights come from retention literature, not from TUP outcome data — it
-        ranks who to check on first, it does not predict failure. Never quote a score to a
+        <strong className="text-foreground">On using these scores:</strong>{" "}
+the model in use takes its weights from{" "}
+        {activeVersion?.sourceInSentence ?? "a source not recorded"} — it ranks who to check on first, it does not predict failure. Never quote a score to a
         student, and never let one stand in for a conversation.
       </p>
     </div>

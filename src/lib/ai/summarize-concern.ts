@@ -5,6 +5,7 @@ import {
   CONCERN_SYSTEM_PROMPT,
   buildConcernPrompt,
   parseConcernSummary,
+  withSafetyFloor,
   type ConcernSummary,
 } from "./concern-summary";
 import { aiModels } from "./groq-core";
@@ -16,6 +17,8 @@ import { groqJson } from "./groq";
  *   Provider  Groq, free plan. The model is GROQ_TEXT_MODEL, by default
  *             openai/gpt-oss-120b.
  *   Output    strict JSON schema, enforced by Groq, then validated with Zod.
+ *             A concern that plainly states a safety risk is raised to
+ *             critical whatever the model said (withSafetyFloor).
  *   Failures  sorted in groq-core.ts. A missing or rejected key, a retired
  *             model, or the free plan's limit is a hold: every concern
  *             would fail alike, so the queue stops and waits instead of
@@ -60,5 +63,5 @@ export async function summarizeConcernText(input: {
   if (!summary) {
     return { ok: false, error: "The AI response was not in the expected format.", retryable: true };
   }
-  return { ok: true, summary, model: result.model };
+  return { ok: true, summary: withSafetyFloor(summary, input), model: result.model };
 }

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { CONCERN_SUMMARY_JSON_SCHEMA, buildConcernPrompt, modelLabel, parseConcernSummary } from "./concern-summary";
+import {
+  CONCERN_SUMMARY_JSON_SCHEMA,
+  buildConcernPrompt,
+  hasSafetySign,
+  modelLabel,
+  parseConcernSummary,
+  withSafetyFloor,
+} from "./concern-summary";
 import { strictSchemaProblems } from "./groq-core";
 
 const valid = {
@@ -45,6 +52,48 @@ describe("buildConcernPrompt", () => {
     expect(prompt.match(/<\/concern>/g)).toHaveLength(1);
     expect(prompt.trimEnd().endsWith("</concern>")).toBe(true);
     expect(prompt).toContain("[concern-tag removed]");
+  });
+});
+
+describe("safety floor", () => {
+  // The live model rated this one "high" three times out of three before the
+  // prompt said critical signs outrank harassment (Oct 29, 2026).
+  const stalking = {
+    subject: "Classmate keeps following me",
+    body: "Since last week [name] ([student number]) has been following me from the IT building to the LRT. I'm scared to go to my 7 PM class.",
+  };
+
+  it("raises a concern that plainly states a safety risk to critical", () => {
+    expect(withSafetyFloor({ ...valid, urgency: "high" }, stalking).urgency).toBe("critical");
+  });
+
+  it("never lowers what the model said", () => {
+    const low = { ...valid, urgency: "low" as const };
+    expect(withSafetyFloor(low, { subject: "ID", body: "How do I replace a lost ID?" })).toBe(low);
+    const critical = { ...valid, urgency: "critical" as const };
+    expect(withSafetyFloor(critical, { subject: "Grades", body: "My grade is missing." })).toBe(critical);
+  });
+
+  it("reads English and Filipino", () => {
+    for (const text of [
+      "He keeps stalking me after class.",
+      "Ilang araw na po akong sinusundan ng isang lalaki.",
+      "Natatakot na po akong pumasok sa klase.",
+      "A blockmate threatened me in the hallway.",
+      "I have been thinking about suicide.",
+      "Binantaan niya ako sa GC.",
+      "I was groped on the stairs of the CAFA building.",
+    ]) expect(hasSafetySign(text), text).toBe(true);
+  });
+
+  it("leaves everyday wording alone", () => {
+    for (const text of [
+      "This thesis deadline is killing me.",
+      "A classmate follows me on IG and comments on every post.",
+      "Please follow up on my scholarship requirements.",
+      "Some blockmates keep posting edited photos of me in our GC.",
+      "I'm afraid I will fail Calculus.",
+    ]) expect(hasSafetySign(text), text).toBe(false);
   });
 });
 

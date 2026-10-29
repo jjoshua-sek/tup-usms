@@ -54,10 +54,12 @@ export const CONCERN_SYSTEM_PROMPT = `You triage concerns that students at the T
 Write the summary for staff in two or three plain sentences: what happened, and what the student is asking for. Keep the facts the student gave — dates, places, course codes, offices, amounts — and add nothing they did not say. Refer to the student as "the student" or "they", never "he" or "she": the concern does not tell you their gender. The concern is anonymized: names, student numbers, emails and phone numbers appear as [name], [student number], [email] and [phone]. Keep those placeholders, never guess who they are, and name no one even if a name slipped through; refer to people by their role instead ("a classmate", "a professor"). Do not diagnose, judge, or advise the student. Concerns may be written in English, Filipino, or Taglish; always summarize in English.
 
 Urgency:
-- critical — risk of harm to the student or anyone else: any physical contact or assault, stalking or being followed, a threat, self-harm, the student saying they feel unsafe or afraid to come to campus, or any other safety emergency
-- high — harassment, discrimination, bullying, or something that will cost the student enrollment, a grade, a scholarship, or graduation if it waits
+- critical — risk of harm to the student or anyone else: any physical contact or assault, stalking, being followed or watched, someone who keeps contacting the student after being told to stop, a threat, self-harm, the student saying they feel unsafe or are scared or afraid to go to class or campus, or any other safety emergency
+- high — harassment, discrimination or bullying with none of the safety signs above, or something that will cost the student enrollment, a grade, a scholarship, or graduation if it waits
 - medium — an academic, financial, or administrative problem that needs action within days
 - low — a question, a suggestion, or feedback with no deadline attached
+
+Judge urgency from what the student describes, not from the category they chose. A concern that has any one of the critical signs is critical even when it is also harassment or bullying: a classmate who follows the student home is critical, not high.
 
 When in doubt between two levels, choose the higher one: under-triaging a concern costs more than over-triaging it.
 
@@ -81,6 +83,35 @@ export function buildConcernPrompt(input: { category: string; subject: string; b
     clean(input.body),
     "</concern>",
   ].join("\n");
+}
+
+/**
+ * Plain statements of a safety risk, in English and Filipino. A concern that
+ * makes one is critical whatever the model says: the prompt asks for this,
+ * but a model can still read "Harassment" and stop at high. Narrow on
+ * purpose ("follows me on IG" and "this deadline is killing me" do not
+ * match); anything subtler is left to the model.
+ */
+const SAFETY_SIGNS: RegExp[] = [
+  /\bstalk(?:s|ed|ing|er|ers)?\b/i,
+  /\bfollow(?:s|ed|ing)? (?:me|us)\b(?! on\b)/i,
+  /\b(?:sinusundan|sinundan|sumusunod sa (?:akin|amin))\b/i,
+  /\b(?:scared|afraid|frightened) (?:to|of) (?:go|going|come|coming|attend|attending|walk|walking)\b/i,
+  /\b(?:takot|natatakot) (?:na )?(?:(?:po )?(?:akong|kaming|ako|kami) )?(?:pumasok|umuwi|lumabas)\b/i,
+  /\b(?:threaten(?:s|ed|ing)?|binantaan|papatayin)\b/i,
+  /\b(?:suicid\w*|self[- ]harm|kill (?:myself|ourselves)|magpakamatay|saktan ang sarili)\b/i,
+  /\b(?:rap(?:e|ed)|molest\w*|grop(?:e|ed|ing)|hinipuan|sexual(?:ly)? assault\w*|assaulted|sinuntok)\b/i,
+];
+
+/** True when the concern plainly describes one of the critical safety signs. */
+export function hasSafetySign(text: string): boolean {
+  return SAFETY_SIGNS.some((sign) => sign.test(text));
+}
+
+/** Raises the model's urgency to critical when the concern has a safety sign; never lowers it. */
+export function withSafetyFloor(summary: ConcernSummary, concern: { subject: string; body: string }): ConcernSummary {
+  if (summary.urgency === "critical" || !hasSafetySign(`${concern.subject}\n${concern.body}`)) return summary;
+  return { ...summary, urgency: "critical" };
 }
 
 /** Reads the model's JSON. Null when it is not valid or not the right shape. */

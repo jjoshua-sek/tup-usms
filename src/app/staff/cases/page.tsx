@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { WAITING } from "@/lib/osa/today";
-import { WarningIcon as AlertTriangle, FolderOpenIcon as FolderOpen, GavelIcon as Gavel, PlusIcon as Plus, ScalesIcon as Scale } from "@phosphor-icons/react/ssr";
+import { CaretRightIcon as ChevronRight, PlusIcon as Plus, ScalesIcon as Scale } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
-import { StatsCard } from "@/components/shared/stats-card";
 import { buttonVariants } from "@/components/ui/button";
 import { isClassificationPending } from "@/lib/osa/classification";
 import { getStaffContext } from "@/lib/osa/staff-context";
+import { WAITING } from "@/lib/osa/today";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -19,24 +18,26 @@ import { formatManilaDate } from "@/lib/utils/time";
 import { CASE_STATUS_META, type ViolationCaseWithRelations } from "@/types/osa";
 
 export const metadata: Metadata = {
-  title: "Cases",
+  title: "Discipline cases",
 };
 
 export const revalidate = 15;
 
-const CLASSIFICATION_TONE = {
-  minor: "warning" as const,
-  major: "danger" as const,
-  confidential: "danger" as const,
+const CLASSIFICATION = {
+  minor: { label: "Minor", tone: "warning" as const },
+  major: { label: "Major", tone: "danger" as const },
+  confidential: { label: "Confidential", tone: "danger" as const },
 };
 
 const FILTERS = [
   { key: "open", label: "Open" },
-  { key: "scheduling", label: "Needs scheduling" },
+  { key: "scheduling", label: "Needs a date" },
   { key: "apology", label: "Apology letters" },
   { key: "escalated", label: "Escalated" },
   { key: "all", label: "All" },
 ] as const;
+
+type FilterKey = (typeof FILTERS)[number]["key"];
 
 interface CaseRow extends ViolationCaseWithRelations {
   apology_letters: Array<{ review_status: string }> | null;
@@ -69,14 +70,14 @@ export default async function StaffCasesPage({
   if (!staff || (!staff.isOsa && !staff.isCommittee)) {
     return (
       <RestrictedNotice
-        title="Cases"
+        title="Discipline cases"
         audience="The case queue is for OSA officers and committee members (PIC, SDB, CODI). Any staff member can still file a complaint against a student."
       >
         {/* Checklist A3: students and any staff may file, against students only. */}
         {staff && (
           <Link
             href="/staff/cases/new"
-            className={buttonVariants({ size: "sm", className: "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700" })}
+            className={cn(buttonVariants(), "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700")}
           >
             <Plus className="mr-1.5 h-4 w-4" />
             File a complaint
@@ -87,7 +88,7 @@ export default async function StaffCasesPage({
   }
 
   const { filter } = await searchParams;
-  const activeFilter = FILTERS.some((f) => f.key === filter) ? filter! : "open";
+  const activeFilter: FilterKey = FILTERS.find((f) => f.key === filter)?.key ?? "open";
 
   const supabase = await createClient();
   const db = loose(supabase);
@@ -111,66 +112,60 @@ export default async function StaffCasesPage({
     .filter((c) => hasPendingLetter(c) || c.status === "awaiting_apology")
     .sort((a, b) => Number(hasPendingLetter(b)) - Number(hasPendingLetter(a)));
 
-  const visible =
-    activeFilter === "all"
-      ? cases
-      : activeFilter === "scheduling"
-        ? needsScheduling
-        : activeFilter === "escalated"
-          ? escalated
-          : activeFilter === "apology"
-            ? apologyWork
-            : open;
+  const byFilter: Record<FilterKey, CaseRow[]> = {
+    open,
+    scheduling: needsScheduling,
+    apology: apologyWork,
+    escalated,
+    all: cases,
+  };
+  const visible = byFilter[activeFilter];
 
   return (
     <div>
       <PageHeader
-        breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Cases" }]}
-        title="Discipline Cases"
-        description="Every case filed with the OSA, and where each one stands in the process."
+        breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Discipline cases" }]}
+        title="Discipline cases"
+        description="Every case filed with the OSA, and where each one stands. Open a case to schedule it, record what happened, or close it."
       >
         <Link
           href="/staff/cases/new"
-          className={buttonVariants({ size: "sm", className: "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700" })}
+          className={cn(buttonVariants(), "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700")}
         >
           <Plus className="mr-1.5 h-4 w-4" />
           File a case
         </Link>
       </PageHeader>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard label="Open cases" value={open.length} icon={FolderOpen} />
-        <StatsCard
-          label="Needs scheduling"
-          value={needsScheduling.length}
-          icon={Gavel}
-          iconTone={needsScheduling.length > 0 ? "warn" : "neutral"}
-        />
-        <StatsCard
-          label="Escalated"
-          value={escalated.length}
-          icon={AlertTriangle}
-          iconTone={escalated.length > 0 ? "danger" : "neutral"}
-        />
-        <StatsCard label="All time" value={cases.length} icon={Scale} />
-      </div>
-
-      <div className="mb-4 flex flex-wrap items-center gap-1 border-b border-border">
-        {FILTERS.map((option) => (
-          <Link
-            key={option.key}
-            href={`/staff/cases?filter=${option.key}`}
-            className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-base font-medium transition-colors",
-              activeFilter === option.key
-                ? "border-tup-maroon-600 text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {option.label}
-          </Link>
-        ))}
-      </div>
+      {/* The tabs carry their own counts, so no separate number tiles. */}
+      <nav aria-label="Which cases" className="mb-4 flex flex-wrap items-center gap-1 border-b border-border">
+        {FILTERS.map((option) => {
+          const active = activeFilter === option.key;
+          return (
+            <Link
+              key={option.key}
+              href={`/staff/cases?filter=${option.key}`}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "-mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 text-base font-medium transition-colors",
+                active
+                  ? "border-tup-maroon-600 text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {option.label}
+              <span
+                className={cn(
+                  "rounded-full px-2 text-sm tabular-nums",
+                  active ? "bg-tup-maroon-600 text-white" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {byFilter[option.key].length}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
 
       {visible.length === 0 ? (
         <EmptyState
@@ -179,73 +174,50 @@ export default async function StaffCasesPage({
           description="Cases are filed by faculty and staff. When one is filed, it lands here for classification and scheduling."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <table className="w-full text-base">
-            <thead className="border-b border-border text-left text-sm text-muted-foreground font-medium">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">Case</th>
-                <th className="px-4 py-2.5 font-medium">Student</th>
-                <th className="px-4 py-2.5 font-medium">Offense</th>
-                <th className="px-4 py-2.5 font-medium">Incident</th>
-                <th className="px-4 py-2.5 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {visible.map((violationCase) => {
-                const statusMeta = CASE_STATUS_META[violationCase.status];
-                return (
-                  <tr key={violationCase.id} className="hover:bg-muted/40">
-                    <td className="px-4 py-2.5">
-                      <Link
-                        href={`/staff/cases/${violationCase.id}`}
-                        className="font-mono text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
-                      >
-                        {violationCase.case_number}
-                      </Link>
-                      <div className="mt-0.5">
-                        {isClassificationPending(violationCase) ? (
-                          <ToneBadge label="to classify" tone="info" />
-                        ) : (
-                          <ToneBadge
-                            label={violationCase.classification}
-                            tone={CLASSIFICATION_TONE[violationCase.classification]}
-                          />
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          {visible.map((violationCase) => {
+            const statusMeta = CASE_STATUS_META[violationCase.status];
+            const student = violationCase.students;
+            const classification = CLASSIFICATION[violationCase.classification];
+            return (
+              <li key={violationCase.id}>
+                {/* The whole row opens the case, not only its number. */}
+                <Link
+                  href={`/staff/cases/${violationCase.id}`}
+                  className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-none"
+                >
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <p className="text-base">
+                        <span className="text-lg font-semibold">
+                          {student ? `${student.first_name} ${student.last_name}` : "Unknown student"}
+                        </span>
+                        {student?.student_number && (
+                          <span className="ml-2 whitespace-nowrap font-mono text-sm text-muted-foreground">
+                            {student.student_number}
+                          </span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <p className="font-medium">
-                        {violationCase.students
-                          ? `${violationCase.students.first_name} ${violationCase.students.last_name}`
-                          : "—"}
                       </p>
-                      <p className="font-mono text-sm text-muted-foreground">
-                        {violationCase.students?.student_number ?? ""}
-                      </p>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      {violationCase.violation_types?.name ?? "Unclassified"}
-                    </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">
-                      {formatManilaDate(violationCase.incident_date)}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <ToneBadge
-                        label={statusMeta?.label ?? violationCase.status}
-                        tone={statusMeta?.tone ?? "neutral"}
-                      />
-                      {hasPendingLetter(violationCase) && (
-                        <div className="mt-1">
-                          <ToneBadge label="Letter to review" tone="warning" />
-                        </div>
+                      <ToneBadge label={statusMeta?.label ?? violationCase.status} tone={statusMeta?.tone ?? "neutral"} />
+                    </div>
+                    <p className="text-base">{violationCase.violation_types?.name ?? "Offense not yet classified"}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+                      <span className="whitespace-nowrap font-mono">{violationCase.case_number}</span>
+                      {isClassificationPending(violationCase) ? (
+                        <ToneBadge label="To classify" tone="info" />
+                      ) : (
+                        classification && <ToneBadge label={classification.label} tone={classification.tone} />
                       )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <span className="whitespace-nowrap">Incident {formatManilaDate(violationCase.incident_date)}</span>
+                      {hasPendingLetter(violationCase) && <ToneBadge label="Letter to review" tone="warning" />}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/60" aria-hidden="true" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

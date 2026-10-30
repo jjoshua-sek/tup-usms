@@ -122,7 +122,7 @@ export type HearingStatus = (typeof HEARING_STATUSES)[number];
 
 export const HEARING_STATUS_LABELS: Record<HearingStatus, string> = {
   awaiting_complainant: "Awaiting professor approval",
-  complainant_approved: "Approved — ready to notify student",
+  complainant_approved: "Approved, ready to notify the student",
   student_notified: "Student notified",
   student_acknowledged: "Student acknowledged",
   confirmed: "Confirmed",
@@ -131,6 +131,16 @@ export const HEARING_STATUS_LABELS: Record<HearingStatus, string> = {
   cancelled: "Cancelled",
   no_show_student: "Student did not attend",
   no_show_complainant: "Complainant did not attend",
+};
+
+/** What each kind of meeting is called on screen, for staff and students alike. */
+export const HEARING_TYPE_LABELS: Record<string, string> = {
+  counselling: "Counselling session",
+  conference: "Conference with the OSA",
+  mediation: "Mediation",
+  pic_hearing: "PIC hearing",
+  sdb_hearing: "SDB hearing",
+  follow_up: "Follow-up meeting",
 };
 
 export type RiskTier = "low" | "moderate" | "high" | "critical";

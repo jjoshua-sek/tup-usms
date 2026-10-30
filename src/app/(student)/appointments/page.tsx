@@ -9,19 +9,10 @@ import { PageHeader } from "@/components/shared/page-header";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { formatManila, formatManilaTime, isUpcoming } from "@/lib/utils/time";
-import { HEARING_STATUS_LABELS, type HearingStatus } from "@/types/osa";
+import { HEARING_STATUS_LABELS, HEARING_TYPE_LABELS, type HearingStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
   title: "My Appointments",
-};
-
-const HEARING_TYPE_LABELS: Record<string, string> = {
-  counselling: "Counselling session",
-  conference: "Conference with the OSA",
-  mediation: "Mediation",
-  pic_hearing: "PIC hearing",
-  sdb_hearing: "SDB hearing",
-  follow_up: "Follow-up meeting",
 };
 
 const HEARING_TONE: Record<HearingStatus, Tone> = {

@@ -89,15 +89,15 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                 </p>
                 {proposal.rationale && (
                   <p className="mt-0.5 flex items-start gap-1 text-sm text-ai-accent">
-                    <Sparkles className="mt-0.5 h-3 w-3 shrink-0" />
+                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
                     {proposal.rationale}
                   </p>
                 )}
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <span className="font-mono text-sm text-muted-foreground">
-                  score {proposal.score.toFixed(2)}
+                <span className="text-sm text-muted-foreground">
+                  Fit {Math.round(proposal.score * 100)}%
                 </span>
                 <Button
                   type="button"
@@ -105,7 +105,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                   variant={isSelected ? "secondary" : "outline"}
                   onClick={() => setSelected(isSelected ? null : proposal.id)}
                 >
-                  {isSelected ? "Cancel" : "Use this slot"}
+                  {isSelected ? "Cancel" : "Use this time"}
                 </Button>
               </div>
             </div>
@@ -127,7 +127,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                 <input type="hidden" name="proposal_id" value={proposal.id} />
 
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium">Meeting type</span>
+                  <span className="text-base font-medium">Meeting type</span>
                   <select name="hearing_type" defaultValue="conference" className={inputClass}>
                     {HEARING_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -138,7 +138,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                 </label>
 
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium">Venue</span>
+                  <span className="text-base font-medium">Venue</span>
                   <input
                     name="venue"
                     defaultValue="OSA Office"
@@ -254,12 +254,12 @@ export function CaseStatusForm({
           else toast.success(result.message ?? "Updated.");
         })
       }
-      className="space-y-2"
+      className="grid gap-3 sm:grid-cols-[minmax(12rem,16rem)_1fr] sm:items-end"
     >
       <input type="hidden" name="case_id" value={caseId} />
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Move case to</span>
+        <span className="text-base font-medium">Move the case to</span>
         <select name="status" defaultValue={currentStatus} className={inputClass}>
           {CASE_STATUSES.map((status) => (
             <option key={status} value={status}>
@@ -269,21 +269,22 @@ export function CaseStatusForm({
         </select>
       </label>
 
-      <textarea
-        name="note"
-        rows={2}
-        maxLength={1000}
-        placeholder="Note for the case file (optional)"
-        className={inputClass}
-      />
+      <label className="block space-y-1">
+        <span className="text-base font-medium">Note for the case file <span className="font-normal text-muted-foreground">(optional)</span></span>
+        <textarea name="note" rows={1} maxLength={1000} className={inputClass} />
+      </label>
 
-      <Button type="submit" size="sm" variant="outline" disabled={isPending} className="w-full">
-        {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-        Save
+      <Button
+        type="submit"
+        disabled={isPending}
+        className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 sm:col-span-2 sm:justify-self-start"
+      >
+        {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+        Save the change
       </Button>
     </form>
   );
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";
+  "w-full min-h-10 rounded-md border border-border bg-background px-3 py-2 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20";

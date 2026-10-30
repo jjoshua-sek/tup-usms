@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Clock, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { ClockIcon as Clock, EyeIcon as Eye, CheckCircleIcon as CheckCircle2, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 
 /**
  * Status badge for concerns. Distinct from urgency — status reflects

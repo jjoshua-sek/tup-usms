@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Camera, CheckCircle2, ExternalLink, ImageUp, Loader2, ScanLine, ShieldCheck, TriangleAlert, X } from "lucide-react";
+import { CameraIcon as Camera, CheckCircleIcon as CheckCircle2, ArrowSquareOutIcon as ExternalLink, UploadSimpleIcon as ImageUp, CircleNotchIcon as Loader2, ScanIcon as ScanLine, ShieldCheckIcon as ShieldCheck, WarningIcon as TriangleAlert, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { getStampedScanUrl, scanStampedCopy, verifyWithStampedScan } from "@/app/staff/documents/actions";

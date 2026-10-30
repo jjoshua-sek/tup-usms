@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
+import { EyeIcon as Eye, EyeSlashIcon as EyeOff, KeyIcon as KeyRound, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { activateAccount } from "@/app/(auth)/activate/actions";

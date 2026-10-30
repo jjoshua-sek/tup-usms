@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Clock, CheckCircle2 } from "lucide-react";
+import { CameraIcon as Camera, ClockIcon as Clock, CheckCircleIcon as CheckCircle2 } from "@phosphor-icons/react/ssr";
 import {
   Dialog,
   DialogContent,

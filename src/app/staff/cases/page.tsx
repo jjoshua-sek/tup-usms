@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, FolderOpen, Gavel, Plus, Scale } from "lucide-react";
+import { WarningIcon as AlertTriangle, FolderOpenIcon as FolderOpen, GavelIcon as Gavel, PlusIcon as Plus, ScalesIcon as Scale } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";

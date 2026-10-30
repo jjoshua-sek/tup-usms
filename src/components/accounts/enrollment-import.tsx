@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Download, FileSpreadsheet, Loader2, UploadCloud, UserPlus } from "lucide-react";
+import { DownloadSimpleIcon as Download, FileCsvIcon as FileSpreadsheet, CircleNotchIcon as Loader2, CloudArrowUpIcon as UploadCloud, UserPlusIcon as UserPlus } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

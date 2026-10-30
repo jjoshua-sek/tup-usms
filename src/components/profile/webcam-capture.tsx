@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, RefreshCw, X, AlertCircle, Check } from "lucide-react";
+import { CameraIcon as Camera, ArrowsClockwiseIcon as RefreshCw, XIcon as X, WarningCircleIcon as AlertCircle, CheckIcon as Check } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 

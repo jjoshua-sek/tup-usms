@@ -1,17 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  CheckCircle2,
-  MessageSquare,
-  AlertTriangle,
-  FolderOpen,
-  Plus,
-  Award,
-  IdCard,
-  ShieldAlert,
-  Megaphone,
-} from "lucide-react";
+import { CheckCircleIcon as CheckCircle2, ChatTextIcon as MessageSquare, WarningIcon as AlertTriangle, FolderOpenIcon as FolderOpen, PlusIcon as Plus, MedalIcon as Award, IdentificationCardIcon as IdCard, ShieldWarningIcon as ShieldAlert, MegaphoneIcon as Megaphone } from "@phosphor-icons/react/ssr";
 
 import { getCurrentTerm } from "@/lib/access/term";
 import { createClient } from "@/lib/supabase/server";

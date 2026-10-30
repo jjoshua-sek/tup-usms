@@ -1,23 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  Camera,
-  CheckCircle2,
-  Eye,
-  KeyRound,
-  Loader2,
-  Plug,
-  QrCode,
-  ScanLine,
-  Settings,
-  Server,
-  ShieldAlert,
-  WifiOff,
-  X,
-  XCircle,
-} from "lucide-react";
+import { WarningIcon as AlertTriangle, CameraIcon as Camera, CheckCircleIcon as CheckCircle2, EyeIcon as Eye, KeyIcon as KeyRound, CircleNotchIcon as Loader2, PlugIcon as Plug, QrCodeIcon as QrCode, ScanIcon as ScanLine, GearSixIcon as Settings, HardDrivesIcon as Server, ShieldWarningIcon as ShieldAlert, WifiSlashIcon as WifiOff, XIcon as X, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 
 import { CameraScanner } from "@/components/access/camera-scanner";
 import { initialScanMode, SCAN_MODE_KEY } from "@/lib/access/scan-mode";
@@ -739,7 +723,7 @@ function ResultPanel({
 
   return (
     <div className="grid w-full max-w-3xl place-items-center gap-6 px-6 text-center">
-      <Icon className="h-24 w-24" strokeWidth={1.5} />
+      <Icon className="h-24 w-24" />
 
       <div>
         <h1 className="font-display text-5xl font-bold tracking-tight">{result.headline}</h1>

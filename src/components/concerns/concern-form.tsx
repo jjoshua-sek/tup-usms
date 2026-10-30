@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { CircleNotchIcon as Loader2, PaperPlaneRightIcon as Send, SparkleIcon as Sparkles } from "@phosphor-icons/react/ssr";
 
 import {
   concernSchema,

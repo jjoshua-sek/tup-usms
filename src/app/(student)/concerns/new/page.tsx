@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Zap } from "lucide-react";
+import { LightningIcon as Zap } from "@phosphor-icons/react/ssr";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { ConcernFormInline } from "@/components/concerns/concern-form-inline";

@@ -1,12 +1,6 @@
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  MailCheck,
-  type LucideIcon,
-} from "lucide-react";
+import { WarningIcon as AlertTriangle, ArrowRightIcon as ArrowRight, CheckCircleIcon as CheckCircle2, ClockIcon as Clock, EnvelopeSimpleOpenIcon as MailCheck } from "@phosphor-icons/react/ssr";
+import type { Icon as LucideIcon } from "@phosphor-icons/react";
 
 import {
   describeService,

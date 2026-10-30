@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Bell, BellOff } from "lucide-react";
+import { ArrowRightIcon as ArrowRight, BellIcon as Bell, BellSlashIcon as BellOff } from "@phosphor-icons/react/ssr";
 
 import {
   MarkAllReadButton,

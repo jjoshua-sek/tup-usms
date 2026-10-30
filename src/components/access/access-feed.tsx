@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, CheckCircle2, Radio, XCircle } from "lucide-react";
+import { ArrowDownLeftIcon as ArrowDownLeft, ArrowUpRightIcon as ArrowUpRight, CheckCircleIcon as CheckCircle2, BroadcastIcon as Radio, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 
 import { createClient } from "@/lib/supabase/client";
 import { ACCESS_REASON_META, type AccessReason } from "@/lib/access/decide";

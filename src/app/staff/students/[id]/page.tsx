@@ -1,17 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Activity,
-  BadgeCheck,
-  ClipboardCheck,
-  FileText,
-  Gavel,
-  GraduationCap,
-  HeartHandshake,
-  MessageSquareWarning,
-  Send,
-} from "lucide-react";
+import { PulseIcon as Activity, SealCheckIcon as BadgeCheck, ClipboardTextIcon as ClipboardCheck, FileTextIcon as FileText, GavelIcon as Gavel, GraduationCapIcon as GraduationCap, HandHeartIcon as HeartHandshake, ChatCircleTextIcon as MessageSquareWarning, PaperPlaneRightIcon as Send } from "@phosphor-icons/react/ssr";
 
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";

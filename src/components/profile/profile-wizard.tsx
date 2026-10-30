@@ -11,7 +11,7 @@ import { ProgressStepper } from "./progress-stepper";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { APP_SITE_NAME } from "@/lib/brand";
-import { Sparkles } from "lucide-react";
+import { SparkleIcon as Sparkles } from "@phosphor-icons/react/ssr";
 
 interface WizardStudentData {
   // Step 1 fields (may be empty for first-time)

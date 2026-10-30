@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { KeyRound, Loader2 } from "lucide-react";
+import { KeyIcon as KeyRound, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { sendPasswordReset } from "@/app/staff/accounts/actions";

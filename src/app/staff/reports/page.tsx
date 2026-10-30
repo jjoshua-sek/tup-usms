@@ -1,15 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Award,
-  ClipboardCheck,
-  DoorOpen,
-  Download,
-  Gavel,
-  IdCard,
-  Scale,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { MedalIcon as Award, ClipboardTextIcon as ClipboardCheck, DoorOpenIcon as DoorOpen, DownloadSimpleIcon as Download, GavelIcon as Gavel, IdentificationCardIcon as IdCard, ScalesIcon as Scale, TrendUpIcon as TrendingUp, UsersIcon as Users } from "@phosphor-icons/react/ssr";
 
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { PageHeader } from "@/components/shared/page-header";

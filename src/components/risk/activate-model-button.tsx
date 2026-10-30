@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { activateRiskModel } from "@/app/staff/risk/actions";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Filter, Inbox, Plus, Sparkles } from "lucide-react";
+import { CaretRightIcon as ChevronRight, FunnelIcon as Filter, TrayIcon as Inbox, PlusIcon as Plus, SparkleIcon as Sparkles } from "@phosphor-icons/react/ssr";
 
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";

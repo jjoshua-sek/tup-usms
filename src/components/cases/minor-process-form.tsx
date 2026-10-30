@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { CircleNotchIcon as Loader2, WarningIcon as TriangleAlert } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { chooseMinorProcess } from "@/app/staff/cases/actions";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Award, HandHeart, Trophy, Users } from "lucide-react";
+import { MedalIcon as Award, HandHeartIcon as HandHeart, TrophyIcon as Trophy, UsersIcon as Users } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";

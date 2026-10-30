@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Loader2, PenLine, Send, Upload } from "lucide-react";
+import { CircleNotchIcon as Loader2, PencilLineIcon as PenLine, PaperPlaneRightIcon as Send, UploadSimpleIcon as Upload } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { submitApologyLetter } from "@/app/(student)/violations/actions";

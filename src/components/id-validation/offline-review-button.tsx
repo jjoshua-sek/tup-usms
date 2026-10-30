@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { CheckIcon as Check, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { resolveOfflineReview } from "@/app/staff/id-validation/actions";

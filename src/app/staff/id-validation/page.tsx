@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BadgeCheck, Clock, IdCard, Search, ShieldX } from "lucide-react";
+import { SealCheckIcon as BadgeCheck, ClockIcon as Clock, IdentificationCardIcon as IdCard, MagnifyingGlassIcon as Search, ShieldSlashIcon as ShieldX } from "@phosphor-icons/react/ssr";
 
 import { StampedScanPanel } from "@/components/documents/stamped-scan-panel";
 import { CounterValidateForm } from "@/components/id-validation/counter-validate-form";

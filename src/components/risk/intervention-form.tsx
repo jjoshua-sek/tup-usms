@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { HeartPulse, Loader2, X } from "lucide-react";
+import { HeartbeatIcon as HeartPulse, CircleNotchIcon as Loader2, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { createInterventionFromRisk, updateIntervention } from "@/app/staff/risk/actions";

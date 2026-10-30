@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import { LockIcon as Lock } from "@phosphor-icons/react/ssr";
 
 import { PageHeader } from "@/components/shared/page-header";
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CalendarCheck, CalendarClock, MapPin, UserRound } from "lucide-react";
+import { CalendarCheckIcon as CalendarCheck, CalendarDotsIcon as CalendarClock, MapPinIcon as MapPin, UserIcon as UserRound } from "@phosphor-icons/react/ssr";
 
 import { AcknowledgeButton } from "@/components/appointments/acknowledge-button";
 import { EmptyState } from "@/components/osa/empty-state";

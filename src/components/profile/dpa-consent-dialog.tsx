@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Shield, Lock, Eye, FileCheck, ChevronRight } from "lucide-react";
+import { ShieldIcon as Shield, LockIcon as Lock, EyeIcon as Eye, FileTextIcon as FileCheck, CaretRightIcon as ChevronRight } from "@phosphor-icons/react/ssr";
 
 import {
   Dialog,

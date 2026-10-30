@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Archive, BadgeCheck, Ban, Loader2, RotateCcw, ShieldX, X } from "lucide-react";
+import { ArchiveIcon as Archive, SealCheckIcon as BadgeCheck, ProhibitIcon as Ban, CircleNotchIcon as Loader2, ArrowCounterClockwiseIcon as RotateCcw, ShieldSlashIcon as ShieldX, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { reviewIdValidation } from "@/app/staff/id-validation/actions";

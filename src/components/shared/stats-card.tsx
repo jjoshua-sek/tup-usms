@@ -5,7 +5,7 @@
 // which fails because functions aren't serializable across the boundary.
 
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import type { Icon as LucideIcon } from "@phosphor-icons/react";
 
 interface StatsCardProps {
   /** Small label above the value (e.g. "Active Concerns") */

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, ExternalLink, Eye, Loader2, RotateCcw, X } from "lucide-react";
+import { CheckIcon as Check, ArrowSquareOutIcon as ExternalLink, EyeIcon as Eye, CircleNotchIcon as Loader2, ArrowCounterClockwiseIcon as RotateCcw, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { getApologyFileUrl, reviewApologyLetter } from "@/app/staff/cases/actions";

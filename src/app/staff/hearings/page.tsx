@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClock, CheckCheck, Gavel, MapPin, Send } from "lucide-react";
+import { CalendarDotsIcon as CalendarClock, ChecksIcon as CheckCheck, GavelIcon as Gavel, MapPinIcon as MapPin, PaperPlaneRightIcon as Send } from "@phosphor-icons/react/ssr";
 
 import { HearingActions } from "@/components/cases/case-workflow";
 import { EmptyState } from "@/components/osa/empty-state";

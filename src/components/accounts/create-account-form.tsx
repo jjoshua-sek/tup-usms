@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Loader2, UserPlus } from "lucide-react";
+import { CircleNotchIcon as Loader2, UserPlusIcon as UserPlus } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { createAccount } from "@/app/staff/accounts/actions";

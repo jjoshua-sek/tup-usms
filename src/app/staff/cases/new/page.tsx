@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
-import { Scale } from "lucide-react";
+import { ScalesIcon as Scale } from "@phosphor-icons/react/ssr";
 
 export const metadata: Metadata = {
   title: "File a Case",

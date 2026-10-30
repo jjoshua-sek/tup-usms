@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Send, Loader2 } from "lucide-react";
+import { PaperPlaneRightIcon as Send, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 
 import { addConcernResponse } from "@/app/(student)/concerns/actions";
 import { Button } from "@/components/ui/button";

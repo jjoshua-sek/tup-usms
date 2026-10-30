@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2, NotebookPen, X } from "lucide-react";
+import { CircleNotchIcon as Loader2, NotePencilIcon as NotebookPen, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { logGuidanceSession } from "@/app/staff/guidance/actions";

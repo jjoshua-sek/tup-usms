@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { FilePlus2, Loader2, X } from "lucide-react";
+import { FilePlusIcon as FilePlus2, CircleNotchIcon as Loader2, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { requestClearance } from "@/app/(student)/clearance/actions";

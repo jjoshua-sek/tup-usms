@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CalendarRange, FileText } from "lucide-react";
+import { CalendarDotsIcon as CalendarRange, FileTextIcon as FileText } from "@phosphor-icons/react/ssr";
 
 import {
   AddBlockForm,

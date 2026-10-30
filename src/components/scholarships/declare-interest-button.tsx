@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Check, HandHeart, Loader2 } from "lucide-react";
+import { CheckIcon as Check, HandHeartIcon as HandHeart, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { declareScholarshipInterest } from "@/app/(student)/scholarships/actions";

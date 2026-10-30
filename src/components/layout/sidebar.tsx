@@ -3,33 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  User,
-  Calendar,
-  MessageSquare,
-  FileText,
-  AlertTriangle,
-  ClipboardCheck,
-  Award,
-  Settings,
-  LogOut,
-  ScanLine,
-  Users,
-  CalendarDays,
-  CalendarClock,
-  X,
-  IdCard,
-  FolderOpen,
-  ShieldAlert,
-  BarChart3,
-  Bell,
-  Activity,
-  HeartPulse,
-  ScrollText,
-  DoorOpen,
-  UserCog,
-} from "lucide-react";
+import { SquaresFourIcon as LayoutDashboard, UserIcon as User, CalendarBlankIcon as Calendar, ChatTextIcon as MessageSquare, FileTextIcon as FileText, WarningIcon as AlertTriangle, ClipboardTextIcon as ClipboardCheck, MedalIcon as Award, GearSixIcon as Settings, SignOutIcon as LogOut, ScanIcon as ScanLine, UsersIcon as Users, CalendarIcon as CalendarDays, CalendarDotsIcon as CalendarClock, XIcon as X, IdentificationCardIcon as IdCard, FolderOpenIcon as FolderOpen, ShieldWarningIcon as ShieldAlert, ChartBarIcon as BarChart3, BellIcon as Bell, PulseIcon as Activity, HeartbeatIcon as HeartPulse, ScrollIcon as ScrollText, DoorOpenIcon as DoorOpen, UserGearIcon as UserCog } from "@phosphor-icons/react/ssr";
 import { createClient } from "@/lib/supabase/client";
 import { announceSignOut } from "@/components/auth/session-guard";
 import { useRouter } from "next/navigation";

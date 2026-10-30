@@ -1,8 +1,8 @@
 // Server Component (no "use client") — accepts Lucide icon props from Server pages.
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ArrowRightIcon as ArrowRight } from "@phosphor-icons/react/ssr";
+import type { Icon as LucideIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface ModuleCardProps {

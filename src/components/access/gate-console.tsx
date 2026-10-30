@@ -1,18 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  Copy,
-  DoorOpen,
-  Eye,
-  KeyRound,
-  Loader2,
-  Pencil,
-  Plus,
-  Power,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import { CopyIcon as Copy, DoorOpenIcon as DoorOpen, EyeIcon as Eye, KeyIcon as KeyRound, CircleNotchIcon as Loader2, PencilSimpleIcon as Pencil, PlusIcon as Plus, PowerIcon as Power, ShieldCheckIcon as ShieldCheck, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

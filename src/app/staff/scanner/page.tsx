@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DoorOpen, Lock } from "lucide-react";
+import { DoorOpenIcon as DoorOpen, LockIcon as Lock } from "@phosphor-icons/react/ssr";
 
 import { DeskScanner } from "@/components/access/desk-scanner";
 import { PageHeader } from "@/components/shared/page-header";

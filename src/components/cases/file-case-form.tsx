@@ -2,15 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AlertTriangle,
-  Check,
-  Loader2,
-  Search,
-  ShieldAlert,
-  UserRound,
-  X,
-} from "lucide-react";
+import { WarningIcon as AlertTriangle, CheckIcon as Check, CircleNotchIcon as Loader2, MagnifyingGlassIcon as Search, ShieldWarningIcon as ShieldAlert, UserIcon as UserRound, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

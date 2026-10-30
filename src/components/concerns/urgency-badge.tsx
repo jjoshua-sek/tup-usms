@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { AlertOctagon, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { WarningOctagonIcon as AlertOctagon, WarningIcon as AlertTriangle, InfoIcon as Info, CheckCircleIcon as CheckCircle2 } from "@phosphor-icons/react/ssr";
 
 /**
  * Visual treatment for AI-assigned urgency levels.

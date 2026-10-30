@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeftIcon as ArrowLeft } from "@phosphor-icons/react/ssr";
 
 import { idleLimitMinutes } from "@/lib/auth/session-policy";
 import { createClient } from "@/lib/supabase/server";

@@ -1,4 +1,4 @@
-import { ExternalLink, FileText, ImageIcon } from "lucide-react";
+import { ArrowSquareOutIcon as ExternalLink, FileTextIcon as FileText, ImageIcon } from "@phosphor-icons/react/ssr";
 
 import type { ConcernAttachment } from "@/lib/concerns/attachments";
 import { formatBytes } from "@/lib/images/compress";

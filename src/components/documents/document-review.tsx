@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  ExternalLink,
-  Eye,
-  Loader2,
-  Sparkles,
-  ThumbsDown,
-  ThumbsUp,
-  X,
-} from "lucide-react";
+import { ArrowSquareOutIcon as ExternalLink, EyeIcon as Eye, CircleNotchIcon as Loader2, SparkleIcon as Sparkles, ThumbsDownIcon as ThumbsDown, ThumbsUpIcon as ThumbsUp, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { ArrowRight, Loader2, LogOut } from "lucide-react";
+import { ArrowRightIcon as ArrowRight, CircleNotchIcon as Loader2, SignOutIcon as LogOut } from "@phosphor-icons/react/ssr";
 
 import { announceSignOut } from "@/components/auth/session-guard";
 import { createClient } from "@/lib/supabase/client";

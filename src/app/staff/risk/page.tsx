@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, AlertTriangle, CircleHelp, TrendingUp } from "lucide-react";
+import { PulseIcon as Activity, WarningIcon as AlertTriangle, QuestionIcon as CircleHelp, TrendUpIcon as TrendingUp } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";

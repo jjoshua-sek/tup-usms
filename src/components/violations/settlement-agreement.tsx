@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Handshake, Loader2 } from "lucide-react";
+import { HandshakeIcon as Handshake, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { signSettlement } from "@/app/(student)/violations/actions";

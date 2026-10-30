@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowUpRight, Loader2, X } from "lucide-react";
+import { ArrowUpRightIcon as ArrowUpRight, CircleNotchIcon as Loader2, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { escalateCase, recordEscalationOutcome } from "@/app/staff/cases/actions";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CalendarSearch, Check, Loader2, Send, Sparkles } from "lucide-react";
+import { CalendarDotIcon as CalendarSearch, CheckIcon as Check, CircleNotchIcon as Loader2, PaperPlaneRightIcon as Send, SparkleIcon as Sparkles } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

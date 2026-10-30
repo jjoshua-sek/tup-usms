@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DoorOpen, Lock, ShieldAlert, XCircle } from "lucide-react";
+import { DoorOpenIcon as DoorOpen, LockIcon as Lock, ShieldWarningIcon as ShieldAlert, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 
 import { AccessFeed, type AccessEventRow } from "@/components/access/access-feed";
 import { AnomalyList, type AnomalyRow } from "@/components/access/anomaly-list";

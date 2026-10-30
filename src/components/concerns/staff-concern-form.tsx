@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { CircleNotchIcon as Loader2, FloppyDiskIcon as Save } from "@phosphor-icons/react/ssr";
 
 import { recordConcern } from "@/app/staff/concerns/actions";
 import { RECEIVED_VIA_LABEL, STAFF_RECEIVED_VIA, type ReceivedVia } from "@/lib/concerns/intake";

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Loader2, MailCheck } from "lucide-react";
+import { CircleNotchIcon as Loader2, EnvelopeSimpleOpenIcon as MailCheck } from "@phosphor-icons/react/ssr";
 
 import { requestPasswordReset } from "@/app/(auth)/reset-password/actions";
 import { Button } from "@/components/ui/button";

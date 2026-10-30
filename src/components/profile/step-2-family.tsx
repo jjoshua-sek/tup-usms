@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, ArrowLeft, Loader2, Users } from "lucide-react";
+import { ArrowRightIcon as ArrowRight, ArrowLeftIcon as ArrowLeft, CircleNotchIcon as Loader2, UsersIcon as Users } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 import { z } from "zod";
 

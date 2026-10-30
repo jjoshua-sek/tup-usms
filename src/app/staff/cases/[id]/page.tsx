@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowUpRight,
-  CalendarClock,
-  CalendarSearch,
-  Handshake,
-  HardHat,
-  History,
-  Mail,
-  MapPin,
-  Scale,
-  User,
-} from "lucide-react";
+import { ArrowUpRightIcon as ArrowUpRight, CalendarDotsIcon as CalendarClock, CalendarDotIcon as CalendarSearch, HandshakeIcon as Handshake, HardHatIcon as HardHat, ClockCounterClockwiseIcon as History, EnvelopeSimpleIcon as Mail, MapPinIcon as MapPin, ScalesIcon as Scale, UserIcon as User } from "@phosphor-icons/react/ssr";
 
 import {
   ApologyFileLink,

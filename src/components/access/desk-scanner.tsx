@@ -1,16 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import {
-  Camera,
-  CheckCircle2,
-  Clock,
-  Keyboard,
-  Loader2,
-  ScanLine,
-  ShieldAlert,
-  XCircle,
-} from "lucide-react";
+import { CameraIcon as Camera, CheckCircleIcon as CheckCircle2, ClockIcon as Clock, KeyboardIcon as Keyboard, CircleNotchIcon as Loader2, ScanIcon as ScanLine, ShieldWarningIcon as ShieldAlert, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { verifyAtDesk, type DeskScanResult } from "@/app/staff/scanner/actions";

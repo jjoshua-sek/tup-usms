@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertTriangle, CalendarCheck } from "lucide-react";
+import { WarningIcon as AlertTriangle, CalendarCheckIcon as CalendarCheck } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { ToneBadge } from "@/components/osa/tone-badge";

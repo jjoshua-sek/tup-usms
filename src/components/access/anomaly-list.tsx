@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Check, ShieldAlert, ShieldCheck, X } from "lucide-react";
+import { CheckIcon as Check, ShieldWarningIcon as ShieldAlert, ShieldCheckIcon as ShieldCheck, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { reviewAnomaly } from "@/app/staff/gates/actions";

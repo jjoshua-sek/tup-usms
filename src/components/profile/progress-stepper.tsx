@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { CheckIcon as Check } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 
 interface Step {

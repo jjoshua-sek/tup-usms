@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import {
-  Award,
-  Check,
-  CircleHelp,
-  ExternalLink,
-  Mail,
-  Minus,
-  Upload,
-  X,
-} from "lucide-react";
+import { MedalIcon as Award, CheckIcon as Check, QuestionIcon as CircleHelp, ArrowSquareOutIcon as ExternalLink, EnvelopeSimpleIcon as Mail, MinusIcon as Minus, UploadSimpleIcon as Upload, XIcon as X } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { EmptyState } from "@/components/osa/empty-state";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, HeartPulse, ListChecks } from "lucide-react";
+import { CheckCircleIcon as CheckCircle2, HeartbeatIcon as HeartPulse, ListChecksIcon as ListChecks } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";

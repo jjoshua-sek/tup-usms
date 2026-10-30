@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { FileText, Loader2 } from "lucide-react";
+import { FileTextIcon as FileText, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { fileAppeal } from "@/app/(student)/violations/actions";

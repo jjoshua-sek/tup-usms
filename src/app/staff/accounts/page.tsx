@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FileSpreadsheet, MailCheck, ShieldCheck, UserPlus } from "lucide-react";
+import { FileCsvIcon as FileSpreadsheet, EnvelopeSimpleOpenIcon as MailCheck, ShieldCheckIcon as ShieldCheck, UserPlusIcon as UserPlus } from "@phosphor-icons/react/ssr";
 
 import { CreateAccountForm } from "@/components/accounts/create-account-form";
 import { EnrollmentImport } from "@/components/accounts/enrollment-import";

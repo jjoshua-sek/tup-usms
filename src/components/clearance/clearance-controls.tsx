@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Loader2, ScanSearch } from "lucide-react";
+import { CheckCircleIcon as CheckCircle2, CircleNotchIcon as Loader2, MagnifyingGlassIcon as ScanSearch } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

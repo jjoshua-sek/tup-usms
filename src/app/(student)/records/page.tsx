@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { FileText, GraduationCap, TrendingDown, TrendingUp } from "lucide-react";
+import { FileTextIcon as FileText, GraduationCapIcon as GraduationCap, TrendDownIcon as TrendingDown, TrendUpIcon as TrendingUp } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";

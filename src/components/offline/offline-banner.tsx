@@ -1,4 +1,4 @@
-import { WifiOff } from "lucide-react";
+import { WifiSlashIcon as WifiOff } from "@phosphor-icons/react/ssr";
 import { connection } from "next/server";
 
 import { isOfflineMode, offlineBannerState } from "@/lib/offline/mode";

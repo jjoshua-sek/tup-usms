@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, RefreshCw } from "lucide-react";
+import { CheckCircleIcon as CheckCircle2, CircleNotchIcon as Loader2, ArrowsClockwiseIcon as RefreshCw } from "@phosphor-icons/react/ssr";
 
 import {
   updateConcernStatus,

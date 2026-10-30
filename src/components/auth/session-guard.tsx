@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Clock3 } from "lucide-react";
+import { ClockIcon as Clock3 } from "@phosphor-icons/react/ssr";
 
 import { createClient } from "@/lib/supabase/client";
 import { HEARTBEAT_PATH } from "@/lib/auth/session-policy";

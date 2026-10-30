@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { FileUp, Loader2, Upload } from "lucide-react";
+import { FileArrowUpIcon as FileUp, CircleNotchIcon as Loader2, UploadSimpleIcon as Upload } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

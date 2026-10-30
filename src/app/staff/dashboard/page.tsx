@@ -1,15 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  MessageSquare,
-  AlertTriangle,
-  Zap,
-  Users,
-  Plus,
-  Download,
-  ArrowRight,
-} from "lucide-react";
+import { ChatTextIcon as MessageSquare, WarningIcon as AlertTriangle, LightningIcon as Zap, UsersIcon as Users, PlusIcon as Plus, DownloadSimpleIcon as Download, ArrowRightIcon as ArrowRight } from "@phosphor-icons/react/ssr";
 
 import { modelLabel } from "@/lib/ai/concern-summary";
 import { aiConfigured, aiModels } from "@/lib/ai/groq-core";

@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import {
-  ArrowLeft,
-  Loader2,
-  Camera,
-  Upload,
-  Check,
-  X,
-  Image as ImageIcon,
-} from "lucide-react";
+import { ArrowLeftIcon as ArrowLeft, CircleNotchIcon as Loader2, CameraIcon as Camera, UploadSimpleIcon as Upload, CheckIcon as Check, XIcon as X, ImageIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { uploadProfilePhoto, finalizeProfile } from "@/app/(student)/profile/actions";

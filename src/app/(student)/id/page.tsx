@@ -1,14 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import {
-  ArrowRightLeft,
-  CheckCircle2,
-  Clock,
-  DoorOpen,
-  ShieldAlert,
-  User,
-  XCircle,
-} from "lucide-react";
+import { ArrowsLeftRightIcon as ArrowRightLeft, CheckCircleIcon as CheckCircle2, ClockIcon as Clock, DoorOpenIcon as DoorOpen, ShieldWarningIcon as ShieldAlert, UserIcon as User, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 
 import { IdCardQr, IdQrPanel } from "@/components/id/id-qr-panel";
 import { RequestValidationButton } from "@/components/id/request-validation-button";

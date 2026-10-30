@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, FileSearch, FolderOpen, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
+import { CheckCircleIcon as CheckCircle2, FileMagnifyingGlassIcon as FileSearch, FolderOpenIcon as FolderOpen, ShieldCheckIcon as ShieldCheck, SparkleIcon as Sparkles, WarningIcon as TriangleAlert } from "@phosphor-icons/react/ssr";
 
 import {
   DocumentReviewForms,

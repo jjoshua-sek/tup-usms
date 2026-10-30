@@ -3,19 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  Camera,
-  Upload,
-  Edit2,
-  Loader2,
-  CheckCircle2,
-  Lock,
-  User,
-  Users,
-  GraduationCap,
-  Image as ImageIcon,
-  ChevronDown,
-} from "lucide-react";
+import { CameraIcon as Camera, UploadSimpleIcon as Upload, PencilSimpleIcon as Edit2, CircleNotchIcon as Loader2, CheckCircleIcon as CheckCircle2, LockIcon as Lock, UserIcon as User, UsersIcon as Users, GraduationCapIcon as GraduationCap, ImageIcon, CaretDownIcon as ChevronDown } from "@phosphor-icons/react/ssr";
 
 import {
   Card,

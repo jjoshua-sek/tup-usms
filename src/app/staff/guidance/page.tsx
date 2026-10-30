@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClock, HeartPulse, Lock, NotebookPen } from "lucide-react";
+import { CalendarDotsIcon as CalendarClock, HeartbeatIcon as HeartPulse, LockIcon as Lock, NotePencilIcon as NotebookPen } from "@phosphor-icons/react/ssr";
 
 import { LogSessionForm } from "@/components/guidance/log-session-form";
 import { EmptyState } from "@/components/osa/empty-state";

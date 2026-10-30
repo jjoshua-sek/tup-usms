@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CameraOff, Loader2 } from "lucide-react";
+import { CameraSlashIcon as CameraOff, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 
 const ELEMENT_ID = "kiosk-camera-region";
 

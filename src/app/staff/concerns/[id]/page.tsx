@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import {
-  ArrowLeft,
-  Zap,
-  Building2,
-  MessageSquareReply,
-} from "lucide-react";
+import { ArrowLeftIcon as ArrowLeft, LightningIcon as Zap, BuildingsIcon as Building2, ArrowBendUpLeftIcon as MessageSquareReply } from "@phosphor-icons/react/ssr";
 
 import { modelLabel } from "@/lib/ai/concern-summary";
 import { listConcernAttachments } from "@/lib/concerns/attachments";

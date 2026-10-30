@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Plus,
-  Sparkles,
-  ChevronRight,
-  Inbox,
-  ArrowRight,
-} from "lucide-react";
+import { PlusIcon as Plus, SparkleIcon as Sparkles, CaretRightIcon as ChevronRight, TrayIcon as Inbox, ArrowRightIcon as ArrowRight } from "@phosphor-icons/react/ssr";
 
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";

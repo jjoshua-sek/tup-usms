@@ -1,4 +1,4 @@
-import { Clock, ChevronRight } from "lucide-react";
+import { ClockIcon as Clock, CaretRightIcon as ChevronRight } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 
 interface ProvisionalPhotoBannerProps {

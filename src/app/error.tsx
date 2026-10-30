@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, RotateCw } from "lucide-react";
+import { WarningIcon as AlertTriangle, ArrowClockwiseIcon as RotateCw } from "@phosphor-icons/react/ssr";
 
 /**
  * The app-wide error screen. Before this there was none, so any error

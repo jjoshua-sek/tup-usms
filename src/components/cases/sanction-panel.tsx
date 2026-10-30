@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  CalendarPlus,
-  Gavel,
-  HardHat,
-  Loader2,
-  Scale,
-  UserX,
-  X,
-} from "lucide-react";
+import { CalendarPlusIcon as CalendarPlus, GavelIcon as Gavel, HardHatIcon as HardHat, CircleNotchIcon as Loader2, ScalesIcon as Scale, UserMinusIcon as UserX, XIcon as X } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Loader2, Send } from "lucide-react";
+import { CircleNotchIcon as Loader2, PaperPlaneRightIcon as Send } from "@phosphor-icons/react/ssr";
 import { toast } from "sonner";
 
 import { forwardAppeal } from "@/app/staff/cases/sanction-actions";

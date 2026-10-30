@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, HelpCircle, Menu } from "lucide-react";
+import { BellIcon as Bell, QuestionIcon as HelpCircle, ListIcon as Menu } from "@phosphor-icons/react/ssr";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ClipboardCheck, FileCheck2, Hourglass } from "lucide-react";
+import { WarningIcon as AlertTriangle, ClipboardTextIcon as ClipboardCheck, FileTextIcon as FileCheck2, HourglassIcon as Hourglass } from "@phosphor-icons/react/ssr";
 
 import {
   AdvanceClearanceForm,

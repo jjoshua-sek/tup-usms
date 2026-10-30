@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { EyeIcon as Eye, EyeSlashIcon as EyeOff, CircleNotchIcon as Loader2 } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 /**

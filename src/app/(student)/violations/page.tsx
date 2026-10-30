@@ -1,7 +1,7 @@
 import { FileAppealForm } from "@/components/violations/file-appeal-form";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
+import { CalendarIcon as CalendarDays, MapPinIcon as MapPin, ShieldCheckIcon as ShieldCheck } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";

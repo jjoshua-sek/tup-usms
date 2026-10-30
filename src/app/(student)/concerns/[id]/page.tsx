@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import {
-  ArrowLeft,
-  Sparkles,
-  MessageSquare,
-  Building2,
-  Calendar,
-} from "lucide-react";
+import { ArrowLeftIcon as ArrowLeft, SparkleIcon as Sparkles, ChatTextIcon as MessageSquare, BuildingsIcon as Building2, CalendarBlankIcon as Calendar } from "@phosphor-icons/react/ssr";
 
 import { listConcernAttachments } from "@/lib/concerns/attachments";
 import { createClient } from "@/lib/supabase/server";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Maximize2, Sun, X } from "lucide-react";
+import { ArrowsOutIcon as Maximize2, SunIcon as Sun, XIcon as X } from "@phosphor-icons/react/ssr";
 
 /**
  * The institutional QR — the same code printed on the physical TUP ID.

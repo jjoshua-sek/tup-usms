@@ -267,6 +267,15 @@
   cursor: not-allowed;
 }
 
+/* The selected size in the header's A / A+ / A++ switch, drawn from the
+   same attribute that sets the size, so it never shows the wrong one. */
+html:not([data-text-size]) .text-size-option[data-size="normal"],
+html[data-text-size="large"] .text-size-option[data-size="large"],
+html[data-text-size="larger"] .text-size-option[data-size="larger"] {
+  background: #ffffff;
+  color: var(--color-tup-maroon-700);
+}
+
 /* Movement becomes a short fade for anyone who asks the system for less motion. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

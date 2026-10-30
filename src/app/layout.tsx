@@ -55,10 +55,14 @@ export default function RootLayout({
       className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      {/* The text size chosen in the header (A, A+, A++), applied before first paint. */}
-      <Script id="text-size" strategy="beforeInteractive">
-        {TEXT_SIZE_SCRIPT}
-      </Script>
+      <head>
+        {/* The text size chosen in the header (A, A+, A++), applied before first
+            paint so the page never jumps. A script directly inside <html> is
+            invalid and breaks hydration, hence the <head>. */}
+        <Script id="text-size" strategy="beforeInteractive">
+          {TEXT_SIZE_SCRIPT}
+        </Script>
+      </head>
       {/* data-offline-mode greys out every saving form on the LAN copy (globals.css). */}
       <body className="min-h-full flex flex-col font-sans" data-offline-mode={isOfflineMode() ? "" : undefined}>
         <OfflineBanner />

@@ -65,11 +65,12 @@ export function TextSizeSwitch({ className }: { className?: string }) {
           aria-label={option.name}
           aria-pressed={size === option.value}
           title={option.name}
+          data-size={option.value}
           onClick={() => applySize(option.value)}
-          className={cn(
-            "min-w-9 rounded-md px-2 py-1 text-sm font-semibold leading-none transition-colors duration-150 active:scale-[0.97]",
-            size === option.value ? "bg-white text-tup-maroon-700" : "text-white/85 hover:bg-white/15 hover:text-white",
-          )}
+          // The highlight comes from CSS (globals.css, .text-size-option), which
+          // reads the same <html> attribute the size does, so it is right from
+          // the first frame instead of after hydration.
+          className="text-size-option min-w-9 rounded-md px-2 py-1 text-sm font-semibold leading-none text-white/85 transition-colors duration-150 hover:bg-white/15 hover:text-white active:scale-[0.97]"
         >
           {option.label}
         </button>

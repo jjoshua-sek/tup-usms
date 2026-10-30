@@ -155,7 +155,7 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
         />
       )}
 
-      {/* Sidebar — sits below the TUP header (top-[60px]) on desktop;
+      {/* Sidebar: sits below the TUP header (top-[3.75rem]) on desktop;
           full-height slide-out drawer on mobile */}
       <aside
         className={cn(

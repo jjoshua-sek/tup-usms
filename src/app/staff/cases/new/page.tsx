@@ -93,7 +93,7 @@ export default async function FileCasePage({
       <PageHeader
         breadcrumbs={[
           { label: "Staff", href: "/staff/dashboard" },
-          { label: "Cases", href: "/staff/cases" },
+          { label: "Discipline cases", href: "/staff/cases" },
           { label: "File a case" },
         ]}
         title="File a Case"

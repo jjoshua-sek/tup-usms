@@ -320,7 +320,7 @@ export default async function StaffCaseDetailPage({
       <PageHeader
         breadcrumbs={[
           { label: "Staff", href: "/staff/dashboard" },
-          { label: "Cases", href: "/staff/cases" },
+          { label: "Discipline cases", href: "/staff/cases" },
           { label: violationCase.case_number },
         ]}
         title={violationCase.violation_types?.name ?? "Case"}

@@ -94,7 +94,7 @@ export function UrgencyBadge({
           className
         )}
       >
-        {showIcon && <Icon className="h-3 w-3" />}
+        {showIcon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
         {config.label}
       </span>
     );
@@ -108,7 +108,7 @@ export function UrgencyBadge({
         className
       )}
     >
-      {showIcon && <Icon className="h-3 w-3" />}
+      {showIcon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
       {config.label}
     </span>
   );

@@ -10,6 +10,7 @@ import {
   manilaWallClock,
   parseManilaDateTime,
   startOfManilaDay,
+  timeAgo,
 } from "./time";
 
 // Run as Vercel does. On a developer machine set to Manila time, every one of
@@ -126,5 +127,22 @@ describe("parseManilaDateTime", () => {
     expect(parseManilaDateTime("2026-09-25")).toBeNull();
     expect(parseManilaDateTime("2026-09-25T09:00Z")).toBeNull();
     expect(parseManilaDateTime("next Friday")).toBeNull();
+  });
+});
+
+describe("timeAgo", () => {
+  const now = Date.parse("2026-10-30T12:00:00Z");
+  const before = (ms: number) => new Date(now - ms).toISOString();
+
+  it("says it in whole words, singular for one", () => {
+    expect(timeAgo(before(20_000), now)).toBe("just now");
+    expect(timeAgo(before(60_000), now)).toBe("1 minute ago");
+    expect(timeAgo(before(5 * 60_000), now)).toBe("5 minutes ago");
+    expect(timeAgo(before(3 * 3_600_000), now)).toBe("3 hours ago");
+    expect(timeAgo(before(86_400_000), now)).toBe("1 day ago");
+  });
+
+  it("gives the date once it is a month old", () => {
+    expect(timeAgo("2026-09-19T04:00:00Z", now)).toBe("Sep 19, 2026");
   });
 });

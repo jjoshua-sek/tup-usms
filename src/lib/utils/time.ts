@@ -92,6 +92,24 @@ export function formatManilaTime(value: DateInput): string {
 }
 
 /**
+ * "3 hours ago", in whole words rather than "3h", for lists people skim.
+ * Past a month it gives the date instead, since "41 days ago" is harder to
+ * place than "Sep 19, 2026".
+ */
+export function timeAgo(value: string | Date, now: number = nowMs()): string {
+  const seconds = Math.floor((now - new Date(value).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const unit = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"} ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return unit(minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return unit(hours, "hour");
+  const days = Math.floor(hours / 24);
+  if (days < 30) return unit(days, "day");
+  return formatManilaDate(value);
+}
+
+/**
  * Wall-clock arithmetic in Manila time.
  *
  * Philippine Standard Time is UTC+8 all year — the Philippines does not

@@ -1,23 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CaretRightIcon as ChevronRight, FunnelIcon as Filter, TrayIcon as Inbox, PlusIcon as Plus, SparkleIcon as Sparkles } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon as ChevronDown, CaretRightIcon as ChevronRight, TrayIcon as Inbox, PlusIcon as Plus, SparkleIcon as Sparkles } from "@phosphor-icons/react/ssr";
 
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
-import { UrgencyBadge, UrgencyBar } from "@/components/concerns/urgency-badge";
-import { StatusBadge } from "@/components/concerns/status-badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { UrgencyBadge, UrgencyBar, URGENCY_LEVELS } from "@/components/concerns/urgency-badge";
+import { CONCERN_STATUSES as STATUS_LABELS, StatusBadge } from "@/components/concerns/status-badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatManilaDate } from "@/lib/utils/time";
+import { timeAgo } from "@/lib/utils/time";
 import { RECEIVED_VIA_LABEL, receivedVia } from "@/lib/concerns/intake";
+import { byUrgencyThenNewest } from "@/lib/concerns/queue-order";
 import {
   CONCERN_CATEGORIES,
   CONCERN_STATUSES,
@@ -26,7 +21,7 @@ import {
 } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
-  title: "Concern Queue",
+  title: "Student concerns",
 };
 
 export const revalidate = 0;
@@ -52,19 +47,6 @@ interface ConcernRow {
   } | null;
 }
 
-function timeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return formatManilaDate(date);
-}
-
 interface SearchParams {
   status?: string;
   urgency?: string;
@@ -80,6 +62,9 @@ export default async function StaffConcernsPage({
   const filterStatus = params.status || "all";
   const filterUrgency = params.urgency || "all";
   const filterCategory = params.category || "all";
+  const anyFilter = filterStatus !== "all" || filterUrgency !== "all" || filterCategory !== "all";
+  // Urgency and category sit folded under "More filters" unless one is in use.
+  const moreFiltersInUse = filterUrgency !== "all" || filterCategory !== "all";
 
   const supabase = await createClient();
 
@@ -102,87 +87,79 @@ export default async function StaffConcernsPage({
   if (filterUrgency !== "all") query = query.eq("urgency_level", filterUrgency);
   if (filterCategory !== "all") query = query.eq("category", filterCategory);
 
-  // Sort: critical first, then high, medium, low, then unprocessed
-  query = query.order("urgency_level", { ascending: false, nullsFirst: false });
-  query = query.order("created_at", { ascending: false });
-
   const { data: concernsRaw } = await query;
-  const concerns = (concernsRaw as unknown as ConcernRow[]) ?? [];
+  // Most urgent first (sorted here: see queue-order.ts).
+  const concerns = ((concernsRaw as unknown as ConcernRow[]) ?? []).sort(byUrgencyThenNewest);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Concern Queue"
-        description="All student concerns, sorted by AI-assessed urgency."
+        title="Student concerns"
+        description="Concerns sent in by students or recorded by the OSA. The most urgent are at the top."
       >
         <Link
           href="/staff/concerns/new"
-          className={cn(buttonVariants({ size: "sm" }), "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700")}
+          className={cn(buttonVariants(), "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700")}
         >
           <Plus className="mr-1 h-4 w-4" /> Record a concern
         </Link>
       </PageHeader>
 
-      {/* Filter Bar */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base font-medium">Filters</CardTitle>
-            {(filterStatus !== "all" ||
-              filterUrgency !== "all" ||
-              filterCategory !== "all") && (
-              <Link
-                href="/staff/concerns"
-                className="ml-auto text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Clear all
-              </Link>
-            )}
+      {/* Filters: status always shown, the rest folded away. */}
+      <div className="space-y-3">
+        <FilterGroup
+          label="Show"
+          current={filterStatus}
+          options={[
+            { value: "all", label: "All" },
+            ...CONCERN_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s].label })),
+          ]}
+          paramKey="status"
+          currentParams={params}
+        />
+
+        <details open={moreFiltersInUse} className="group rounded-lg border border-border bg-card">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 text-base font-medium [&::-webkit-details-marker]:hidden">
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+            More filters
+            <span className="text-muted-foreground font-normal">(urgency and category)</span>
+          </summary>
+          <div className="space-y-4 border-t border-border px-4 py-4">
+            <FilterGroup
+              label="Urgency"
+              current={filterUrgency}
+              options={[
+                { value: "all", label: "All" },
+                ...URGENCY_KEYS.map((u) => ({ value: u, label: URGENCY_LEVELS[u].label })),
+              ]}
+              paramKey="urgency"
+              currentParams={params}
+            />
+            <FilterGroup
+              label="Category"
+              current={filterCategory}
+              options={[
+                { value: "all", label: "All" },
+                ...CONCERN_CATEGORIES.map((c) => ({ value: c, label: concernCategoryLabel(c) })),
+              ]}
+              paramKey="category"
+              currentParams={params}
+            />
           </div>
-          <CardDescription className="text-sm">
-            {concerns.length} concern{concerns.length === 1 ? "" : "s"} matching
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <FilterGroup
-            label="Status"
-            current={filterStatus}
-            options={[
-              { value: "all", label: "All" },
-              ...(CONCERN_STATUSES as readonly string[]).map((s) => ({
-                value: s,
-                label: s.replace("_", " "),
-              })),
-            ]}
-            paramKey="status"
-            currentParams={params}
-          />
-          <FilterGroup
-            label="Urgency"
-            current={filterUrgency}
-            options={[
-              { value: "all", label: "All" },
-              ...(URGENCY_KEYS as readonly string[]).map((u) => ({
-                value: u,
-                label: u,
-              })),
-            ]}
-            paramKey="urgency"
-            currentParams={params}
-          />
-          <FilterGroup
-            label="Category"
-            current={filterCategory}
-            options={[
-              { value: "all", label: "All" },
-              ...CONCERN_CATEGORIES.map((c) => ({ value: c, label: concernCategoryLabel(c) })),
-            ]}
-            paramKey="category"
-            currentParams={params}
-          />
-        </CardContent>
-      </Card>
+        </details>
+
+        <div className="flex items-center gap-3 text-base">
+          <p className="text-muted-foreground">
+            {concerns.length} {concerns.length === 1 ? "concern" : "concerns"}
+            {anyFilter ? " match these filters" : ""}
+          </p>
+          {anyFilter && (
+            <Link href="/staff/concerns" className="font-medium text-tup-maroon-700 hover:underline">
+              Clear filters
+            </Link>
+          )}
+        </div>
+      </div>
 
       {/* Concern List */}
       {concerns.length === 0 ? (
@@ -192,69 +169,73 @@ export default async function StaffConcernsPage({
               <Inbox className="h-8 w-8 text-emerald-600" />
             </div>
             <h3 className="mt-4 font-display font-semibold">
-              No concerns match your filters
+              {anyFilter ? "No concerns match these filters" : "No concerns yet"}
             </h3>
             <p className="mt-1 max-w-sm text-base text-muted-foreground">
-              Try clearing some filters above, or check back later for new
-              submissions.
+              {anyFilter
+                ? "Press Clear filters above to see every concern."
+                : "New concerns from students appear here as soon as they are sent."}
             </p>
           </CardContent>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden py-0">
           <ul className="divide-y">
             {concerns.map((concern) => {
               const studentName = concern.students
                 ? `${concern.students.first_name} ${concern.students.last_name}`
-                : "Unknown";
+                : "Unknown student";
               const summaryFailed = concern.ai_summary_status === "failed";
               const isProcessing = !concern.ai_summary && !summaryFailed;
+              const via = receivedVia(concern.received_via);
 
               return (
                 <li key={concern.id}>
                   <Link
                     href={`/staff/concerns/${concern.id}`}
-                    className="flex items-stretch gap-4 px-6 py-4 transition-colors hover:bg-accent/30"
+                    className="flex items-stretch gap-4 px-5 py-4 transition-colors hover:bg-accent/30 focus-visible:bg-accent/40 focus-visible:outline-none"
                   >
                     <UrgencyBar level={concern.urgency_level} />
 
-                    <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex-1 min-w-0 space-y-2">
                       <div className="flex items-start justify-between gap-3">
-                        <p className="font-display font-semibold leading-tight text-balance">
+                        <p className="text-lg font-semibold leading-snug text-balance">
                           {concern.subject_line}
                         </p>
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap pt-1">
                           {timeAgo(concern.created_at)}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <p className="text-base">
                         <span className="font-medium">{studentName}</span>
-                        <span className="text-muted-foreground/60">·</span>
-                        <span className="font-mono text-muted-foreground">
-                          {concern.students?.student_number}
-                        </span>
-                        <StatusBadge status={concern.status} />
+                        {concern.students?.student_number && (
+                          <span className="ml-2 whitespace-nowrap font-mono text-sm text-muted-foreground">
+                            {concern.students.student_number}
+                          </span>
+                        )}
+                        <span className="text-muted-foreground"> · {concernCategoryLabel(concern.category)}</span>
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2">
                         <UrgencyBadge level={concern.urgency_level} />
-                        <Badge variant="secondary" className="h-5 text-sm">
-                          {concernCategoryLabel(concern.category)}
-                        </Badge>
-                        {receivedVia(concern.received_via) !== "online" && (
-                          <Badge variant="outline" className="h-5 text-sm">
-                            {RECEIVED_VIA_LABEL[receivedVia(concern.received_via)]}
-                            {concern.referred_by ? ` · ${concern.referred_by}` : ""}
+                        <StatusBadge status={concern.status} />
+                        {via !== "online" && (
+                          <Badge variant="outline">
+                            {RECEIVED_VIA_LABEL[via]}
+                            {concern.referred_by ? `: ${concern.referred_by}` : ""}
                           </Badge>
                         )}
                       </div>
 
                       {isProcessing ? (
-                        <p className="flex items-center gap-1 text-sm italic text-muted-foreground/70">
-                          <Sparkles className="h-3 w-3 animate-pulse" />
-                          AI summary processing...
+                        <p className="flex items-center gap-1.5 text-base italic text-muted-foreground">
+                          <Sparkles className="h-4 w-4 animate-pulse" />
+                          The summary is being written.
                         </p>
                       ) : summaryFailed ? (
-                        <p className="text-sm text-amber-800">
-                          No AI summary — open the concern to read it or re-run the analysis.
+                        <p className="text-base text-amber-800">
+                          No summary yet. Open the concern to read it in full, or run the summary again.
                         </p>
                       ) : (
                         <p className="text-base text-muted-foreground line-clamp-2">
@@ -263,18 +244,14 @@ export default async function StaffConcernsPage({
                       )}
 
                       {concern.suggested_dept && (
-                        <p className="text-sm">
-                          <span className="text-muted-foreground">
-                            Suggested:
-                          </span>{" "}
-                          <span className="font-medium">
-                            {concern.suggested_dept}
-                          </span>
+                        <p className="text-base">
+                          <span className="text-muted-foreground">Suggested office:</span>{" "}
+                          <span className="font-medium">{concern.suggested_dept}</span>
                         </p>
                       )}
                     </div>
 
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 self-center" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground/60 self-center" aria-hidden="true" />
                   </Link>
                 </li>
               );
@@ -305,42 +282,38 @@ function FilterGroup({
   currentParams,
 }: FilterGroupProps) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((opt) => {
-          const newParams = new URLSearchParams();
-          for (const [k, v] of Object.entries(currentParams)) {
-            if (v && v !== "all" && k !== paramKey) {
-              newParams.set(k, v);
-            }
+    <div className="flex flex-wrap items-center gap-2">
+      <p className="mr-1 text-base font-medium text-muted-foreground">{label}:</p>
+      {options.map((opt) => {
+        const newParams = new URLSearchParams();
+        for (const [k, v] of Object.entries(currentParams)) {
+          if (v && v !== "all" && k !== paramKey) {
+            newParams.set(k, v);
           }
-          if (opt.value !== "all") {
-            newParams.set(paramKey, opt.value);
-          }
-          const href =
-            newParams.toString().length > 0
-              ? `/staff/concerns?${newParams.toString()}`
-              : "/staff/concerns";
+        }
+        if (opt.value !== "all") {
+          newParams.set(paramKey, opt.value);
+        }
+        const href =
+          newParams.toString().length > 0
+            ? `/staff/concerns?${newParams.toString()}`
+            : "/staff/concerns";
 
-          const isActive = current === opt.value;
-          return (
-            <Link
-              key={opt.value}
-              href={href}
-              className={cn(
-                buttonVariants({
-                  variant: isActive ? "default" : "outline",
-                  size: "sm",
-                }),
-                "h-7 capitalize"
-              )}
-            >
-              {opt.label}
-            </Link>
-          );
-        })}
-      </div>
+        const isActive = current === opt.value;
+        return (
+          <Link
+            key={opt.value}
+            href={href}
+            aria-current={isActive ? "true" : undefined}
+            className={cn(
+              buttonVariants({ variant: isActive ? "default" : "outline", size: "sm" }),
+              isActive && "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700",
+            )}
+          >
+            {opt.label}
+          </Link>
+        );
+      })}
     </div>
   );
 }

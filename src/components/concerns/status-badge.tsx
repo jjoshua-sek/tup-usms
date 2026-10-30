@@ -18,7 +18,7 @@ export const CONCERN_STATUSES = {
     className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30",
   },
   in_review: {
-    label: "In Review",
+    label: "In review",
     icon: Eye,
     className: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30",
   },
@@ -72,7 +72,7 @@ export function StatusBadge({ status, showIcon = true, className }: StatusBadgeP
         className
       )}
     >
-      {showIcon && <Icon className="h-3 w-3" />}
+      {showIcon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
       {config.label}
     </span>
   );

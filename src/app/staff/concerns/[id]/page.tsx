@@ -14,8 +14,9 @@ import { MarkResolvedButton, StatusUpdater } from "@/components/concerns/status-
 import { ConcernRealtime } from "@/components/concerns/concern-realtime";
 import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
-import { formatManila, manilaWallClock } from "@/lib/utils/time";
+import { formatManila, manilaWallClock, timeAgo } from "@/lib/utils/time";
 import { RECEIVED_VIA_LABEL, receivedVia } from "@/lib/concerns/intake";
+import { byUrgencyThenNewest } from "@/lib/concerns/queue-order";
 import { concernCategoryLabel } from "@/lib/validations/concern";
 
 export const metadata: Metadata = {
@@ -74,18 +75,6 @@ interface ResponseEntry {
   responder_id: string;
   response_text: string;
   created_at: string;
-}
-
-function timeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 /** The review console reads times on a 24-hour clock. */
@@ -154,15 +143,13 @@ export default async function StaffConcernDetailPage({
   const concern = concernRaw as unknown as ConcernDetail | null;
   if (!concern) notFound();
 
-  // Fetch queue (sibling concerns) — pending + in_review, newest first
+  // The queue beside it: the ten most urgent open concerns. Sorted here,
+  // not in the query (see queue-order.ts).
   const { data: queueRaw } = await supabase
     .from("concerns")
     .select("id, subject_line, urgency_level, status, created_at")
-    .in("status", ["pending", "in_review"])
-    .order("urgency_level", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(10);
-  const queue = (queueRaw as unknown as QueueRow[]) ?? [];
+    .in("status", ["pending", "in_review"]);
+  const queue = ((queueRaw as unknown as QueueRow[]) ?? []).sort(byUrgencyThenNewest).slice(0, 10);
 
   // Fetch responses
   const { data: responsesRaw } = await supabase
@@ -204,9 +191,8 @@ export default async function StaffConcernDetailPage({
 
       <PageHeader
         breadcrumbs={[
-          { label: "Console", href: "/staff/dashboard" },
-          { label: "Concerns", href: "/staff/concerns" },
-          { label: "Queue", href: "/staff/concerns" },
+          { label: "Staff", href: "/staff/dashboard" },
+          { label: "Student concerns", href: "/staff/concerns" },
           { label: shortId(concern) },
         ]}
         title="Concern Review"

@@ -18,7 +18,7 @@ export default async function RecordConcernPage() {
       <PageHeader
         breadcrumbs={[
           { label: "Staff", href: "/staff/dashboard" },
-          { label: "Concerns", href: "/staff/concerns" },
+          { label: "Student concerns", href: "/staff/concerns" },
           { label: "Record" },
         ]}
         title="Record a concern"

@@ -462,7 +462,7 @@ export default async function StaffStudentRecordPage({
       <PageHeader
         breadcrumbs={[
           { label: "Staff", href: "/staff/dashboard" },
-          { label: "Students", href: "/staff/students" },
+          { label: "Student records", href: "/staff/students" },
           { label: name },
         ]}
         title={name}

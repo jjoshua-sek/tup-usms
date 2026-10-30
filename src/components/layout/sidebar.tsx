@@ -1,139 +1,136 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { SquaresFourIcon as LayoutDashboard, UserIcon as User, CalendarBlankIcon as Calendar, ChatTextIcon as MessageSquare, FileTextIcon as FileText, WarningIcon as AlertTriangle, ClipboardTextIcon as ClipboardCheck, MedalIcon as Award, GearSixIcon as Settings, SignOutIcon as LogOut, ScanIcon as ScanLine, UsersIcon as Users, CalendarIcon as CalendarDays, CalendarDotsIcon as CalendarClock, XIcon as X, IdentificationCardIcon as IdCard, FolderOpenIcon as FolderOpen, ShieldWarningIcon as ShieldAlert, ChartBarIcon as BarChart3, BellIcon as Bell, PulseIcon as Activity, HeartbeatIcon as HeartPulse, ScrollIcon as ScrollText, DoorOpenIcon as DoorOpen, UserGearIcon as UserCog } from "@phosphor-icons/react/ssr";
-import { createClient } from "@/lib/supabase/client";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  BellIcon,
+  CalendarBlankIcon,
+  CalendarDotsIcon,
+  CalendarIcon,
+  ChartBarIcon,
+  ChatTextIcon,
+  ClipboardTextIcon,
+  ClockCounterClockwiseIcon,
+  DoorOpenIcon,
+  FileTextIcon,
+  FolderOpenIcon,
+  GearSixIcon,
+  HandHeartIcon,
+  HeartbeatIcon,
+  HouseIcon,
+  IdentificationCardIcon,
+  MedalIcon,
+  NotePencilIcon,
+  PulseIcon,
+  ScanIcon,
+  ShieldWarningIcon,
+  SignOutIcon,
+  SquaresFourIcon,
+  UserGearIcon,
+  UserIcon,
+  UsersIcon,
+  WarningIcon,
+  XIcon,
+} from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
+
 import { announceSignOut } from "@/components/auth/session-guard";
-import { useRouter } from "next/navigation";
+import type { StaffNavIcon, StaffNavSection } from "@/lib/osa/staff-nav";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: number;
+  icon: Icon;
 }
 
 interface NavSection {
-  label: string;
+  label: string | null;
   items: NavItem[];
 }
 
 /**
- * Student navigation for the OSA System.
- *
- * Maps to requirement #5: ID validation and status, own schedule
- * (appointments, not classes), notifications, scholarship eligibility,
- * violations list, and clearance status.
+ * Student navigation: ID validation and status, appointments, notifications,
+ * scholarships, violations and clearance.
  */
 const studentSections: NavSection[] = [
   {
     label: "Main",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "My Appointments", href: "/appointments", icon: Calendar },
-      { label: "Notifications", href: "/notifications", icon: Bell },
-      { label: "My Violations", href: "/violations", icon: ShieldAlert },
-      { label: "Concerns", href: "/concerns", icon: MessageSquare },
+      { label: "Dashboard", href: "/dashboard", icon: SquaresFourIcon },
+      { label: "My Appointments", href: "/appointments", icon: CalendarBlankIcon },
+      { label: "Notifications", href: "/notifications", icon: BellIcon },
+      { label: "My Violations", href: "/violations", icon: ShieldWarningIcon },
+      { label: "Concerns", href: "/concerns", icon: ChatTextIcon },
     ],
   },
   {
     label: "Services",
     items: [
-      { label: "Scholarships", href: "/scholarships", icon: Award },
-      { label: "Clearance", href: "/clearance", icon: ClipboardCheck },
-      { label: "Digital ID", href: "/id", icon: IdCard },
-      { label: "Academic Records", href: "/records", icon: FileText },
+      { label: "Scholarships", href: "/scholarships", icon: MedalIcon },
+      { label: "Clearance", href: "/clearance", icon: ClipboardTextIcon },
+      { label: "Digital ID", href: "/id", icon: IdentificationCardIcon },
+      { label: "Academic Records", href: "/records", icon: FileTextIcon },
     ],
   },
   {
     label: "Account",
     items: [
-      { label: "Profile", href: "/profile", icon: User },
-      { label: "My Schedule", href: "/availability", icon: CalendarDays },
-      { label: "Settings", href: "/settings", icon: Settings },
+      { label: "Profile", href: "/profile", icon: UserIcon },
+      { label: "My Schedule", href: "/availability", icon: CalendarIcon },
+      { label: "Settings", href: "/settings", icon: GearSixIcon },
     ],
   },
 ];
 
-/**
- * Staff navigation for the OSA console.
- *
- * Maps to requirement #4: schedule repercussion appointments, see which
- * students have violations, notify students. Plus the ML early warning
- * system, which is the staff-facing headline feature.
- */
-const staffSections: NavSection[] = [
-  {
-    label: "Console",
-    items: [
-      { label: "Overview", href: "/staff/dashboard", icon: LayoutDashboard },
-      { label: "Calendar", href: "/staff/calendar", icon: CalendarClock },
-      { label: "Cases", href: "/staff/cases", icon: AlertTriangle },
-      { label: "Hearings", href: "/staff/hearings", icon: CalendarDays },
-      { label: "Students", href: "/staff/students", icon: Users },
-      { label: "Concerns", href: "/staff/concerns", icon: MessageSquare },
-    ],
-  },
-  {
-    label: "Early Warning",
-    items: [
-      { label: "At-Risk Students", href: "/staff/risk", icon: Activity },
-      { label: "Interventions", href: "/staff/interventions", icon: HeartPulse },
-      { label: "Guidance", href: "/staff/guidance", icon: MessageSquare },
-    ],
-  },
-  {
-    label: "Services",
-    items: [
-      { label: "Scholarships", href: "/staff/scholarships", icon: Award },
-      { label: "Clearance", href: "/staff/clearance", icon: ClipboardCheck },
-      { label: "ID Validation", href: "/staff/id-validation", icon: IdCard },
-      { label: "Gates & Access", href: "/staff/gates", icon: DoorOpen },
-      { label: "QR Scanner", href: "/staff/scanner", icon: ScanLine },
-      { label: "Document Review", href: "/staff/documents", icon: FolderOpen },
-    ],
-  },
-  {
-    label: "Compliance",
-    items: [
-      { label: "Audit Log", href: "/staff/audit", icon: ScrollText },
-      { label: "Reports", href: "/staff/reports", icon: BarChart3 },
-      { label: "Settings", href: "/staff/settings", icon: Settings },
-    ],
-  },
-];
-
-/**
- * Administrators only. The Accounts page enforces this itself; hiding the
- * link just keeps staff from being offered a screen that will refuse them.
- */
-const adminSection: NavSection = {
-  label: "Administration",
-  items: [{ label: "Accounts", href: "/staff/accounts", icon: UserCog }],
+/** The staff menu arrives from the server as names; these draw them. */
+const STAFF_ICONS: Record<StaffNavIcon, Icon> = {
+  home: HouseIcon,
+  concerns: ChatTextIcon,
+  cases: WarningIcon,
+  complaint: NotePencilIcon,
+  hearings: CalendarIcon,
+  calendar: CalendarDotsIcon,
+  students: UsersIcon,
+  risk: PulseIcon,
+  followups: HeartbeatIcon,
+  guidance: HandHeartIcon,
+  scholarships: MedalIcon,
+  clearance: ClipboardTextIcon,
+  idValidation: IdentificationCardIcon,
+  documents: FolderOpenIcon,
+  scanner: ScanIcon,
+  gates: DoorOpenIcon,
+  reports: ChartBarIcon,
+  activity: ClockCounterClockwiseIcon,
+  accounts: UserGearIcon,
+  settings: GearSixIcon,
 };
 
 interface SidebarProps {
   role: "student" | "staff" | "admin";
-  /** A UITC account sees only Accounts (I1). */
-  accountsOnly?: boolean;
+  /** The staff menu for this person, built on the server (lib/osa/staff-nav.ts). */
+  staffNav?: StaffNavSection[];
   /** Optional per-route badge counts for sidebar items (e.g. { "/concerns": 3 }) */
   badges?: Record<string, number>;
   open?: boolean;
   onClose?: () => void;
 }
 
-export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarProps) {
+const HOME_HREFS = new Set(["/dashboard", "/staff/dashboard"]);
+
+export function Sidebar({ role, staffNav, badges, open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const sections = accountsOnly
-    ? [{ label: "UITC", items: adminSection.items }]
-    : role === "student"
+
+  const sections: NavSection[] =
+    role === "student"
       ? studentSections
-      : role === "admin"
-        ? [...staffSections, adminSection]
-        : staffSections;
+      : (staffNav ?? []).map((section) => ({
+          label: section.label,
+          items: section.items.map((item) => ({ label: item.label, href: item.href, icon: STAFF_ICONS[item.icon] })),
+        }));
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -148,48 +145,38 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
     <>
       {/* Mobile overlay */}
       {open && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={onClose}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={onClose} aria-hidden="true" />
       )}
 
-      {/* Sidebar: sits below the TUP header (top-[3.75rem]) on desktop;
-          full-height slide-out drawer on mobile */}
+      {/* Sidebar: sits below the TUP header on desktop; a slide-out drawer on mobile. */}
       <aside
         className={cn(
           "fixed lg:sticky inset-y-0 lg:inset-auto left-0 z-40 lg:z-auto",
           "w-60 flex flex-col bg-white border-r border-border",
-          "transition-transform duration-200 lg:translate-x-0",
+          "transition-transform duration-300 ease-[var(--ease-drawer)] lg:translate-x-0",
           "lg:top-[3.75rem] lg:h-[calc(100dvh-3.75rem)]",
-          open ? "translate-x-0" : "-translate-x-full"
+          open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {/* Mobile-only close button (header is hidden on mobile sidebar) */}
+        {/* Mobile-only close button (the header is hidden behind the drawer on mobile) */}
         <div className="lg:hidden flex h-14 items-center justify-between px-4 border-b border-border bg-tup-maroon-600 text-white">
-          <span className="text-base font-semibold">Navigation</span>
-          <button onClick={onClose} aria-label="Close menu">
-            <X className="h-5 w-5" />
+          <span className="text-base font-semibold">Menu</span>
+          <button onClick={onClose} aria-label="Close menu" className="rounded-md p-1.5 hover:bg-white/15">
+            <XIcon className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav aria-label="Main menu" className="flex-1 overflow-y-auto px-3 py-4">
           {sections.map((section, idx) => (
-            <div key={section.label} className={cn(idx > 0 && "mt-5")}>
-              {/* Section label — Geist Mono uppercase per mockup */}
-              <div className="px-3 pb-1 text-sm text-muted-foreground font-medium">
-                {section.label}
-              </div>
+            <div key={section.label ?? "top"} className={cn(idx > 0 && "mt-6")}>
+              {section.label && (
+                <div className="px-3 pb-1.5 text-sm font-semibold text-muted-foreground">{section.label}</div>
+              )}
 
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {section.items.map((item) => {
                   const isActive =
-                    pathname === item.href ||
-                    (item.href !== "/dashboard" &&
-                      item.href !== "/staff/dashboard" &&
-                      pathname.startsWith(item.href + "/"));
+                    pathname === item.href || (!HOME_HREFS.has(item.href) && pathname.startsWith(item.href + "/"));
                   const badge = badges?.[item.href];
 
                   return (
@@ -197,28 +184,27 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
                       <Link
                         href={item.href}
                         onClick={onClose}
+                        aria-current={isActive ? "page" : undefined}
                         className={cn(
-                          "group flex items-center gap-2.5 px-3 py-2 rounded-md text-base font-medium transition-colors",
-                          isActive
-                            ? "bg-tup-maroon-600 text-white"
-                            : "text-foreground hover:bg-muted"
+                          "group flex min-h-11 items-center gap-3 rounded-lg px-3 text-base font-medium transition-colors duration-150",
+                          "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-tup-maroon-600/40",
+                          isActive ? "bg-tup-maroon-600 text-white" : "text-foreground hover:bg-muted",
                         )}
                       >
                         <item.icon
                           className={cn(
-                            "h-4 w-4 shrink-0",
-                            isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground"
+                            "h-5 w-5 shrink-0",
+                            isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground",
                           )}
                         />
                         <span className="truncate">{item.label}</span>
                         {badge !== undefined && badge > 0 && (
                           <span
                             className={cn(
-                              "ml-auto font-mono text-sm font-semibold px-1.5 py-0.5 rounded-full",
-                              isActive
-                                ? "bg-white/25 text-white"
-                                : "bg-tup-gold-500 text-tup-maroon-700"
+                              "ml-auto rounded-full px-2 py-0.5 text-sm font-semibold tabular-nums",
+                              isActive ? "bg-white/25 text-white" : "bg-tup-gold-500 text-tup-maroon-700",
                             )}
+                            aria-label={`${badge} waiting`}
                           >
                             {badge}
                           </span>
@@ -232,13 +218,12 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
           ))}
         </nav>
 
-        {/* Footer */}
         <div className="border-t border-border px-3 py-3">
           <button
             onClick={handleSignOut}
-            className="flex w-full items-center gap-2.5 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-base text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
           >
-            <LogOut className="h-4 w-4" />
+            <SignOutIcon className="h-5 w-5" />
             Sign out
           </button>
         </div>

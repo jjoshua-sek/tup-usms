@@ -4,6 +4,8 @@ import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import type { StaffRole } from "@/types/osa";
 
+import { COMMITTEE_ROLES, OSA_ROLES } from "./roles";
+
 /**
  * Who is this staff member, and what are they allowed to work on?
  *
@@ -21,8 +23,8 @@ import type { StaffRole } from "@/types/osa";
  *   Security        gate feed only (see lib/access/guards.ts)
  */
 
-export const OSA_ROLES: StaffRole[] = ["osa_head", "osa_officer", "admin"];
-export const COMMITTEE_ROLES: StaffRole[] = ["pic_member", "sdb_member", "codi_member"];
+// The lists live in roles.ts so the staff menu reads the same ones.
+export { OSA_ROLES, COMMITTEE_ROLES } from "./roles";
 
 export interface StaffContext {
   userId: string;

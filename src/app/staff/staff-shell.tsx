@@ -1,14 +1,15 @@
 "use client";
 
 import { AppShell } from "@/components/layout/app-shell";
+import type { StaffNavSection } from "@/lib/osa/staff-nav";
 
 interface StaffShellProps {
   children: React.ReactNode;
   userName: string;
   userSubtitle?: string;
   role: "staff" | "admin";
-  /** A UITC account sees only Accounts (I1). */
-  accountsOnly?: boolean;
+  /** This person's menu, built in the staff layout. */
+  staffNav: StaffNavSection[];
   notificationCount: number;
   sidebarBadges?: Record<string, number>;
   idleMinutes: number;
@@ -19,7 +20,7 @@ export function StaffShell({
   userName,
   userSubtitle,
   role,
-  accountsOnly,
+  staffNav,
   notificationCount,
   sidebarBadges,
   idleMinutes,
@@ -27,7 +28,7 @@ export function StaffShell({
   return (
     <AppShell
       role={role}
-      accountsOnly={accountsOnly}
+      staffNav={staffNav}
       idleMinutes={idleMinutes}
       userName={userName}
       userSubtitle={userSubtitle}

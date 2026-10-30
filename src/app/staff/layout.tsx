@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { idleLimitMinutes } from "@/lib/auth/session-policy";
+import { staffNavFor } from "@/lib/osa/staff-nav";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { STAFF_ROLE_LABELS, type StaffRole } from "@/types/osa";
@@ -82,7 +83,8 @@ export default async function StaffLayout({
       // place every page's permission check reads — not from the login
       // role, which only decides entry to /staff.
       role={staffData?.role_type === "admin" ? "admin" : "staff"}
-      accountsOnly={staffData?.role_type === "registrar"}
+      // Only the pages this role can open (UITC: Accounts and Settings).
+      staffNav={staffNavFor(staffData?.role_type ?? null)}
       notificationCount={unreadCount || 0}
       sidebarBadges={sidebarBadges}
       idleMinutes={idleLimitMinutes("staff")}

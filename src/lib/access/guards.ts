@@ -11,11 +11,10 @@ import "server-only";
 
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
+import { ACCESS_MANAGE_ROLES, ACCESS_VIEW_ROLES } from "@/lib/osa/roles";
 import type { StaffRole } from "@/types/osa";
 
-/** Security guards watch the gate feed; they do not configure gates. */
-const VIEW_ROLES: StaffRole[] = ["osa_head", "osa_officer", "security_guard", "admin"];
-const MANAGE_ROLES: StaffRole[] = ["osa_head", "osa_officer", "admin"];
+/** Security guards watch the gate feed; they do not configure gates (lists in lib/osa/roles.ts). */
 
 export interface AccessStaff {
   userId: string;
@@ -27,11 +26,11 @@ export interface AccessStaff {
 }
 
 export function canViewAccess(role: StaffRole | null | undefined): boolean {
-  return !!role && VIEW_ROLES.includes(role);
+  return !!role && ACCESS_VIEW_ROLES.includes(role);
 }
 
 export function canManageAccess(role: StaffRole | null | undefined): boolean {
-  return !!role && MANAGE_ROLES.includes(role);
+  return !!role && ACCESS_MANAGE_ROLES.includes(role);
 }
 
 export async function getAccessStaff(): Promise<AccessStaff | null> {

@@ -152,7 +152,7 @@ export function Sidebar({ role, staffNav, badges, open, onClose }: SidebarProps)
       <aside
         className={cn(
           "fixed lg:sticky inset-y-0 lg:inset-auto left-0 z-40 lg:z-auto",
-          "w-60 flex flex-col bg-white border-r border-border",
+          "w-64 flex flex-col bg-white border-r border-border",
           "transition-transform duration-300 ease-[var(--ease-drawer)] lg:translate-x-0",
           "lg:top-[3.75rem] lg:h-[calc(100dvh-3.75rem)]",
           open ? "translate-x-0" : "-translate-x-full",
@@ -166,7 +166,7 @@ export function Sidebar({ role, staffNav, badges, open, onClose }: SidebarProps)
           </button>
         </div>
 
-        <nav aria-label="Main menu" className="flex-1 overflow-y-auto px-3 py-4">
+        <nav aria-label="Main menu" className="flex-1 overflow-y-auto px-2 py-4">
           {sections.map((section, idx) => (
             <div key={section.label ?? "top"} className={cn(idx > 0 && "mt-6")}>
               {section.label && (

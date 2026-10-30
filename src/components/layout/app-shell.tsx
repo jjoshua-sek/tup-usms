@@ -73,7 +73,7 @@ export function AppShell({
         role={role}
       />
 
-      <div className="flex flex-1 lg:grid lg:grid-cols-[15rem_1fr]">
+      <div className="flex flex-1 lg:grid lg:grid-cols-[16rem_1fr]">
         <Sidebar
           role={role}
           staffNav={staffNav}

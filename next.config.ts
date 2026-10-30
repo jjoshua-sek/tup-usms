@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 /**
@@ -33,6 +34,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Pin the project root. A stray lockfile higher up (an empty one in the
+  // user's home folder) made Turbopack take the home folder as the root and
+  // look for tailwindcss in the wrong place.
+  turbopack: { root: path.join(__dirname) },
   // The offline LAN copy runs STARS in a Docker container (lan/Dockerfile),
   // which needs the self-contained server. Vercel builds without it.
   output: process.env.STARS_STANDALONE === "true" ? "standalone" : undefined,

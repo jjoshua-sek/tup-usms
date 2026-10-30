@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+
+import { WAITING } from "@/lib/osa/today";
 import { WarningIcon as AlertTriangle, FolderOpenIcon as FolderOpen, GavelIcon as Gavel, PlusIcon as Plus, ScalesIcon as Scale } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
@@ -47,7 +49,8 @@ function hasPendingLetter(row: CaseRow): boolean {
   return (row.apology_letters ?? []).some((letter) => letter.review_status === "pending");
 }
 
-const SCHEDULING_STATUSES = ["filed", "under_review", "counselling_scheduled"];
+// Shared with the home page's "Today" list, so both count the same cases.
+const SCHEDULING_STATUSES: readonly string[] = WAITING.casesToSchedule;
 const ESCALATED_STATUSES = ["escalated_pic", "escalated_sdb", "referred_codi"];
 
 /**

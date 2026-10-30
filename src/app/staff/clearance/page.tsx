@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { WAITING } from "@/lib/osa/today";
 import Link from "next/link";
 import { WarningIcon as AlertTriangle, ClipboardTextIcon as ClipboardCheck, FileTextIcon as FileCheck2, HourglassIcon as Hourglass } from "@phosphor-icons/react/ssr";
 
@@ -99,8 +100,9 @@ export default async function StaffClearancePage() {
 
   const requests = (rows as RequestRow[] | null) ?? [];
 
+  // Shared with the home page's "Today" list.
   const incoming = requests.filter((request) =>
-    ["submitted", "verifying"].includes(request.status),
+    (WAITING.clearanceRequests as readonly string[]).includes(request.status),
   );
   const held = requests.filter((request) => request.status === "on_hold");
   const ready = requests.filter((request) =>

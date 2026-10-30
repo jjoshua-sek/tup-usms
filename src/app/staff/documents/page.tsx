@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { WAITING } from "@/lib/osa/today";
 import Link from "next/link";
 import { CheckCircleIcon as CheckCircle2, FileMagnifyingGlassIcon as FileSearch, FolderOpenIcon as FolderOpen, ShieldCheckIcon as ShieldCheck, SparkleIcon as Sparkles, WarningIcon as TriangleAlert } from "@phosphor-icons/react/ssr";
 
@@ -81,10 +82,9 @@ export default async function StaffDocumentsPage() {
     .limit(200);
 
   const documents = (rows as DocumentRow[] | null) ?? [];
+  // Shared with the home page's "Today" list.
   const pending = documents.filter((document) =>
-    ["uploaded", "extracted", "extracting", "verification_failed"].includes(
-      document.processing_status,
-    ),
+    (WAITING.documentsToCheck as readonly string[]).includes(document.processing_status),
   );
   const verified = documents.filter((document) => document.processing_status === "verified");
   const rejected = documents.filter((document) => document.processing_status === "rejected");

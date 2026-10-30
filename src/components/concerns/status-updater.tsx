@@ -10,6 +10,7 @@ import {
   resummarizeConcern,
 } from "@/app/staff/concerns/actions";
 import { CONCERN_STATUSES } from "@/lib/validations/concern";
+import { CONCERN_STATUSES as STATUS_STYLES } from "@/components/concerns/status-badge";
 
 type ConcernStatusValue = (typeof CONCERN_STATUSES)[number];
 
@@ -20,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface StatusUpdaterProps {
   concernId: string;
@@ -28,12 +30,10 @@ interface StatusUpdaterProps {
   hasAiSummary: boolean;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Pending",
-  in_review: "In Review",
-  resolved: "Resolved",
-  closed: "Closed",
-};
+// The same words as the status badges on the list.
+const STATUS_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(STATUS_STYLES).map(([status, style]) => [status, style.label]),
+);
 
 export function StatusUpdater({
   concernId,
@@ -64,13 +64,13 @@ export function StatusUpdater({
 
   const handleResummarize = () => {
     startResummarize(async () => {
-      toast.info("Re-running AI analysis...");
+      toast.info("Writing the summary again…");
       const result = await resummarizeConcern(concernId);
       if (result.error) {
         toast.error(result.error);
         return;
       }
-      toast.success("AI summary updated");
+      toast.success("Summary updated");
       router.refresh();
     });
   };
@@ -78,16 +78,16 @@ export function StatusUpdater({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       <div className="flex items-center gap-2 flex-1">
-        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-          Status:
+        <span className="text-base font-medium text-muted-foreground whitespace-nowrap">
+          Status
         </span>
         <Select
           value={optimisticStatus}
           onValueChange={handleStatusChange}
           disabled={isPending}
         >
-          <SelectTrigger className="h-8 w-[140px]">
-            <SelectValue />
+          <SelectTrigger className="h-10 w-44 text-base" aria-label="Status">
+            <SelectValue>{(value: string) => STATUS_LABELS[value] ?? value}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {(CONCERN_STATUSES as readonly ConcernStatusValue[]).map((status) => (
@@ -98,27 +98,21 @@ export function StatusUpdater({
           </SelectContent>
         </Select>
         {isPending && (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         )}
       </div>
 
       <Button
         variant="outline"
-        size="sm"
         onClick={handleResummarize}
         disabled={isResummarizing}
-        title={
-          hasAiSummary
-            ? "Re-run AI analysis on this concern"
-            : "Run AI analysis on this concern"
-        }
       >
         {isResummarizing ? (
-          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <RefreshCw className="mr-2 h-3.5 w-3.5" />
+          <RefreshCw className="mr-2 h-4 w-4" />
         )}
-        {hasAiSummary ? "Re-analyze" : "Run AI"}
+        {hasAiSummary ? "Write the summary again" : "Write a summary"}
       </Button>
     </div>
   );
@@ -160,14 +154,14 @@ export function MarkResolvedButton({
       type="button"
       onClick={handleClick}
       disabled={done || isPending}
-      className="px-3 py-2 rounded-md text-sm font-medium bg-card border border-border hover:bg-muted transition-colors inline-flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none"
+      className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}
     >
       {isPending ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <CheckCircle2 className="h-3.5 w-3.5" />
+        <CheckCircle2 className="h-4 w-4" />
       )}
-      {done ? STATUS_LABELS[currentStatus] : "Mark Resolved"}
+      {done ? STATUS_LABELS[currentStatus] : "Mark as resolved"}
     </button>
   );
 }

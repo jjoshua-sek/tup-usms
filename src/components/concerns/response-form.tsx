@@ -64,14 +64,14 @@ export function ResponseForm({
 
   const placeholderByRole =
     responderRole === "staff"
-      ? "Provide a response, ask for clarification, or post a status update..."
+      ? "Write your answer, ask a question, or tell the student what happens next."
       : "Reply or add more context to your concern...";
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
       <div className="space-y-2">
         <Label htmlFor="response_text" className="text-base font-medium">
-          {responderRole === "staff" ? "Staff response" : "Add a reply"}
+          {responderRole === "staff" ? "Reply to the student" : "Add a reply"}
         </Label>
         <Textarea
           id="response_text"

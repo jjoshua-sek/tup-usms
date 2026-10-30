@@ -37,7 +37,7 @@ export function FileAppealForm({ appealId, bodyLabel }: { appealId: string; body
       className="mt-2 space-y-2"
     >
       <input type="hidden" name="appeal_id" value={appealId} />
-      <label htmlFor={`grounds-${appealId}`} className="block text-[12px] font-medium text-amber-950 dark:text-amber-100">
+      <label htmlFor={`grounds-${appealId}`} className="block text-sm font-medium text-amber-950 dark:text-amber-100">
         Why should the decision be changed?
       </label>
       <textarea
@@ -50,9 +50,9 @@ export function FileAppealForm({ appealId, bodyLabel }: { appealId: string; body
         value={text}
         onChange={(event) => setText(event.target.value)}
         placeholder="State what you believe is wrong with the decision, and any facts or evidence the committee did not consider."
-        className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none"
       />
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         {text.trim().length < MIN_APPEAL_GROUNDS
           ? `At least ${MIN_APPEAL_GROUNDS} characters (${text.trim().length} so far).`
           : `The OSA forwards this to the ${bodyLabel}, which decides it.`}

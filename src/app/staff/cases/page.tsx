@@ -158,7 +158,7 @@ export default async function StaffCasesPage({
             key={option.key}
             href={`/staff/cases?filter=${option.key}`}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-[13px] font-medium transition-colors",
+              "-mb-px border-b-2 px-3 py-2 text-base font-medium transition-colors",
               activeFilter === option.key
                 ? "border-tup-maroon-600 text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground",
@@ -177,8 +177,8 @@ export default async function StaffCasesPage({
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <table className="w-full text-[13px]">
-            <thead className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+          <table className="w-full text-base">
+            <thead className="border-b border-border text-left text-sm text-muted-foreground font-medium">
               <tr>
                 <th className="px-4 py-2.5 font-medium">Case</th>
                 <th className="px-4 py-2.5 font-medium">Student</th>
@@ -195,7 +195,7 @@ export default async function StaffCasesPage({
                     <td className="px-4 py-2.5">
                       <Link
                         href={`/staff/cases/${violationCase.id}`}
-                        className="font-mono text-[12px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
+                        className="font-mono text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
                       >
                         {violationCase.case_number}
                       </Link>
@@ -216,7 +216,7 @@ export default async function StaffCasesPage({
                           ? `${violationCase.students.first_name} ${violationCase.students.last_name}`
                           : "—"}
                       </p>
-                      <p className="font-mono text-[11px] text-muted-foreground">
+                      <p className="font-mono text-sm text-muted-foreground">
                         {violationCase.students?.student_number ?? ""}
                       </p>
                     </td>

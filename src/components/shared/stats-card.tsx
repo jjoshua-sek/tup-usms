@@ -80,7 +80,7 @@ export function StatsCard({
       )}
     >
       <div className="flex items-start justify-between mb-2.5">
-        <span className="text-xs text-muted-foreground font-medium">
+        <span className="text-sm text-muted-foreground font-medium">
           {label}
         </span>
         <div
@@ -95,7 +95,7 @@ export function StatsCard({
 
       <div
         className={cn(
-          "text-[26px] font-semibold leading-none tabular-nums tracking-tight mb-1",
+          "text-2xl font-semibold leading-none tabular-nums tracking-tight mb-1",
           valueClassName
         )}
       >
@@ -103,7 +103,7 @@ export function StatsCard({
       </div>
 
       {trend && (
-        <div className={cn("text-[11px]", trendToneStyles[trendTone])}>
+        <div className={cn("text-sm", trendToneStyles[trendTone])}>
           {trend}
         </div>
       )}

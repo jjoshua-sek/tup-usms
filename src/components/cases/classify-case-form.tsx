@@ -33,7 +33,7 @@ export function ClassifyCaseForm({ caseId, current }: { caseId: string; current:
         name="classification"
         defaultValue={current ?? ""}
         required
-        className="h-8 rounded-md border border-border bg-background px-2 text-sm focus:border-tup-maroon-600 focus:outline-none"
+        className="h-8 rounded-md border border-border bg-background px-2 text-base focus:border-tup-maroon-600 focus:outline-none"
       >
         <option value="" disabled>
           Choose minor or major

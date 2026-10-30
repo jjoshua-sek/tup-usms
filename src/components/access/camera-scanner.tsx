@@ -101,14 +101,14 @@ export function CameraScanner({ onScan, className }: CameraScannerProps) {
         {!ready && !error && (
           <div className="absolute inset-0 grid place-content-center gap-2 justify-items-center text-white/70">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-xs">Starting camera…</p>
+            <p className="text-sm">Starting camera…</p>
           </div>
         )}
 
         {error && (
           <div className="grid place-content-center gap-2 justify-items-center p-10 text-white/70">
             <CameraOff className="h-7 w-7" />
-            <p className="max-w-[240px] text-center text-xs">{error}</p>
+            <p className="max-w-[240px] text-center text-sm">{error}</p>
           </div>
         )}
       </div>

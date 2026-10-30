@@ -214,7 +214,7 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
         <h3 className="text-2xl font-semibold tracking-tight mb-1.5">
           Welcome back
         </h3>
-        <p className="text-[13px] text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Sign in with your TUP institutional account to continue.
         </p>
       </div>
@@ -222,7 +222,7 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
       {signedOut && (
         <div
           role="status"
-          className="mb-5 rounded-lg border border-border bg-muted/50 px-3.5 py-3 text-[13px] leading-relaxed"
+          className="mb-5 rounded-lg border border-border bg-muted/50 px-3.5 py-3 text-base leading-relaxed"
         >
           <p className="font-semibold">Signed out for your security</p>
           <p className="mt-0.5 text-muted-foreground">{signedOut}</p>
@@ -232,7 +232,7 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
       {linkExpired && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3 text-[13px] leading-relaxed text-amber-950"
+          className="mb-5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3 text-base leading-relaxed text-amber-950"
         >
           <p className="font-semibold">That sign-in link no longer works.</p>
           <p className="mt-0.5">
@@ -248,7 +248,7 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-offline-allowed>
         {/* Student Number */}
         <div className="space-y-1.5">
-          <Label htmlFor="student_number" className="text-[12px] font-medium">
+          <Label htmlFor="student_number" className="text-sm font-medium">
             Student Number
           </Label>
           <Input
@@ -260,7 +260,7 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
             className={errors.student_number ? "border-destructive" : ""}
           />
           {errors.student_number && (
-            <p className="text-xs text-destructive">
+            <p className="text-sm text-destructive">
               {errors.student_number.message}
             </p>
           )}
@@ -269,12 +269,12 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
         {/* Password */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-[12px] font-medium">
+            <Label htmlFor="password" className="text-sm font-medium">
               Password
             </Label>
             <Link
               href="/reset-password"
-              className="text-[11px] font-medium text-tup-maroon-600 hover:underline"
+              className="text-sm font-medium text-tup-maroon-600 hover:underline"
             >
               Forgot password?
             </Link>
@@ -304,13 +304,13 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
             </button>
           </div>
           {errors.password && (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
+            <p className="text-sm text-destructive">{errors.password.message}</p>
           )}
         </div>
 
         {/* Birth Date */}
         <div className="space-y-1.5">
-          <Label htmlFor="birth_date" className="text-[12px] font-medium">
+          <Label htmlFor="birth_date" className="text-sm font-medium">
             Birth Date
           </Label>
           <Input
@@ -322,7 +322,7 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
             className={errors.birth_date ? "border-destructive" : ""}
           />
           {errors.birth_date && (
-            <p className="text-xs text-destructive">
+            <p className="text-sm text-destructive">
               {errors.birth_date.message}
             </p>
           )}
@@ -347,7 +347,7 @@ export function LoginForm({ offline = false }: { offline?: boolean }) {
       </form>
 
       {/* DPA notice card — institutional touch matching the mockup */}
-      <div className="mt-6 px-3.5 py-3 bg-muted rounded-md border-l-[3px] border-l-tup-gold-500 text-[11px] text-muted-foreground leading-relaxed">
+      <div className="mt-6 px-3.5 py-3 bg-muted rounded-md border-l-[3px] border-l-tup-gold-500 text-sm text-muted-foreground leading-relaxed">
         <strong className="text-foreground font-semibold">
           Data Privacy Notice
         </strong>

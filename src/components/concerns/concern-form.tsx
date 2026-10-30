@@ -146,9 +146,9 @@ export function ConcernForm({ trigger }: ConcernFormProps) {
               </SelectContent>
             </Select>
             {errors.category && (
-              <p className="text-xs text-destructive">{errors.category.message}</p>
+              <p className="text-sm text-destructive">{errors.category.message}</p>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Choose the area that best describes your concern.
             </p>
           </div>
@@ -159,7 +159,7 @@ export function ConcernForm({ trigger }: ConcernFormProps) {
               <Label htmlFor="subject_line">
                 Subject <span className="text-destructive">*</span>
               </Label>
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-sm text-muted-foreground tabular-nums">
                 {subjectLine.length} / 200
               </span>
             </div>
@@ -172,7 +172,7 @@ export function ConcernForm({ trigger }: ConcernFormProps) {
               className={errors.subject_line ? "border-destructive" : ""}
             />
             {errors.subject_line && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {errors.subject_line.message}
               </p>
             )}
@@ -184,7 +184,7 @@ export function ConcernForm({ trigger }: ConcernFormProps) {
               <Label htmlFor="body_text">
                 Describe your concern <span className="text-destructive">*</span>
               </Label>
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-sm text-muted-foreground tabular-nums">
                 {bodyText.length} / 10,000
               </span>
             </div>
@@ -198,11 +198,11 @@ export function ConcernForm({ trigger }: ConcernFormProps) {
               className={errors.body_text ? "border-destructive" : ""}
             />
             {errors.body_text && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {errors.body_text.message}
               </p>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Our AI reads this to summarize for staff and assign urgency.
               The more context you provide, the better.
             </p>

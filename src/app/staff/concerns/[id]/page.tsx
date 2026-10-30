@@ -211,12 +211,12 @@ export default async function StaffConcernDetailPage({
         ]}
         title="Concern Review"
       >
-        <span className="text-[11px] text-muted-foreground font-mono mr-2">
+        <span className="text-sm text-muted-foreground font-mono mr-2">
           {totalQueue} in queue · {highUrgencyCount} high urgency
         </span>
         <Link
           href="/staff/concerns"
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-card border border-border hover:bg-muted transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-card border border-border hover:bg-muted transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to queue
@@ -228,8 +228,8 @@ export default async function StaffConcernDetailPage({
         {/* QUEUE PANEL */}
         <aside className="bg-accent border-r border-border p-4 lg:max-h-[calc(100vh-280px)] lg:overflow-y-auto">
           <div className="flex justify-between items-center pb-3 mb-3 border-b border-border">
-            <h4 className="text-[13px] font-semibold">Queue</h4>
-            <span className="font-mono text-[10px] text-muted-foreground bg-card px-2 py-1 rounded-full border border-border">
+            <h4 className="text-base font-semibold">Queue</h4>
+            <span className="font-mono text-sm text-muted-foreground bg-card px-2 py-1 rounded-full border border-border">
               All · {totalQueue}
             </span>
           </div>
@@ -249,20 +249,20 @@ export default async function StaffConcernDetailPage({
                   )}
                 >
                   <div className="flex justify-between items-center mb-1.5">
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <span className="font-mono text-sm text-muted-foreground">
                       {shortId(q)}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       {timeAgo(q.created_at)}
                     </span>
                   </div>
-                  <div className="text-[12px] font-medium leading-tight mb-1.5 line-clamp-2">
+                  <div className="text-sm font-medium leading-tight mb-1.5 line-clamp-2">
                     {q.subject_line}
                   </div>
                   {q.urgency_level && (
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full border",
+                        "inline-flex items-center gap-1 text-sm font-semibold px-1.5 py-0.5 rounded-full border",
                         urgencyBadgeStyles[q.urgency_level] ||
                           "bg-muted text-muted-foreground border-border"
                       )}
@@ -274,7 +274,7 @@ export default async function StaffConcernDetailPage({
               );
             })}
             {queue.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">
+              <p className="text-sm text-muted-foreground text-center py-4">
                 Queue is empty.
               </p>
             )}
@@ -286,17 +286,17 @@ export default async function StaffConcernDetailPage({
           {/* Detail header */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-5 pb-5 border-b border-border">
             <div className="min-w-0">
-              <div className="font-mono text-[11px] text-muted-foreground mb-1">
+              <div className="font-mono text-sm text-muted-foreground mb-1">
                 {shortId(concern)} ·{" "}
                 {receivedVia(concern.received_via) === "online"
                   ? "Submitted"
                   : `${RECEIVED_VIA_LABEL[receivedVia(concern.received_via)]}${concern.referred_by ? ` (${concern.referred_by})` : ""}, recorded by the OSA`}{" "}
                 {formatManila(concern.created_at, TIMESTAMP)}
               </div>
-              <h2 className="text-[18px] font-semibold tracking-tight mb-2 text-balance">
+              <h2 className="text-lg font-semibold tracking-tight mb-2 text-balance">
                 {concern.subject_line}
               </h2>
-              <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span>
                   <strong className="text-foreground font-medium">
                     {studentName}
@@ -326,7 +326,7 @@ export default async function StaffConcernDetailPage({
             {student && (
               <Link
                 href={`/staff/students/${student.id}`}
-                className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-card border border-border hover:bg-muted transition-colors"
+                className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-card border border-border hover:bg-muted transition-colors"
               >
                 View student profile →
               </Link>
@@ -335,17 +335,17 @@ export default async function StaffConcernDetailPage({
 
           {/* A complaint against a student: who, when, and the case it became */}
           {isComplaint && (
-            <div className="mb-6 flex flex-wrap items-start justify-between gap-3 rounded-md border border-amber-300 bg-amber-50/60 p-4 text-[13px] dark:border-amber-800 dark:bg-amber-950/20">
+            <div className="mb-6 flex flex-wrap items-start justify-between gap-3 rounded-md border border-amber-300 bg-amber-50/60 p-4 text-base dark:border-amber-800 dark:bg-amber-950/20">
               <dl className="grid min-w-0 gap-x-6 gap-y-1 sm:grid-cols-2">
                 <div>
-                  <dt className="text-[11px] text-muted-foreground">Complaint against</dt>
+                  <dt className="text-sm text-muted-foreground">Complaint against</dt>
                   <dd className="font-medium">
                     {concern.respondent_name ?? "—"}
                     {concern.respondent_details ? ` · ${concern.respondent_details}` : ""}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] text-muted-foreground">When and where</dt>
+                  <dt className="text-sm text-muted-foreground">When and where</dt>
                   <dd className="font-medium">
                     {concern.incident_date ?? "—"}
                     {concern.incident_location ? ` · ${concern.incident_location}` : ""}
@@ -355,14 +355,14 @@ export default async function StaffConcernDetailPage({
               {filedCase ? (
                 <Link
                   href={`/staff/cases/${filedCase.id}`}
-                  className="shrink-0 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted"
+                  className="shrink-0 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-muted"
                 >
                   Filed as {filedCase.case_number} →
                 </Link>
               ) : (
                 <Link
                   href={`/staff/cases/new?from_concern=${id}`}
-                  className="shrink-0 rounded-md bg-tup-maroon-600 px-3 py-2 text-xs font-medium text-white hover:bg-tup-maroon-700"
+                  className="shrink-0 rounded-md bg-tup-maroon-600 px-3 py-2 text-sm font-medium text-white hover:bg-tup-maroon-700"
                 >
                   File a case from this complaint
                 </Link>
@@ -375,18 +375,18 @@ export default async function StaffConcernDetailPage({
             {/* ORIGINAL SUBMISSION PANEL */}
             <div className="border border-border rounded-md overflow-hidden">
               <div className="bg-accent border-b border-border px-3.5 py-2.5 flex justify-between items-center">
-                <span className="font-mono text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-sm font-semibold text-muted-foreground">
                   📝 Original Submission
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-sm text-muted-foreground font-mono">
                   {words} words
                 </span>
               </div>
               <div className="p-4">
-                <p className="text-[13px] leading-[1.65] italic text-balance">
+                <p className="text-base leading-[1.65] italic text-balance">
                   &ldquo;{concern.body_text}&rdquo;
                 </p>
-                <span className="inline-block mt-3 not-italic font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                <span className="inline-block mt-3 not-italic font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
                   Detected: {lang.label}
                 </span>
               </div>
@@ -395,20 +395,20 @@ export default async function StaffConcernDetailPage({
             {/* AI SUMMARY PANEL */}
             <div className="border border-ai-accent rounded-md overflow-hidden">
               <div className="bg-ai-accent-soft border-b border-ai-accent px-3.5 py-2.5 flex justify-between items-center">
-                <span className="font-mono text-[11px] font-semibold text-ai-accent uppercase tracking-wider flex items-center gap-1">
+                <span className="text-sm font-semibold text-ai-accent flex items-center gap-1">
                   <Zap className="h-3 w-3" />
                   AI-Generated Summary
                 </span>
                 {/* The model that actually wrote this summary — a fallback
                     may have answered in place of the one requested. */}
-                <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-ai-accent-soft text-ai-accent border border-ai-accent">
+                <span className="inline-flex items-center gap-1 text-sm font-semibold px-1.5 py-0.5 rounded-full bg-ai-accent-soft text-ai-accent border border-ai-accent">
                   {modelLabel(concern.ai_summary_model)}
                 </span>
               </div>
               <div className="p-4">
                 {concern.ai_summary ? (
                   <>
-                    <p className="text-[13px] leading-relaxed mb-4">
+                    <p className="text-base leading-relaxed mb-4">
                       {concern.ai_summary}
                     </p>
                     <div className="border-t border-border pt-3.5 space-y-0">
@@ -416,7 +416,7 @@ export default async function StaffConcernDetailPage({
                         {concern.urgency_level && (
                           <span
                             className={cn(
-                              "inline-flex items-center font-mono text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full border",
+                              "inline-flex items-center text-sm font-semibold px-1.5 py-0.5 rounded-full border",
                               urgencyBadgeStyles[concern.urgency_level] ||
                                 "bg-muted text-muted-foreground border-border"
                             )}
@@ -427,7 +427,7 @@ export default async function StaffConcernDetailPage({
                       </AiField>
                       {concern.suggested_dept && (
                         <AiField label="recommended_dept">
-                          <span className="text-[12px] font-medium flex items-center gap-1">
+                          <span className="text-sm font-medium flex items-center gap-1">
                             <Building2 className="h-3 w-3 text-muted-foreground" />
                             {concern.suggested_dept}
                           </span>
@@ -435,26 +435,26 @@ export default async function StaffConcernDetailPage({
                       )}
                       {concern.ai_key_issues && concern.ai_key_issues.length > 0 && (
                         <AiField label="key_issues">
-                          <span className="text-[12px] font-medium">
+                          <span className="text-sm font-medium">
                             {concern.ai_key_issues.join(" · ")}
                           </span>
                         </AiField>
                       )}
                       <AiField label="detected_language">
-                        <span className="text-[12px] font-medium">
+                        <span className="text-sm font-medium">
                           {lang.label}
                         </span>
                       </AiField>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-3.5 pt-3 border-t border-ai-accent text-[10px] text-ai-accent font-mono">
+                    <div className="flex items-center gap-1.5 mt-3.5 pt-3 border-t border-ai-accent text-sm text-ai-accent font-mono">
                       <Zap className="h-3 w-3" />
                       Generated · Reviewable · See audit log
                     </div>
                   </>
                 ) : concern.ai_summary_status === "failed" ? (
                   <div className="text-center py-8">
-                    <p className="text-[13px] font-medium mb-2">No AI summary for this concern</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-base font-medium mb-2">No AI summary for this concern</p>
+                    <p className="text-sm text-muted-foreground">
                       {concern.ai_summary_error ?? "The AI could not summarize it."} Read the
                       concern in full, or use &ldquo;Re-analyze&rdquo; in the status row to try
                       again.
@@ -462,14 +462,14 @@ export default async function StaffConcernDetailPage({
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-[13px] text-muted-foreground italic mb-2">
+                    <p className="text-base text-muted-foreground italic mb-2">
                       AI analysis pending...
                     </p>
                     {/* A held queue (no credit, bad key) says why it is waiting. */}
                     {concern.ai_summary_error ? (
-                      <p className="text-[11px] text-amber-800">{concern.ai_summary_error}</p>
+                      <p className="text-sm text-amber-800">{concern.ai_summary_error}</p>
                     ) : (
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         It usually appears within a minute of the concern being filed. Use
                         &ldquo;Re-analyze&rdquo; in the status row to run it now.
                       </p>
@@ -483,7 +483,7 @@ export default async function StaffConcernDetailPage({
           {/* Files the student attached when filing */}
           {attachments.length > 0 && (
             <div className="mb-6">
-              <h3 className="font-mono text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">
                 📎 Attachments · {attachments.length}
               </h3>
               <ConcernAttachments attachments={attachments} />
@@ -500,7 +500,7 @@ export default async function StaffConcernDetailPage({
             {!isClosed && (
               <a
                 href="#reply"
-                className="px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors inline-flex items-center justify-center gap-1"
+                className="px-3 py-2 rounded-md text-sm font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors inline-flex items-center justify-center gap-1"
               >
                 <MessageSquareReply className="h-3.5 w-3.5" />
                 Respond to Student
@@ -512,7 +512,7 @@ export default async function StaffConcernDetailPage({
           {/* Response thread */}
           {responses.length > 0 && (
             <div className="mb-6 border-t border-border pt-5">
-              <h3 className="text-[13px] font-semibold mb-3">
+              <h3 className="text-base font-semibold mb-3">
                 Conversation · {responses.length}{" "}
                 {responses.length === 1 ? "reply" : "replies"}
               </h3>
@@ -532,17 +532,17 @@ export default async function StaffConcernDetailPage({
                       <div className="flex justify-between items-center mb-1.5">
                         <span
                           className={cn(
-                            "font-mono text-[10px] font-semibold uppercase tracking-wider",
+                            "text-sm font-semibold",
                             isStaff ? "text-tup-maroon-600" : "text-muted-foreground"
                           )}
                         >
                           {isStaff ? "Staff" : "Student"}
                         </span>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-sm text-muted-foreground">
                           {formatManila(response.created_at, TIMESTAMP)}
                         </span>
                       </div>
-                      <p className="text-[13px] whitespace-pre-wrap leading-relaxed">
+                      <p className="text-base whitespace-pre-wrap leading-relaxed">
                         {response.response_text}
                       </p>
                     </div>
@@ -575,8 +575,8 @@ function AiField({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex justify-between items-center py-1.5 text-[12px]">
-      <span className="text-muted-foreground font-mono text-[11px]">{label}</span>
+    <div className="flex justify-between items-center py-1.5 text-sm">
+      <span className="text-muted-foreground font-mono text-sm">{label}</span>
       <span className="font-medium">{children}</span>
     </div>
   );

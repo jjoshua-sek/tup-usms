@@ -191,10 +191,10 @@ export default async function StaffScholarshipsPage() {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-display text-[15px] font-semibold">
+                      <p className="font-display text-base font-semibold">
                         {scholarship.name}
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {scholarship.sponsor_name} · {scholarship.funding_type}
                       </p>
                     </div>
@@ -204,7 +204,7 @@ export default async function StaffScholarshipsPage() {
                     />
                   </div>
 
-                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                     <Meta label="Slots">
                       {slotsLeft == null
                         ? "Unlimited"
@@ -222,7 +222,7 @@ export default async function StaffScholarshipsPage() {
                   </dl>
 
                   {(scholarship.scholarship_criteria ?? []).length === 0 && (
-                    <p className="mt-2 rounded-md bg-amber-50 p-2 text-[11px] text-amber-900">
+                    <p className="mt-2 rounded-md bg-amber-50 p-2 text-sm text-amber-900">
                       No criteria defined — every student will see &ldquo;more info
                       needed&rdquo; for this program.
                     </p>
@@ -238,28 +238,28 @@ export default async function StaffScholarshipsPage() {
       {scholars.length > 0 && (
         <section className="mb-8">
           <h2 className="font-display text-lg font-semibold tracking-tight">Scholars</h2>
-          <p className="mb-3 text-[13px] text-muted-foreground">
+          <p className="mb-3 text-base text-muted-foreground">
             Awarded students checked against the grade and conduct requirements they must keep, on their latest verified grades.
           </p>
           <ul className="space-y-2">
             {scholars.map(({ application, retention }) => (
               <li key={application.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link href={`/staff/students/${application.students!.id}`} className="text-[13px] font-semibold text-tup-maroon-600 underline-offset-2 hover:underline">
+                  <Link href={`/staff/students/${application.students!.id}`} className="text-base font-semibold text-tup-maroon-600 underline-offset-2 hover:underline">
                     {application.students!.first_name} {application.students!.last_name}
                   </Link>
-                  <span className="font-mono text-[11px] text-muted-foreground">{application.students!.student_number}</span>
-                  <span className="text-[12px] text-muted-foreground">· {application.scholarships?.name ?? "Scholarship"}</span>
+                  <span className="font-mono text-sm text-muted-foreground">{application.students!.student_number}</span>
+                  <span className="text-sm text-muted-foreground">· {application.scholarships?.name ?? "Scholarship"}</span>
                   <ToneBadge label={RETENTION_META[retention.status].label} tone={RETENTION_META[retention.status].tone} />
                 </div>
-                <p className="mt-1 text-[12px] text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {retention.summary}
                   {gradesTerm.get(application.students!.id)
                     ? ` GWA from ${gradesTerm.get(application.students!.id)}.`
                     : " No verified rating slip on file yet."}
                 </p>
                 {retention.failing.length > 0 && (
-                  <ul className="ml-4 mt-1 list-disc text-[12px]">
+                  <ul className="ml-4 mt-1 list-disc text-sm">
                     {retention.failing.map((f) => (
                       <li key={f.description}>
                         {f.description}: now <strong>{f.actual}</strong>
@@ -268,7 +268,7 @@ export default async function StaffScholarshipsPage() {
                   </ul>
                 )}
                 {retention.status === "at_risk" && retention.unchecked.length > 0 && (
-                  <p className="mt-1 text-[12px] text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Not checked yet, for want of verified grades: {retention.unchecked.join("; ")}.
                   </p>
                 )}
@@ -299,7 +299,7 @@ export default async function StaffScholarshipsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[13px] font-semibold">
+                      <p className="text-base font-semibold">
                         {application.scholarships?.name ?? "Scholarship"}
                       </p>
                       <ToneBadge
@@ -307,7 +307,7 @@ export default async function StaffScholarshipsPage() {
                         tone={STATUS_TONE[application.status] ?? "neutral"}
                       />
                     </div>
-                    <p className="mt-1 text-[13px]">
+                    <p className="mt-1 text-base">
                       {application.students ? (
                         <Link
                           href={`/staff/students/${application.students.id}`}
@@ -318,15 +318,15 @@ export default async function StaffScholarshipsPage() {
                       ) : (
                         "Unknown student"
                       )}
-                      <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                      <span className="ml-2 font-mono text-sm text-muted-foreground">
                         {application.students?.student_number}
                       </span>
-                      <span className="ml-2 text-[11px] text-muted-foreground">
+                      <span className="ml-2 text-sm text-muted-foreground">
                         {application.school_year}
                       </span>
                     </p>
                     {(application.endorsement_notes || application.rejection_reason) && (
-                      <p className="mt-1 text-[12px] text-muted-foreground">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {application.rejection_reason ?? application.endorsement_notes}
                       </p>
                     )}

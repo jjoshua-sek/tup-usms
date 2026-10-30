@@ -75,11 +75,11 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
       <div className="space-y-4">
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center justify-between">
-            <p className="font-display text-sm font-semibold">Scan or type a student number</p>
+            <p className="font-display text-base font-semibold">Scan or type a student number</p>
             <button
               type="button"
               onClick={() => setUseCamera((current) => !current)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
             >
               {useCamera ? <Keyboard className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
               {useCamera ? "Use scanner" : "Use camera"}
@@ -103,7 +103,7 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
                 }}
                 placeholder="TUPM-22-0148"
                 spellCheck={false}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm focus:border-tup-maroon-600 focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-base focus:border-tup-maroon-600 focus:outline-none"
               />
               <Button
                 type="button"
@@ -120,7 +120,7 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
             </div>
           )}
 
-          <p className="mt-2 text-[11px] text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             A USB scanner types the number and presses Enter on its own — just keep this field
             focused.
           </p>
@@ -128,11 +128,11 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
 
         {/* Session history */}
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <p className="border-b border-border px-4 py-2.5 font-display text-sm font-semibold">
+          <p className="border-b border-border px-4 py-2.5 font-display text-base font-semibold">
             This session
           </p>
           {history.length === 0 ? (
-            <p className="p-6 text-center text-xs text-muted-foreground">No scans yet.</p>
+            <p className="p-6 text-center text-sm text-muted-foreground">No scans yet.</p>
           ) : (
             <ul className="divide-y divide-border">
               {history.map((entry) => (
@@ -142,11 +142,11 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
                   ) : (
                     <XCircle className="h-3.5 w-3.5 shrink-0 text-red-600" />
                   )}
-                  <span className="flex-1 truncate font-mono text-xs">{entry.label}</span>
-                  <span className="truncate text-[11px] text-muted-foreground">
+                  <span className="flex-1 truncate font-mono text-sm">{entry.label}</span>
+                  <span className="truncate text-sm text-muted-foreground">
                     {entry.detail}
                   </span>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">{entry.at}</span>
+                  <span className="shrink-0 text-sm text-muted-foreground">{entry.at}</span>
                 </li>
               ))}
             </ul>
@@ -159,14 +159,14 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
         {!result ? (
           <div className="grid h-full place-content-center justify-items-center gap-3 py-16 text-center">
             <ScanLine className="h-8 w-8 text-muted-foreground/40" />
-            <p className="max-w-xs text-sm text-muted-foreground">
+            <p className="max-w-xs text-base text-muted-foreground">
               Scan a TUP ID to check its validation status for this term.
             </p>
           </div>
         ) : (
           <div className="space-y-4">
             <div
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-base font-semibold ${
                 result.decision === "allow"
                   ? "bg-emerald-50 text-emerald-800"
                   : "bg-red-50 text-red-800"
@@ -180,7 +180,7 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
               {result.headline} — {result.hint}
             </div>
 
-            <dl className="space-y-1.5 text-[13px]">
+            <dl className="space-y-1.5 text-base">
               <Row label="Name" value={result.staffDetail?.fullName ?? "—"} />
               <Row label="Student number" value={result.staffDetail?.studentNumber ?? "—"} mono />
               <Row label="Validation" value={result.staffDetail?.validationStatus ?? "none"} />
@@ -199,14 +199,14 @@ export function DeskScanner({ canSeeCases }: DeskScannerProps) {
             </dl>
 
             {result.anomalyFlagged && (
-              <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
+              <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
                 <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 This scan raised an access anomaly. It is queued for review under Gates &amp;
                 Access — it does not block the student by itself.
               </p>
             )}
 
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Every desk scan is logged with your name against the student&apos;s access
               history.
             </p>
@@ -221,7 +221,7 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-1.5">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className={`font-medium ${mono ? "font-mono text-xs" : ""}`}>{value}</dd>
+      <dd className={`font-medium ${mono ? "font-mono text-sm" : ""}`}>{value}</dd>
     </div>
   );
 }

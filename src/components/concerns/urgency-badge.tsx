@@ -67,7 +67,7 @@ export function UrgencyBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+          "inline-flex items-center rounded-md border px-1.5 py-0.5 text-sm font-semibold",
           "bg-muted text-muted-foreground border-border",
           className
         )}
@@ -84,7 +84,7 @@ export function UrgencyBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 text-xs font-medium",
+          "inline-flex items-center gap-1 text-sm font-medium",
           {
             critical: "text-red-700 dark:text-red-400",
             high: "text-orange-700 dark:text-orange-400",
@@ -103,7 +103,7 @@ export function UrgencyBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+        "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-sm font-semibold",
         config.badge,
         className
       )}

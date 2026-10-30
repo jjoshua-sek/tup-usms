@@ -30,7 +30,7 @@ export function ForwardAppealForm({ appealId, bodyLabel }: { appealId: string; b
         name="external_reference"
         maxLength={80}
         placeholder="Transmittal / reference no. (optional)"
-        className="h-8 min-w-[200px] flex-1 rounded-md border border-border bg-background px-2.5 text-xs focus:border-tup-maroon-600 focus:outline-none"
+        className="h-8 min-w-[200px] flex-1 rounded-md border border-border bg-background px-2.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
       />
       <Button type="submit" size="sm" disabled={pending} className="h-8 bg-tup-maroon-600 text-white hover:bg-tup-maroon-700">
         {pending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1.5 h-3.5 w-3.5" />}

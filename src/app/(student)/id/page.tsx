@@ -164,8 +164,8 @@ export default async function DigitalIdPage() {
 
           {/* TOP: brand */}
           <div className="relative z-10 flex items-start justify-between">
-            <div className="text-[11px] leading-snug tracking-wider opacity-85">
-              <strong className="mb-1 block text-sm font-semibold tracking-wide text-tup-gold-500">
+            <div className="text-sm leading-snug tracking-wider opacity-85">
+              <strong className="mb-1 block text-base font-semibold tracking-wide text-tup-gold-500">
                 TUP MANILA
               </strong>
               Technological University
@@ -173,7 +173,7 @@ export default async function DigitalIdPage() {
               of the Philippines
             </div>
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-tup-gold-500 text-sm font-bold text-tup-maroon-600"
+              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-tup-gold-500 text-base font-bold text-tup-maroon-600"
               aria-label="TUP seal"
             >
               TUP
@@ -199,12 +199,12 @@ export default async function DigitalIdPage() {
             </div>
 
             <div>
-              <div className="mb-1.5 text-[20px] font-semibold leading-tight tracking-tight">
+              <div className="mb-1.5 text-xl font-semibold leading-tight tracking-tight">
                 {student.first_name}
                 <br />
                 {student.last_name}
               </div>
-              <div className="space-y-0.5 text-[10px] leading-[1.6] opacity-85">
+              <div className="space-y-0.5 text-sm leading-[1.6] opacity-85">
                 <IdMetaRow label="ID" value={student.student_number} />
                 <IdMetaRow label="Course" value={student.program} />
                 <IdMetaRow label="Year" value={student.year_level} />
@@ -215,7 +215,7 @@ export default async function DigitalIdPage() {
 
           {/* BOTTOM: validity + QR */}
           <div className="relative z-10 flex items-end justify-between border-t border-white/20 pt-3.5">
-            <div className="text-[9px] uppercase tracking-widest opacity-70">
+            <div className="text-sm opacity-70 font-medium">
               Valid
               <br />
               <strong className="mt-0.5 block tracking-wide text-tup-gold-500">
@@ -245,29 +245,29 @@ export default async function DigitalIdPage() {
                 ) : (
                   <Clock className="h-4 w-4" />
                 )}
-                <p className="text-sm font-semibold">ID validation — {statusMeta.label}</p>
+                <p className="text-base font-semibold">ID validation — {statusMeta.label}</p>
               </div>
-              <span className="font-mono text-[10px] uppercase tracking-wider opacity-70">
+              <span className="text-sm opacity-70 font-medium">
                 {term.semester}
               </span>
             </div>
 
-            <p className="mt-2 text-[13px] leading-relaxed">{guidance}</p>
+            <p className="mt-2 text-base leading-relaxed">{guidance}</p>
 
             {validation?.rejection_reason && (
-              <p className="mt-2 rounded-md bg-white/60 p-2.5 text-[12px]">
+              <p className="mt-2 rounded-md bg-white/60 p-2.5 text-sm">
                 <strong>OSA note:</strong> {validation.rejection_reason}
               </p>
             )}
 
             {validation?.validation_sticker_number && (
-              <p className="mt-2 text-[12px] opacity-80">
+              <p className="mt-2 text-sm opacity-80">
                 Sticker no. <span className="font-mono">{validation.validation_sticker_number}</span>
               </p>
             )}
 
             {validation?.expires_at && scannable && (
-              <p className="mt-2 text-[12px] opacity-80">
+              <p className="mt-2 text-sm opacity-80">
                 Expires {formatManilaMonthDayTime(validation.expires_at)}
               </p>
             )}
@@ -284,10 +284,10 @@ export default async function DigitalIdPage() {
           {/* How validation works */}
           {!scannable && (
             <div className="rounded-xl border border-border bg-card p-5">
-              <h5 className="mb-2.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <h5 className="mb-2.5 text-sm font-semibold text-muted-foreground">
                 How validation works
               </h5>
-              <ol className="list-decimal space-y-1.5 pl-4 text-[13px] leading-relaxed">
+              <ol className="list-decimal space-y-1.5 pl-4 text-base leading-relaxed">
                 <li>Request validation here, or skip this and go straight to the OSA window.</li>
                 <li>
                   Bring your physical TUP ID to the OSA. They match your face to your profile photo and apply
@@ -303,7 +303,7 @@ export default async function DigitalIdPage() {
 
           {/* Uses */}
           <div className="rounded-xl border border-border bg-card p-5">
-            <h5 className="mb-2.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <h5 className="mb-2.5 text-sm font-semibold text-muted-foreground">
               Valid For
             </h5>
             <div className="flex flex-wrap gap-1.5">
@@ -312,7 +312,7 @@ export default async function DigitalIdPage() {
               ))}
             </div>
 
-            <h5 className="mb-2.5 mt-4 font-mono text-[10px] font-semibold uppercase tracking-wider text-destructive">
+            <h5 className="mb-2.5 mt-4 text-sm font-semibold text-destructive">
               Not Valid For
             </h5>
             <div className="flex flex-wrap gap-1.5">
@@ -330,14 +330,14 @@ export default async function DigitalIdPage() {
           <h3 className="font-display text-lg font-semibold tracking-tight">
             Recent campus access
           </h3>
-          <span className="text-[11px] text-muted-foreground">Last 8 scans</span>
+          <span className="text-sm text-muted-foreground">Last 8 scans</span>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           {events.length === 0 ? (
             <div className="grid place-items-center gap-2 p-10 text-center">
               <DoorOpen className="h-6 w-6 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 No gate scans recorded yet for your ID.
               </p>
             </div>
@@ -351,12 +351,12 @@ export default async function DigitalIdPage() {
                     <XCircle className="h-4 w-4 shrink-0 text-red-600" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{event.gate_label}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="truncate text-base font-medium">{event.gate_label}</p>
+                    <p className="text-sm text-muted-foreground">
                       {formatManilaMonthDayTime(event.occurred_at)}
                     </p>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-sm text-muted-foreground">
                     <ArrowRightLeft className="h-3 w-3" />
                     {event.direction === "entry" ? "Entry" : "Exit"}
                   </span>
@@ -366,7 +366,7 @@ export default async function DigitalIdPage() {
           )}
         </div>
 
-        <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           <strong className="text-foreground">Data minimization:</strong> a gate scan reveals
           only your first name, initial, masked student number and photo — never your contact
           details, grades, or disciplinary record. Access logs are kept for {describeAccessLogRetention(retention)} and are
@@ -380,7 +380,7 @@ export default async function DigitalIdPage() {
 function IdMetaRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-1">
-      <strong className="min-w-[56px] text-[9px] font-semibold uppercase tracking-widest text-tup-gold-500">
+      <strong className="min-w-[56px] text-sm font-semibold text-tup-gold-500">
         {label}
       </strong>
       <span>{value}</span>
@@ -391,13 +391,13 @@ function IdMetaRow({ label, value }: { label: string; value: string }) {
 function UseTag({ label, variant }: { label: string; variant?: "danger" }) {
   if (variant === "danger") {
     return (
-      <span className="rounded-full border border-[#fecaca] bg-[#fef2f2] px-2.5 py-1 text-[11px] text-[#991b1b]">
+      <span className="rounded-full border border-[#fecaca] bg-[#fef2f2] px-2.5 py-1 text-sm text-[#991b1b]">
         {label}
       </span>
     );
   }
   return (
-    <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] text-foreground">
+    <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-sm text-foreground">
       {label}
     </span>
   );

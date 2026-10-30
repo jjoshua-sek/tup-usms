@@ -161,7 +161,7 @@ export default async function StaffRiskPage({
             key={option}
             href={option === "all" ? "/staff/risk" : `/staff/risk?tier=${option}`}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-[13px] font-medium capitalize transition-colors",
+              "-mb-px border-b-2 px-3 py-2 text-base font-medium capitalize transition-colors",
               activeTier === option
                 ? "border-tup-maroon-600 text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground",
@@ -188,7 +188,7 @@ export default async function StaffRiskPage({
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-display text-[15px] font-semibold">
+                      <p className="font-display text-base font-semibold">
                         {row.first_name} {row.last_name}
                       </p>
                       <ToneBadge
@@ -199,7 +199,7 @@ export default async function StaffRiskPage({
                         <ToneBadge label="Low confidence" tone="neutral" />
                       )}
                     </div>
-                    <p className="font-mono text-[11px] text-muted-foreground">
+                    <p className="font-mono text-sm text-muted-foreground">
                       {row.student_number} · {row.program ?? "—"} · {row.year_level ?? "—"}
                     </p>
                   </div>
@@ -207,9 +207,9 @@ export default async function StaffRiskPage({
                   <div className="text-right">
                     <p className="font-mono text-2xl font-semibold tabular-nums">
                       {Math.round(assessment.risk_score * 100)}
-                      <span className="text-sm text-muted-foreground">%</span>
+                      <span className="text-base text-muted-foreground">%</span>
                     </p>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <p className="text-sm text-muted-foreground font-medium">
                       {Math.round(assessment.dataCompleteness * 100)}% data
                     </p>
                   </div>
@@ -218,24 +218,24 @@ export default async function StaffRiskPage({
                 {/* Why — the explainable part */}
                 <div className="mt-3 grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
                       What raises the score
                     </p>
                     {assessment.topRiskFactors.length === 0 ? (
-                      <p className="text-[12px] text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         Nothing above the neutral baseline.
                       </p>
                     ) : (
                       <ul className="space-y-1">
                         {assessment.topRiskFactors.slice(0, 3).map((factor) => (
-                          <li key={factor.feature} className="text-[12px]">
+                          <li key={factor.feature} className="text-sm">
                             <span className="font-medium">{factor.label}</span>
                             {factor.imputed && (
-                              <span className="ml-1 text-[10px] text-muted-foreground">
+                              <span className="ml-1 text-sm text-muted-foreground">
                                 (assumed — no data)
                               </span>
                             )}
-                            <span className="block text-[11px] text-muted-foreground">
+                            <span className="block text-sm text-muted-foreground">
                               {factor.explanation}
                             </span>
                           </li>
@@ -245,21 +245,21 @@ export default async function StaffRiskPage({
                   </div>
 
                   <div>
-                    <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
                       Suggested next step
                     </p>
                     {suggestions.length === 0 ? (
-                      <p className="text-[12px] text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {tierMeta.action}
                       </p>
                     ) : (
                       <ul className="space-y-1">
                         {suggestions.slice(0, 2).map((suggestion) => (
-                          <li key={suggestion.type} className="text-[12px]">
+                          <li key={suggestion.type} className="text-sm">
                             <span className="font-medium capitalize">
                               {suggestion.type.replace(/_/g, " ")}
                             </span>
-                            <span className="block text-[11px] text-muted-foreground">
+                            <span className="block text-sm text-muted-foreground">
                               {suggestion.reason}
                             </span>
                           </li>
@@ -273,7 +273,7 @@ export default async function StaffRiskPage({
                   <InterventionForm studentId={row.student_id} suggestions={suggestions} />
                   <Link
                     href={`/staff/students/${row.student_id}`}
-                    className="inline-flex items-center px-2 py-1.5 text-[12px] text-tup-maroon-600 underline-offset-2 hover:underline"
+                    className="inline-flex items-center px-2 py-1.5 text-sm text-tup-maroon-600 underline-offset-2 hover:underline"
                   >
                     Open student record
                   </Link>
@@ -286,16 +286,16 @@ export default async function StaffRiskPage({
 
       {versions.length > 0 && (
         <section className="mt-6 rounded-xl border border-border bg-card p-5">
-          <h2 className="font-display text-[15px] font-semibold">Model versions</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          <h2 className="font-display text-base font-semibold">Model versions</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Figures are from students held out of training: AUC is how well the model ranks
             at-risk students above the rest (0.5 is chance, 1 is perfect); precision and recall
             are at the moderate cut point.
             {canChoose ? " Switching rescores every student at once." : ""}
           </p>
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-[12px]">
-              <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="text-sm text-muted-foreground font-medium">
                 <tr className="border-b border-border">
                   <th className="py-2 pr-3 font-semibold">Version</th>
                   <th className="py-2 pr-3 font-semibold">Weights from</th>
@@ -311,7 +311,7 @@ export default async function StaffRiskPage({
                     <td className="py-2.5 pr-3">
                       <span className="font-mono font-medium">{version.label}</span>
                       {version.trainedAt && (
-                        <span className="block text-[11px] text-muted-foreground">
+                        <span className="block text-sm text-muted-foreground">
                           {version.trainedOn
                             ? `${COUNT.format(version.trainedOn)} students · `
                             : ""}
@@ -322,7 +322,7 @@ export default async function StaffRiskPage({
                     <td className="py-2.5 pr-3">
                       {version.source}
                       {version.caveat && (
-                        <span className="block text-[11px] text-muted-foreground">{version.caveat}</span>
+                        <span className="block text-sm text-muted-foreground">{version.caveat}</span>
                       )}
                     </td>
                     <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatFigure(version.auc)}</td>
@@ -343,7 +343,7 @@ export default async function StaffRiskPage({
         </section>
       )}
 
-      <p className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
         <strong className="text-foreground">On using these scores:</strong>{" "}
 the model in use takes its weights from{" "}
         {activeVersion?.sourceInSentence ?? "a source not recorded"} — it ranks who to check on first, it does not predict failure. Never quote a score to a

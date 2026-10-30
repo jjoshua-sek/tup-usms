@@ -132,13 +132,13 @@ function IntegrityFlags({ checks }: { checks: IntegrityCheck[] | null | undefine
   const passed = checks.filter((check) => check.status === "pass").length;
   if (flags.length === 0) {
     return (
-      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
         <ShieldCheck className="h-3 w-3" /> {passed} automatic check{passed === 1 ? "" : "s"} passed (name, number, figures, file).
       </p>
     );
   }
   return (
-    <div className="mt-2 rounded-md bg-amber-50 p-2 text-[11px] leading-relaxed text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+    <div className="mt-2 rounded-md bg-amber-50 p-2 text-sm leading-relaxed text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
       <p className="flex items-center gap-1.5 font-semibold">
         <TriangleAlert className="h-3 w-3" /> Check before verifying
       </p>
@@ -167,7 +167,7 @@ function Group({
     <section>
       <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
         {title}
-        <span className="ml-2 text-sm font-normal text-muted-foreground">
+        <span className="ml-2 text-base font-normal text-muted-foreground">
           {documents.length}
         </span>
       </h2>
@@ -178,7 +178,7 @@ function Group({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-display text-[14px] font-semibold">
+                  <p className="font-display text-base font-semibold">
                     {DOC_LABELS[document.document_type] ?? document.document_type}
                   </p>
                   <ToneBadge
@@ -191,12 +191,12 @@ function Group({
                       tone={document.verification_method === "counter_scan" ? "success" : "neutral"}
                     />
                   )}
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     {document.semester}, {document.school_year}
                   </span>
                 </div>
 
-                <p className="mt-1 text-[13px]">
+                <p className="mt-1 text-base">
                   {document.students ? (
                     <Link
                       href={`/staff/students/${document.students.id}`}
@@ -207,23 +207,23 @@ function Group({
                   ) : (
                     "Unknown student"
                   )}
-                  <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                  <span className="ml-2 font-mono text-sm text-muted-foreground">
                     {document.students?.student_number}
                   </span>
                 </p>
 
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   {document.file_name} · {Math.round(document.file_size / 1024)} KB · uploaded{" "}
                   {formatManilaMonthDayTime(document.uploaded_at)}
                 </p>
 
                 {document.rejection_reason && (
-                  <p className="mt-1.5 rounded-md bg-muted p-2 text-[12px]">
+                  <p className="mt-1.5 rounded-md bg-muted p-2 text-sm">
                     <strong>Rejected:</strong> {document.rejection_reason}
                   </p>
                 )}
                 {document.verification_notes && (
-                  <p className="mt-1.5 text-[12px] text-muted-foreground">
+                  <p className="mt-1.5 text-sm text-muted-foreground">
                     {document.verification_notes}
                   </p>
                 )}
@@ -238,7 +238,7 @@ function Group({
             {/* What the model made of it — including how sure it was */}
             {document.extraction_confidence != null && (
               <p
-                className={`mt-2 flex items-start gap-1.5 rounded-md p-2 text-[11px] leading-relaxed ${
+                className={`mt-2 flex items-start gap-1.5 rounded-md p-2 text-sm leading-relaxed ${
                   document.extraction_confidence < 0.6
                     ? "bg-amber-50 text-amber-900"
                     : "bg-ai-accent-soft text-ai-accent"

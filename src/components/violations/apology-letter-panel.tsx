@@ -117,8 +117,8 @@ export function ApologyLetterPanel({ caseId, caseNumber }: ApologyLetterPanelPro
       className="mt-3 space-y-3 rounded-lg border border-border p-4"
     >
       <div>
-        <p className="text-[13px] font-semibold">Apology letter for {caseNumber}</p>
-        <ul className="mt-1.5 ml-4 list-disc space-y-0.5 text-[12px] text-muted-foreground">
+        <p className="text-base font-semibold">Apology letter for {caseNumber}</p>
+        <ul className="mt-1.5 ml-4 list-disc space-y-0.5 text-sm text-muted-foreground">
           <li>Say what happened, in your own words — no need for formal language.</li>
           <li>Acknowledge who was affected and how.</li>
           <li>Say what you will do differently. This is the part that matters most.</li>
@@ -130,20 +130,20 @@ export function ApologyLetterPanel({ caseId, caseNumber }: ApologyLetterPanelPro
         rows={8}
         maxLength={5000}
         placeholder={`Dear Office of Student Affairs,\n\nI am writing regarding…`}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-tup-maroon-600 focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-base leading-relaxed focus:border-tup-maroon-600 focus:outline-none"
       />
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">
+        <span className="text-sm font-medium">
           Signed copy <span className="text-muted-foreground">(optional)</span>
         </span>
         <input
           type="file"
           name="file"
           accept="image/jpeg,image/png,image/webp,application/pdf"
-          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs file:mr-2 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs"
+          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm file:mr-2 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1 file:text-sm"
         />
-        <span className="block text-[11px] text-muted-foreground">
+        <span className="block text-sm text-muted-foreground">
           <Upload className="mr-1 inline h-3 w-3" />
           If the OSA asked for a signed hard copy, photograph it and attach it here. You can
           still type the text above as well.
@@ -169,7 +169,7 @@ export function ApologyLetterPanel({ caseId, caseNumber }: ApologyLetterPanelPro
         </Button>
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Once submitted you can&apos;t edit it — the OSA reads the version you send. If they
         ask for changes, you&apos;ll be able to submit a revised letter here.
       </p>

@@ -90,7 +90,7 @@ export default async function StaffLayout({
       {!staffData && (
         <div
           role="alert"
-          className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-[13px] leading-relaxed text-amber-950"
+          className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-base leading-relaxed text-amber-950"
         >
           <p className="font-semibold">This account has no staff record.</p>
           <p className="mt-1">

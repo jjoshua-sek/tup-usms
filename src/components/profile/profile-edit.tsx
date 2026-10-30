@@ -160,7 +160,7 @@ export function ProfileEdit({ student }: ProfileEditProps) {
               <h1 className="text-2xl font-display font-bold tracking-tight">
                 {fullName}
               </h1>
-              <p className="font-mono text-sm text-muted-foreground">
+              <p className="font-mono text-base text-muted-foreground">
                 {student.student_number}
               </p>
               <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-2">
@@ -190,7 +190,7 @@ export function ProfileEdit({ student }: ProfileEditProps) {
                 Replace photo
               </Button>
               {student.photo_is_provisional && (
-                <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                <p className="text-sm text-amber-600 dark:text-amber-400">
                   Photo marked provisional
                 </p>
               )}
@@ -255,7 +255,7 @@ export function ProfileEdit({ student }: ProfileEditProps) {
           {student.is_pwd && <Badge variant="outline">PWD</Badge>}
           {student.is_listahan && <Badge variant="outline">Listahanan</Badge>}
           {!student.is_indigenous && !student.is_pwd && !student.is_listahan && (
-            <p className="text-xs text-muted-foreground">No beneficiary statuses indicated</p>
+            <p className="text-sm text-muted-foreground">No beneficiary statuses indicated</p>
           )}
         </div>
       </Section>
@@ -273,7 +273,7 @@ export function ProfileEdit({ student }: ProfileEditProps) {
           {student.section && <Field label="Section" value={student.section} />}
           {student.lrn && <Field label="LRN" value={student.lrn} />}
         </FieldGrid>
-        <p className="mt-3 text-xs text-muted-foreground flex items-center gap-1">
+        <p className="mt-3 text-sm text-muted-foreground flex items-center gap-1">
           <Lock className="h-3 w-3" />
           Most academic fields are read-only. Contact{" "}
           <a
@@ -291,9 +291,9 @@ export function ProfileEdit({ student }: ProfileEditProps) {
         <CardContent className="py-4 flex items-center gap-3">
           <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium">Data Privacy Act consent on file</p>
+            <p className="text-base font-medium">Data Privacy Act consent on file</p>
             {student.dpa_consent_date && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Consented on {formatManilaLongDate(student.dpa_consent_date)}
               </p>
             )}
@@ -343,10 +343,10 @@ function FieldGrid({ children }: { children: React.ReactNode }) {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-0.5">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <p className="text-sm text-muted-foreground font-medium">
         {label}
       </p>
-      <p className="text-sm font-medium">{value}</p>
+      <p className="text-base font-medium">{value}</p>
     </div>
   );
 }

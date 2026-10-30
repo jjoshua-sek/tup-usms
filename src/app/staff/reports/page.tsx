@@ -194,7 +194,7 @@ export default async function StaffReportsPage() {
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 className="font-display text-lg font-semibold tracking-tight">By college</h2>
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Counts only. A college comes from the student&apos;s verified COR; without one, from their program.
             </p>
           </div>
@@ -203,13 +203,13 @@ export default async function StaffReportsPage() {
           </a>
         </div>
         {collegeRows.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border p-8 text-center text-base text-muted-foreground">
             No students on file yet.
           </p>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <table className="w-full min-w-[760px] text-[13px] tabular-nums">
-              <thead className="border-b border-border bg-muted/40 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full min-w-[760px] text-base tabular-nums">
+              <thead className="border-b border-border bg-muted/40 text-left text-sm text-muted-foreground font-medium">
                 <tr>
                   <th className="px-3 py-2 font-medium">College</th>
                   <th className="px-3 py-2 text-right font-medium">Students</th>
@@ -230,7 +230,7 @@ export default async function StaffReportsPage() {
                       <td className="px-3 py-2">
                         {row.college}
                         {row.estimated > 0 && (
-                          <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">
+                          <span className="ml-1.5 text-sm font-normal text-muted-foreground">
                             ({row.estimated} by program)
                           </span>
                         )}
@@ -264,7 +264,7 @@ export default async function StaffReportsPage() {
           Cases by stage
         </h2>
         {byStatus.size === 0 ? (
-          <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border p-8 text-center text-base text-muted-foreground">
             No cases on file yet.
           </p>
         ) : (
@@ -276,7 +276,7 @@ export default async function StaffReportsPage() {
                   const share = Math.round((count / cases.length) * 100);
                   return (
                     <li key={status} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="w-48 shrink-0 text-[13px]">
+                      <span className="w-48 shrink-0 text-base">
                         {CASE_STATUS_META[status]?.label ?? status}
                       </span>
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
@@ -285,7 +285,7 @@ export default async function StaffReportsPage() {
                           style={{ width: `${share}%` }}
                         />
                       </div>
-                      <span className="w-12 shrink-0 text-right font-mono text-[12px] tabular-nums">
+                      <span className="w-12 shrink-0 text-right font-mono text-sm tabular-nums">
                         {count}
                       </span>
                     </li>
@@ -296,7 +296,7 @@ export default async function StaffReportsPage() {
         )}
       </section>
 
-      <p className="mt-5 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
         Risk tiers are computed live from the active model and reflect only students with
         data on file. Report them as a workload measure, not as a prediction of outcomes.
       </p>
@@ -305,7 +305,7 @@ export default async function StaffReportsPage() {
 }
 
 const csvLinkClass =
-  "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-tup-maroon-600 transition-colors hover:bg-muted";
+  "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium text-tup-maroon-600 transition-colors hover:bg-muted";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

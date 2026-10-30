@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+import { TEXT_SIZE_SCRIPT } from "@/components/layout/text-size-switch";
 import { OfflineBanner } from "@/components/offline/offline-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,7 +12,7 @@ import "./globals.css";
 /**
  * Geist Sans — Vercel's institutional sans-serif. Used for body and all headings.
  * Chosen to match the mockup precisely. Geist is highly readable at small sizes
- * (matters here because the redesign uses 13px body text) and has excellent
+ * (body text is 16px, and larger with the text-size switch) and has excellent
  * Latin Extended support for Filipino diacritics.
  */
 const geist = Geist({
@@ -53,6 +55,10 @@ export default function RootLayout({
       className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      {/* The text size chosen in the header (A, A+, A++), applied before first paint. */}
+      <Script id="text-size" strategy="beforeInteractive">
+        {TEXT_SIZE_SCRIPT}
+      </Script>
       {/* data-offline-mode greys out every saving form on the LAN copy (globals.css). */}
       <body className="min-h-full flex flex-col font-sans" data-offline-mode={isOfflineMode() ? "" : undefined}>
         <OfflineBanner />

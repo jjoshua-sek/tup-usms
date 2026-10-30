@@ -27,7 +27,7 @@ export default function NewConcernPage() {
 
         {/* Info card — "What happens next?" */}
         <aside className="bg-accent border border-border rounded-md p-5 self-start">
-          <h4 className="text-sm font-semibold mb-2.5">What happens next?</h4>
+          <h4 className="text-base font-semibold mb-2.5">What happens next?</h4>
 
           <ol className="list-none space-y-0 mt-2" style={{ counterReset: "step" }}>
             <Step n={1}>
@@ -51,11 +51,11 @@ export default function NewConcernPage() {
           <div className="bg-ai-accent-soft border border-ai-accent rounded-md p-3 mt-4">
             <div className="flex items-center gap-1.5 mb-1">
               <Zap className="h-3 w-3 text-ai-accent" />
-              <strong className="text-xs font-semibold text-ai-accent">
+              <strong className="text-sm font-semibold text-ai-accent">
                 About the AI triage
               </strong>
             </div>
-            <p className="text-[11px] text-ai-accent leading-relaxed">
+            <p className="text-sm text-ai-accent leading-relaxed">
               An AI model hosted by Groq reads your concern to write a short
               routing summary for staff. Groq keeps no copy of it. Final
               decisions are always made by a human staff member. Read more in
@@ -70,8 +70,8 @@ export default function NewConcernPage() {
 
 function Step({ n, children }: { n: number; children: React.ReactNode }) {
   return (
-    <li className="text-xs text-muted-foreground py-2 pl-7 relative leading-relaxed border-b border-border last:border-0">
-      <span className="absolute left-0 top-2 w-5 h-5 bg-tup-maroon-600 text-white rounded-full flex items-center justify-center text-[10px] font-semibold font-mono">
+    <li className="text-sm text-muted-foreground py-2 pl-7 relative leading-relaxed border-b border-border last:border-0">
+      <span className="absolute left-0 top-2 w-5 h-5 bg-tup-maroon-600 text-white rounded-full flex items-center justify-center text-sm font-semibold font-mono">
         {n}
       </span>
       {children}

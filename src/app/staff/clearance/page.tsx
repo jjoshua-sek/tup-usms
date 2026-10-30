@@ -163,7 +163,7 @@ function Queue({
     <section>
       <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
         {title}
-        <span className="ml-2 text-sm font-normal text-muted-foreground">
+        <span className="ml-2 text-base font-normal text-muted-foreground">
           {requests.length}
         </span>
       </h2>
@@ -178,7 +178,7 @@ function Queue({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[12px] font-medium">
+                    <span className="font-mono text-sm font-medium">
                       {request.request_number}
                     </span>
                     <ToneBadge label={meta.label} tone={meta.tone} />
@@ -188,7 +188,7 @@ function Queue({
                     />
                   </div>
 
-                  <p className="mt-1 text-[13px]">
+                  <p className="mt-1 text-base">
                     {request.students ? (
                       <Link
                         href={`/staff/students/${request.students.id}`}
@@ -199,15 +199,15 @@ function Queue({
                     ) : (
                       "Unknown student"
                     )}
-                    <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                    <span className="ml-2 font-mono text-sm text-muted-foreground">
                       {request.students?.student_number}
                     </span>
-                    <span className="ml-2 text-[11px] text-muted-foreground">
+                    <span className="ml-2 text-sm text-muted-foreground">
                       {request.students?.program} · {request.students?.year_level}
                     </span>
                   </p>
 
-                  <p className="mt-0.5 text-[12px] text-muted-foreground">
+                  <p className="mt-0.5 text-sm text-muted-foreground">
                     Purpose: {request.purpose ?? "—"} · filed {formatManilaDate(request.created_at)}
                     {request.auto_checked_at
                       ? ` · checked ${formatManilaDate(request.auto_checked_at)} (${request.auto_check_result})`
@@ -222,13 +222,13 @@ function Queue({
                 <ul className="mt-3 space-y-2 rounded-lg bg-red-50/60 p-3">
                   {openHolds.map((hold) => (
                     <li key={hold.id} className="space-y-1.5">
-                      <p className="text-[12px] font-medium text-red-900">
-                        <span className="mr-1.5 rounded bg-red-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+                      <p className="text-sm font-medium text-red-900">
+                        <span className="mr-1.5 rounded bg-red-200 px-1.5 py-0.5 text-sm font-medium">
                           {HOLD_LABELS[hold.hold_reason] ?? hold.hold_reason}
                         </span>
                         {hold.description}
                       </p>
-                      <p className="text-[11px] text-red-900/80">
+                      <p className="text-sm text-red-900/80">
                         Student is told: {hold.resolution_instructions}
                       </p>
                       {canAct && <ResolveHoldButton holdId={hold.id} />}

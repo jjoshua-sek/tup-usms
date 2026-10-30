@@ -52,7 +52,7 @@ export function ReviewControls({ validationId, decisions }: ReviewControlsProps)
         <input type="hidden" name="decision" value={pendingDecision} />
 
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold">{copy.label}</p>
+          <p className="text-sm font-semibold">{copy.label}</p>
           <button
             type="button"
             onClick={() => setPendingDecision(null)}
@@ -70,14 +70,14 @@ export function ReviewControls({ validationId, decisions }: ReviewControlsProps)
             rows={2}
             maxLength={500}
             placeholder={copy.prompt}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs focus:border-tup-maroon-600 focus:outline-none"
+            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
           />
         ) : (
           <input
             name="sticker_number"
             maxLength={40}
             placeholder="Sticker number (optional)"
-            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs focus:border-tup-maroon-600 focus:outline-none"
+            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
           />
         )}
 
@@ -101,7 +101,7 @@ export function ReviewControls({ validationId, decisions }: ReviewControlsProps)
           key={decision}
           type="button"
           onClick={() => setPendingDecision(decision)}
-          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors ${
+          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm font-medium transition-colors ${
             decision === "validate" || decision === "reinstate"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
               : "border-border hover:bg-muted"

@@ -162,13 +162,13 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
           "fixed lg:sticky inset-y-0 lg:inset-auto left-0 z-40 lg:z-auto",
           "w-60 flex flex-col bg-white border-r border-border",
           "transition-transform duration-200 lg:translate-x-0",
-          "lg:top-[60px] lg:h-[calc(100vh-60px)]",
+          "lg:top-[3.75rem] lg:h-[calc(100dvh-3.75rem)]",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Mobile-only close button (header is hidden on mobile sidebar) */}
         <div className="lg:hidden flex h-14 items-center justify-between px-4 border-b border-border bg-tup-maroon-600 text-white">
-          <span className="text-sm font-semibold">Navigation</span>
+          <span className="text-base font-semibold">Navigation</span>
           <button onClick={onClose} aria-label="Close menu">
             <X className="h-5 w-5" />
           </button>
@@ -179,7 +179,7 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
           {sections.map((section, idx) => (
             <div key={section.label} className={cn(idx > 0 && "mt-5")}>
               {/* Section label — Geist Mono uppercase per mockup */}
-              <div className="px-3 pb-1 text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground">
+              <div className="px-3 pb-1 text-sm text-muted-foreground font-medium">
                 {section.label}
               </div>
 
@@ -198,7 +198,7 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
                         href={item.href}
                         onClick={onClose}
                         className={cn(
-                          "group flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors",
+                          "group flex items-center gap-2.5 px-3 py-2 rounded-md text-base font-medium transition-colors",
                           isActive
                             ? "bg-tup-maroon-600 text-white"
                             : "text-foreground hover:bg-muted"
@@ -214,7 +214,7 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
                         {badge !== undefined && badge > 0 && (
                           <span
                             className={cn(
-                              "ml-auto font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                              "ml-auto font-mono text-sm font-semibold px-1.5 py-0.5 rounded-full",
                               isActive
                                 ? "bg-white/25 text-white"
                                 : "bg-tup-gold-500 text-tup-maroon-700"
@@ -236,7 +236,7 @@ export function Sidebar({ role, accountsOnly, badges, open, onClose }: SidebarPr
         <div className="border-t border-border px-3 py-3">
           <button
             onClick={handleSignOut}
-            className="flex w-full items-center gap-2.5 px-3 py-2 rounded-md text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="flex w-full items-center gap-2.5 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             <LogOut className="h-4 w-4" />
             Sign out

@@ -100,7 +100,7 @@ export default async function ScholarshipsPage() {
 
       {/* Honest framing up front */}
       <div className="mb-5 rounded-xl border border-border bg-card p-4">
-        <p className="text-[13px] leading-relaxed">
+        <p className="text-base leading-relaxed">
           <strong>{eligibleCount}</strong> scholarship
           {eligibleCount === 1 ? "" : "s"} match your record right now
           {needsDataCount > 0 && (
@@ -160,7 +160,7 @@ export default async function ScholarshipsPage() {
                         <ToneBadge label="By masterlist" tone="info" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                       {scholarship.sponsor_name} · {scholarship.funding_type}
                       {scholarship.slots_available
                         ? ` · ${Math.max(
@@ -169,7 +169,7 @@ export default async function ScholarshipsPage() {
                           )} of ${scholarship.slots_available} slots left`
                         : ""}
                     </p>
-                    <p className="mt-2 text-[13px] leading-relaxed">{result.summary}</p>
+                    <p className="mt-2 text-base leading-relaxed">{result.summary}</p>
                   </div>
 
                   <div className="flex shrink-0 flex-col items-end gap-2">
@@ -186,7 +186,7 @@ export default async function ScholarshipsPage() {
                 <div className="grid gap-5 p-5 md:grid-cols-2">
                   {/* Criteria */}
                   <div>
-                    <h3 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
                       Eligibility check
                     </h3>
                     <ul className="space-y-1.5">
@@ -200,17 +200,17 @@ export default async function ScholarshipsPage() {
 
                   {/* Requirements */}
                   <div>
-                    <h3 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
                       What to prepare
                     </h3>
                     {requirements.length === 0 ? (
-                      <p className="text-[13px] text-muted-foreground">
+                      <p className="text-base text-muted-foreground">
                         Requirements not published yet — ask at the OSA window.
                       </p>
                     ) : (
                       <ul className="space-y-1.5">
                         {requirements.map((requirement) => (
-                          <li key={requirement.id} className="text-[13px]">
+                          <li key={requirement.id} className="text-base">
                             <span className="font-medium">
                               {requirement.requirement_name}
                             </span>
@@ -218,7 +218,7 @@ export default async function ScholarshipsPage() {
                               <span className="text-muted-foreground"> (optional)</span>
                             )}
                             {requirement.obtained_from && (
-                              <span className="block text-[11px] text-muted-foreground">
+                              <span className="block text-sm text-muted-foreground">
                                 Get it from: {requirement.obtained_from}
                               </span>
                             )}
@@ -228,7 +228,7 @@ export default async function ScholarshipsPage() {
                     )}
 
                     {/* Where to file */}
-                    <div className="mt-4 space-y-1 border-t border-border pt-3 text-[12px]">
+                    <div className="mt-4 space-y-1 border-t border-border pt-3 text-sm">
                       {scholarship.benefit_summary && (
                         <p>
                           <strong>Benefit:</strong> {scholarship.benefit_summary}
@@ -289,12 +289,12 @@ function CriterionLine({ criterion }: { criterion: CriterionResult }) {
         : "text-muted-foreground";
 
   return (
-    <li className="flex items-start gap-2 text-[13px]">
+    <li className="flex items-start gap-2 text-base">
       <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${tone}`} />
       <span className="min-w-0">
         {criterion.human_description}
         {criterion.passed !== true && (
-          <span className="block text-[11px] text-muted-foreground">
+          <span className="block text-sm text-muted-foreground">
             {criterion.hint ?? `Yours: ${criterion.actual}`}
           </span>
         )}

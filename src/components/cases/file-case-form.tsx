@@ -178,7 +178,7 @@ export function FileCaseForm({
         <SectionHeading step={1} title="Who is the complaint against?" />
 
         {fromComplaint && (
-          <p className="mb-3 rounded-lg bg-muted p-3 text-[12px] leading-relaxed">
+          <p className="mb-3 rounded-lg bg-muted p-3 text-sm leading-relaxed">
             The student&rsquo;s complaint names <strong>{fromComplaint.respondentName}</strong>
             {fromComplaint.respondentDetails ? ` (${fromComplaint.respondentDetails})` : ""}. Pick the matching
             student record below; search by number or surname if it is not listed.
@@ -193,10 +193,10 @@ export function FileCaseForm({
                   <UserRound className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-[14px] font-semibold">
+                  <p className="text-base font-semibold">
                     {selected.first_name} {selected.last_name}
                   </p>
-                  <p className="font-mono text-[11px] text-muted-foreground">
+                  <p className="font-mono text-sm text-muted-foreground">
                     {selected.student_number}
                     {selected.program ? ` · ${selected.program}` : ""}
                     {selected.year_level ? ` · ${selected.year_level}` : ""}
@@ -210,7 +210,7 @@ export function FileCaseForm({
                   setSelected(null);
                   setRecord(null);
                 }}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
               >
                 <X className="h-3 w-3" />
                 Change
@@ -219,7 +219,7 @@ export function FileCaseForm({
 
             {/* Requirement #2 — the filer sees the track record before submitting */}
             {record && (
-              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-border pt-3 text-[12px]">
+              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-border pt-3 text-sm">
                 <span className="text-muted-foreground">Track record:</span>
                 <span>
                   <strong>{record.minor}</strong> minor
@@ -253,7 +253,7 @@ export function FileCaseForm({
                 value={query}
                 onChange={(event) => handleQueryChange(event.target.value)}
                 placeholder="Search by student number or surname — e.g. TUPM-22-0148 or Dela Cruz"
-                className="w-full bg-transparent text-sm outline-none"
+                className="w-full bg-transparent text-base outline-none"
               />
             </div>
 
@@ -267,10 +267,10 @@ export function FileCaseForm({
                       className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-muted"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-[13px] font-medium">
+                        <span className="block truncate text-base font-medium">
                           {match.first_name} {match.last_name}
                         </span>
-                        <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                        <span className="block truncate font-mono text-sm text-muted-foreground">
                           {match.student_number}
                           {match.program ? ` · ${match.program}` : ""}
                         </span>
@@ -283,7 +283,7 @@ export function FileCaseForm({
             )}
 
             {query.trim().length >= 2 && !searching && matches.length === 0 && (
-              <p className="mt-2 text-[12px] text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground">
                 No student matches that. Check the number on their ID.
               </p>
             )}
@@ -298,7 +298,7 @@ export function FileCaseForm({
         <SectionHeading step={2} title="What happened?" />
 
         <label className="block space-y-1">
-          <span className="text-xs font-medium">Offense</span>
+          <span className="text-sm font-medium">Offense</span>
           <select
             name="violation_type_id"
             value={typeId}
@@ -344,7 +344,7 @@ export function FileCaseForm({
 
         {selectedType && (
           <div className="mt-3 space-y-2">
-            <p className="rounded-lg bg-muted p-3 text-[12px] leading-relaxed">
+            <p className="rounded-lg bg-muted p-3 text-sm leading-relaxed">
               {selectedType.description}
               {selectedType.handbook_reference && (
                 <span className="mt-1 block text-muted-foreground">
@@ -357,7 +357,7 @@ export function FileCaseForm({
             </p>
 
             {routesToCodi ? (
-              <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-[12px] leading-relaxed text-red-900">
+              <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm leading-relaxed text-red-900">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
                   This is filed <strong>confidentially</strong> and goes straight to the
@@ -367,7 +367,7 @@ export function FileCaseForm({
                 </span>
               </p>
             ) : restricted ? (
-              <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-900">
+              <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm leading-relaxed text-amber-900">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
                   This is filed as a <strong>restricted</strong> case. The OSA handles it, but only the OSA head,
@@ -376,13 +376,13 @@ export function FileCaseForm({
                 </span>
               </p>
             ) : unlisted ? (
-              <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
+              <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                 The Student Manual does not list this, so the OSA classifies it as minor or major
                 after review, and decides the sanction.
               </p>
             ) : (
-              <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
+              <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                 Filed as a <strong className="mx-1">{selectedType.default_classification}</strong>
                 offense, as the Student Manual classifies it. The sanction is decided by the OSA.
@@ -393,7 +393,7 @@ export function FileCaseForm({
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <label className="block space-y-1">
-            <span className="text-xs font-medium">Date of incident</span>
+            <span className="text-sm font-medium">Date of incident</span>
             <input
               type="date"
               name="incident_date"
@@ -403,11 +403,11 @@ export function FileCaseForm({
             />
           </label>
           <label className="block space-y-1">
-            <span className="text-xs font-medium">Time (optional)</span>
+            <span className="text-sm font-medium">Time (optional)</span>
             <input type="time" name="incident_time" className={inputClass} />
           </label>
           <label className="block space-y-1">
-            <span className="text-xs font-medium">Where (optional)</span>
+            <span className="text-sm font-medium">Where (optional)</span>
             <input
               name="incident_location"
               maxLength={120}
@@ -419,7 +419,7 @@ export function FileCaseForm({
         </div>
 
         <label className="mt-3 block space-y-1">
-          <span className="text-xs font-medium">
+          <span className="text-sm font-medium">
             What happened, in your own words
           </span>
           <textarea
@@ -432,12 +432,12 @@ export function FileCaseForm({
             placeholder="Describe what you observed: what the student did, when, who else was present, and anything already said to them about it. Stick to what you saw yourself."
             className={inputClass}
           />
-          <span className="block text-[11px] text-muted-foreground">
+          <span className="block text-sm text-muted-foreground">
             The student will see this description when the case reaches them. Write it as
             something you would be comfortable reading aloud at a hearing.
           </span>
           {fromComplaint && (
-            <span className="block text-[11px] font-medium text-amber-800">
+            <span className="block text-sm font-medium text-amber-800">
               Copied from the complaint. Take out the complainant&rsquo;s name and anything that identifies them,
               unless they agreed to be named.
             </span>
@@ -453,7 +453,7 @@ export function FileCaseForm({
           <>
             <input type="hidden" name="source_concern_id" value={fromComplaint.concernId} />
             <input type="hidden" name="complainant_type" value="student" />
-            <p className="text-[12px] leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               Filed for the student who complained. The case names them only as &ldquo;a student&rdquo;; who they
               are stays on their concern, which only they and OSA staff can read. They are told in their concern
               that the case was filed. You are recorded as the filer, and the OSA sets the hearing date.
@@ -463,7 +463,7 @@ export function FileCaseForm({
         <>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block space-y-1">
-            <span className="text-xs font-medium">Filing as</span>
+            <span className="text-sm font-medium">Filing as</span>
             <select
               name="complainant_type"
               value={complainantType}
@@ -481,7 +481,7 @@ export function FileCaseForm({
           </label>
 
           <label className="block space-y-1">
-            <span className="text-xs font-medium">
+            <span className="text-sm font-medium">
               Complainant name {needsName ? "" : "(optional)"}
             </span>
             <input
@@ -494,7 +494,7 @@ export function FileCaseForm({
           </label>
         </div>
 
-        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           You are recorded as the filer either way, and nothing is sent to the student on filing. If you are
           faculty and a meeting is scheduled, you approve the date before the student is summoned.
         </p>
@@ -527,7 +527,7 @@ export function FileCaseForm({
 function SectionHeading({ step, title }: { step: number; title: string }) {
   return (
     <div className="mb-3 flex items-center gap-2">
-      <span className="grid h-5 w-5 place-items-center rounded-full bg-tup-maroon-600 text-[11px] font-semibold text-white">
+      <span className="grid h-5 w-5 place-items-center rounded-full bg-tup-maroon-600 text-sm font-semibold text-white">
         {step}
       </span>
       <h2 className="font-display text-base font-semibold">{title}</h2>
@@ -536,4 +536,4 @@ function SectionHeading({ step, title }: { step: number; title: string }) {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

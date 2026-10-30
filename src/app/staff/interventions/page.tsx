@@ -133,7 +133,7 @@ export default async function StaffInterventionsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-display text-[15px] font-semibold capitalize">
+                    <p className="font-display text-base font-semibold capitalize">
                       {item.intervention_type.replace(/_/g, " ")}
                     </p>
                     <ToneBadge
@@ -147,14 +147,14 @@ export default async function StaffInterventionsPage() {
                       />
                     )}
                     {item.risk_assessments && (
-                      <span className="font-mono text-[11px] text-muted-foreground">
+                      <span className="font-mono text-sm text-muted-foreground">
                         {item.risk_assessments.risk_tier} ·{" "}
                         {Math.round(Number(item.risk_assessments.risk_score) * 100)}%
                       </span>
                     )}
                   </div>
 
-                  <p className="mt-1 text-[13px]">
+                  <p className="mt-1 text-base">
                     {item.students ? (
                       <Link
                         href={`/staff/students/${item.students.id}`}
@@ -165,22 +165,22 @@ export default async function StaffInterventionsPage() {
                     ) : (
                       "Unknown student"
                     )}
-                    <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                    <span className="ml-2 font-mono text-sm text-muted-foreground">
                       {item.students?.student_number}
                     </span>
                   </p>
 
                   {item.rationale && (
-                    <p className="mt-1 text-[12px] text-muted-foreground">{item.rationale}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{item.rationale}</p>
                   )}
 
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Opened {formatManilaDate(item.created_at)}
                     {item.completed_at ? ` · closed ${formatManilaDate(item.completed_at)}` : ""}
                   </p>
 
                   {item.outcome && (
-                    <p className="mt-2 rounded-md bg-muted p-2 text-[12px]">
+                    <p className="mt-2 rounded-md bg-muted p-2 text-sm">
                       <strong>Outcome:</strong> {item.outcome}
                       {item.outcome_rating ? ` (${item.outcome_rating.replace(/_/g, " ")})` : ""}
                     </p>

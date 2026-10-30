@@ -48,7 +48,7 @@ export function StampedScanPanel({
 
   if (verified) {
     return (
-      <p className="flex items-center gap-1.5 rounded-md bg-emerald-50 p-2 text-[12px] font-medium text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <p className="flex items-center gap-1.5 rounded-md bg-emerald-50 p-2 text-sm font-medium text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
         <ShieldCheck className="h-4 w-4" /> Verified with the stamped copy.
       </p>
     );
@@ -57,7 +57,7 @@ export function StampedScanPanel({
   return (
     <div className="space-y-2 rounded-lg border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold">
+        <p className="flex items-center gap-1.5 text-sm font-semibold">
           <ScanLine className="h-3.5 w-3.5" /> Stamped copy of the {documentLabel}
         </p>
         {mode === "idle" && !reading && (
@@ -95,13 +95,13 @@ export function StampedScanPanel({
       )}
 
       {reading && (
-        <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading the stamped copy and comparing it with the upload…
         </p>
       )}
 
       {!reading && !comparison && mode === "idle" && (
-        <p className="text-[11px] leading-relaxed text-muted-foreground">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           Lay the stamped paper flat in good light, with the whole page in the frame. STARS checks every row against what
           the student uploaded and looks for the Registrar&apos;s stamp.
         </p>
@@ -143,7 +143,7 @@ function ComparisonResult({
   return (
     <div className="space-y-2">
       <p
-        className={`flex items-start gap-1.5 rounded-md p-2 text-[12px] leading-relaxed ${
+        className={`flex items-start gap-1.5 rounded-md p-2 text-sm leading-relaxed ${
           good
             ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200"
             : "bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
@@ -153,7 +153,7 @@ function ComparisonResult({
         <span>{comparison.summary}</span>
       </p>
 
-      <div className="flex flex-wrap gap-1.5 text-[11px]">
+      <div className="flex flex-wrap gap-1.5 text-sm">
         <Stamp label="Registrar stamp" present={comparison.stamps.registrar} />
         <Stamp label="OSA stamp" present={comparison.stamps.osa} />
         {comparison.rowsTotal > 0 && (
@@ -164,7 +164,7 @@ function ComparisonResult({
       </div>
 
       {comparison.differences.length > 0 && (
-        <ul className="ml-4 list-disc space-y-0.5 text-[11px] text-muted-foreground">
+        <ul className="ml-4 list-disc space-y-0.5 text-sm text-muted-foreground">
           {comparison.differences.map((difference) => (
             <li key={difference}>{difference}</li>
           ))}
@@ -296,7 +296,7 @@ function DocumentCamera({ onCapture, onCancel }: { onCapture: (file: File) => vo
 
   if (error) {
     return (
-      <div className="flex items-center justify-between gap-2 rounded-md bg-muted p-2 text-[12px]">
+      <div className="flex items-center justify-between gap-2 rounded-md bg-muted p-2 text-sm">
         <span>{error}</span>
         <button type="button" onClick={onCancel} className={smallButton}>
           Close
@@ -309,7 +309,7 @@ function DocumentCamera({ onCapture, onCancel }: { onCapture: (file: File) => vo
     <div className="space-y-2">
       <div className="relative overflow-hidden rounded-md bg-black">
         <video ref={videoRef} autoPlay playsInline muted className="block max-h-[60vh] w-full object-contain" />
-        {!ready && <p className="absolute inset-0 grid place-items-center text-sm text-white">Starting camera…</p>}
+        {!ready && <p className="absolute inset-0 grid place-items-center text-base text-white">Starting camera…</p>}
         <div className="pointer-events-none absolute inset-3 rounded border-2 border-dashed border-white/40" />
       </div>
       <div className="flex gap-2">
@@ -325,4 +325,4 @@ function DocumentCamera({ onCapture, onCancel }: { onCapture: (file: File) => vo
 }
 
 const smallButton =
-  "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted disabled:opacity-50";
+  "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50";

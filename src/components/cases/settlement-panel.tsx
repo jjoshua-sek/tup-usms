@@ -48,7 +48,7 @@ export function DraftSettlementForm({
       <input type="hidden" name="case_id" value={caseId} />
 
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold">Settlement terms</p>
+        <p className="text-sm font-semibold">Settlement terms</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -61,7 +61,7 @@ export function DraftSettlementForm({
 
       {hearings.length > 0 && (
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Reached at (optional)</span>
+          <span className="text-sm font-medium">Reached at (optional)</span>
           <select name="hearing_id" defaultValue="" className={inputClass}>
             <option value="">Not tied to a specific meeting</option>
             {hearings.map((hearing) => (
@@ -74,7 +74,7 @@ export function DraftSettlementForm({
       )}
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">What both sides agreed to</span>
+        <span className="text-sm font-medium">What both sides agreed to</span>
         <textarea
           name="terms"
           required
@@ -87,7 +87,7 @@ export function DraftSettlementForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">What the student must do</span>
+        <span className="text-sm font-medium">What the student must do</span>
         <textarea
           name="student_obligations"
           rows={2}
@@ -98,7 +98,7 @@ export function DraftSettlementForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Complete by</span>
+        <span className="text-sm font-medium">Complete by</span>
         <input type="date" name="compliance_deadline" className={inputClass} />
       </label>
 
@@ -142,7 +142,7 @@ export function SettlementSignature({
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
       >
         {isPending ? (
           <Loader2 className="h-3 w-3 animate-spin" />
@@ -172,7 +172,7 @@ export function ComplianceForm({ settlementId }: { settlementId: string }) {
       <input type="hidden" name="settlement_id" value={settlementId} />
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Obligations met?</span>
+        <span className="text-sm font-medium">Obligations met?</span>
         <select name="complied" defaultValue="yes" className={inputClass}>
           <option value="yes">Yes — close the case</option>
           <option value="no">Not yet</option>
@@ -195,4 +195,4 @@ export function ComplianceForm({ settlementId }: { settlementId: string }) {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2 py-1 text-[11px] focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";

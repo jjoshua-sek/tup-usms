@@ -32,7 +32,7 @@ export default async function StaffGatesPage() {
         />
         <div className="grid place-items-center gap-3 rounded-xl border border-dashed border-border p-12 text-center">
           <Lock className="h-7 w-7 text-muted-foreground/50" />
-          <p className="max-w-sm text-sm text-muted-foreground">
+          <p className="max-w-sm text-base text-muted-foreground">
             Campus access is limited to OSA officers, the OSA head and security personnel.
             Ask an administrator if you need this view.
           </p>
@@ -127,7 +127,7 @@ export default async function StaffGatesPage() {
           <section>
             <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">Terminals</h2>
             <GateConsole gates={gates} canManage={staff.canManage} />
-            <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Each lane runs <span className="font-mono">/kiosk</span> in a browser and pairs
               once with its device key. Start a new lane in <strong>monitor</strong> mode: it
               records every scan and opens for everyone, so a week of real traffic surfaces the

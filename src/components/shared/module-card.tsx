@@ -88,17 +88,17 @@ export function ModuleCard({
         <Icon className="h-4 w-4" />
       </div>
 
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">
+      <h3 className="text-base font-semibold tracking-tight mb-1">
         {title}
       </h3>
 
-      <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+      <p className="text-sm text-muted-foreground leading-relaxed mb-3">
         {description}
       </p>
 
       <span
         className={cn(
-          "inline-flex items-center gap-1 text-xs font-medium",
+          "inline-flex items-center gap-1 text-sm font-medium",
           styles.link
         )}
       >

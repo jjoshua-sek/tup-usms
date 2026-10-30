@@ -28,7 +28,7 @@ export default async function RecordConcernPage() {
       {allowed ? (
         <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
           <StaffConcernForm />
-          <aside className="self-start rounded-md border border-border bg-accent p-5 text-sm">
+          <aside className="self-start rounded-md border border-border bg-accent p-5 text-base">
             <h2 className="mb-2 font-semibold">What happens next</h2>
             <ul className="list-disc space-y-1.5 pl-4 text-muted-foreground">
               <li>It joins the Concern Queue with an AI summary, like one from the online form.</li>
@@ -40,7 +40,7 @@ export default async function RecordConcernPage() {
       ) : (
         <div className="grid place-items-center gap-3 rounded-xl border border-dashed border-border p-12 text-center">
           <Lock className="h-7 w-7 text-muted-foreground/50" />
-          <p className="max-w-sm text-sm text-muted-foreground">Only OSA staff can record a concern for a student.</p>
+          <p className="max-w-sm text-base text-muted-foreground">Only OSA staff can record a concern for a student.</p>
         </div>
       )}
     </div>

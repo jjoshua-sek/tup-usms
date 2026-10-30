@@ -47,7 +47,7 @@ export function ActivateForm({
         <h3 className="mb-1.5 text-2xl font-semibold tracking-tight">
           {reset ? "Choose a new password" : `Welcome, ${firstName}`}
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           {reset
             ? "Your old password stops working once you save this one. You'll be signed out on every other device."
             : "Choose a password for your account. You'll sign in with it and your student number."}
@@ -55,10 +55,10 @@ export function ActivateForm({
       </div>
 
       <div className="mb-5 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-sm font-semibold text-muted-foreground">
           Student number
         </p>
-        <p className="font-mono text-sm font-medium">{studentNumber}</p>
+        <p className="font-mono text-base font-medium">{studentNumber}</p>
       </div>
 
       <form
@@ -72,7 +72,7 @@ export function ActivateForm({
         className="space-y-4"
       >
         <label className="block space-y-1.5">
-          <span className="text-[12px] font-medium">New password</span>
+          <span className="text-sm font-medium">New password</span>
           <span className="relative block">
             <input
               name="password"
@@ -95,7 +95,7 @@ export function ActivateForm({
         </label>
 
         <label className="block space-y-1.5">
-          <span className="text-[12px] font-medium">Type it again</span>
+          <span className="text-sm font-medium">Type it again</span>
           <input
             name="confirm_password"
             type={visible ? "text" : "password"}
@@ -107,7 +107,7 @@ export function ActivateForm({
           />
         </label>
 
-        <ul className="space-y-0.5 text-[12px] text-muted-foreground">
+        <ul className="space-y-0.5 text-sm text-muted-foreground">
           {RULES.map((rule) => (
             <li key={rule}>· {rule}</li>
           ))}
@@ -131,4 +131,4 @@ export function ActivateForm({
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-base focus:border-tup-maroon-600 focus:outline-none";

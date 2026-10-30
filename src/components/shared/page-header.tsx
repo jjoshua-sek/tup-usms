@@ -52,7 +52,7 @@ export function PageHeader({
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav
           aria-label="Breadcrumb"
-          className="flex items-center gap-1 mb-2 font-mono text-[11px] text-muted-foreground"
+          className="flex items-center gap-1 mb-2 font-mono text-sm text-muted-foreground"
         >
           {breadcrumbs.map((seg, i) => (
             <span key={i} className="flex items-center gap-1">
@@ -78,11 +78,11 @@ export function PageHeader({
 
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-[26px] font-semibold tracking-tight leading-tight">
+          <h1 className="text-2xl font-semibold tracking-tight leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-muted-foreground mt-1">
+            <p className="text-base text-muted-foreground mt-1">
               {description}
             </p>
           )}

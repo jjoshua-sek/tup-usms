@@ -67,11 +67,11 @@ export function IdQrPanel({ payload, scannable }: IdQrPanelProps) {
           </div>
 
           <div className="min-w-0">
-            <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm text-muted-foreground font-medium">
               Institutional QR
             </p>
             <p className="mt-1 font-mono text-lg font-semibold tracking-tight">{payload}</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
               This is the same code printed on your physical TUP ID. Gate turnstiles, the OSA
               front desk and the library all read it.
             </p>
@@ -79,7 +79,7 @@ export function IdQrPanel({ payload, scannable }: IdQrPanelProps) {
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
             >
               <Maximize2 className="h-3.5 w-3.5" />
               Enlarge for scanning
@@ -87,7 +87,7 @@ export function IdQrPanel({ payload, scannable }: IdQrPanelProps) {
           </div>
         </div>
 
-        <p className="mt-4 flex items-start gap-2 border-t border-border pt-3 text-[11px] text-muted-foreground">
+        <p className="mt-4 flex items-start gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
           <Sun className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           Turn your screen brightness up before scanning. Gate readers are infrared and
           struggle with a dim or heavily tinted display.
@@ -117,7 +117,7 @@ export function IdQrPanel({ payload, scannable }: IdQrPanelProps) {
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700"
+              className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700"
             >
               <X className="h-3.5 w-3.5" />
               Close

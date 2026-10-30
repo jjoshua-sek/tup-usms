@@ -26,7 +26,7 @@ export function RestrictedNotice({ title, audience, children }: RestrictedNotice
       />
       <div className="grid place-items-center gap-3 rounded-xl border border-dashed border-border p-12 text-center">
         <Lock className="h-7 w-7 text-muted-foreground/50" />
-        <p className="max-w-sm text-sm text-muted-foreground">{audience}</p>
+        <p className="max-w-sm text-base text-muted-foreground">{audience}</p>
         {children}
       </div>
     </div>

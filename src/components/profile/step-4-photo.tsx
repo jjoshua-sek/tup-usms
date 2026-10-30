@@ -248,7 +248,7 @@ export function Step4Photo({
               className="h-full w-full object-cover"
             />
           </div>
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             File uploads are saved as your final photo (no reminder).
           </p>
           <div className="flex gap-2">
@@ -321,15 +321,15 @@ export function Step4Photo({
             </div>
             {isProvisional ? (
               <div className="text-center max-w-sm">
-                <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                <p className="text-base font-medium text-amber-700 dark:text-amber-400">
                   Provisional photo
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Replace it anytime by clicking one of the options below.
                 </p>
               </div>
             ) : (
-              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              <p className="text-base font-medium text-emerald-700 dark:text-emerald-400">
                 <Check className="inline h-4 w-4 mr-1" />
                 Photo saved
               </p>
@@ -338,8 +338,8 @@ export function Step4Photo({
         ) : (
           <div className="rounded-2xl border-2 border-dashed border-border p-8 text-center space-y-2">
             <ImageIcon className="h-10 w-10 mx-auto text-muted-foreground/50" />
-            <p className="text-sm font-medium">No photo yet</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base font-medium">No photo yet</p>
+            <p className="text-sm text-muted-foreground">
               Choose how you&apos;d like to add one
             </p>
           </div>
@@ -356,10 +356,10 @@ export function Step4Photo({
             <div className="rounded-lg bg-primary/10 p-3 transition-transform group-hover:scale-110">
               <Upload className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-sm font-medium">
+            <p className="text-base font-medium">
               {photoUrl ? "Upload different photo" : "Upload from device"}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               JPG / PNG · max 5 MB
             </p>
           </button>
@@ -373,10 +373,10 @@ export function Step4Photo({
             <div className="rounded-lg bg-primary/10 p-3 transition-transform group-hover:scale-110">
               <Camera className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-sm font-medium">
+            <p className="text-base font-medium">
               {photoUrl ? "Retake with camera" : "Take photo now"}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Use this device&apos;s camera
             </p>
           </button>
@@ -392,12 +392,12 @@ export function Step4Photo({
 
         {/* Optional height & weight */}
         <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-sm font-semibold text-muted-foreground">
             Physical Info — optional
           </p>
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Height (cm)</Label>
+              <Label className="text-sm">Height (cm)</Label>
               <Input
                 type="number"
                 value={height}
@@ -407,7 +407,7 @@ export function Step4Photo({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Weight (lbs)</Label>
+              <Label className="text-sm">Weight (lbs)</Label>
               <Input
                 type="number"
                 value={weight}

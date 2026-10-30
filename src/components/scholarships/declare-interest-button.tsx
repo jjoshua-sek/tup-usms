@@ -20,7 +20,7 @@ export function DeclareInterestButton({
 
   if (alreadyDeclared) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-800">
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1.5 text-sm font-medium text-emerald-800">
         <Check className="h-3.5 w-3.5" />
         On the OSA&apos;s list
       </span>

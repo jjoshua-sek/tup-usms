@@ -37,7 +37,7 @@ export function CounterValidateForm({ studentId, termLabel }: { studentId: strin
         maxLength={40}
         placeholder="Sticker no. (optional)"
         disabled={isPending}
-        className="h-8 w-40 rounded-md border border-border bg-background px-2.5 text-xs focus:border-tup-maroon-600 focus:outline-none"
+        className="h-8 w-40 rounded-md border border-border bg-background px-2.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
       />
       <Button
         type="submit"

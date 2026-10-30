@@ -114,7 +114,7 @@ export function Step2Family({ initialData, onComplete, onBack }: Step2FamilyProp
           {/* Financial support */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Source of Financial Support</Label>
+              <Label className="text-sm">Source of Financial Support</Label>
               {/* `?? ""` keeps the Select controlled from first render. */}
               <Select
                 value={watch("financial_support") ?? ""}
@@ -136,21 +136,21 @@ export function Step2Family({ initialData, onComplete, onBack }: Step2FamilyProp
                 </SelectContent>
               </Select>
               {errors.financial_support && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {errors.financial_support.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Sponsor / Guardian Name</Label>
+              <Label className="text-sm">Sponsor / Guardian Name</Label>
               <Input
                 {...register("sponsor_name")}
                 disabled={isPending}
                 placeholder="If applicable"
               />
               {errors.sponsor_name && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {errors.sponsor_name.message}
                 </p>
               )}
@@ -159,10 +159,10 @@ export function Step2Family({ initialData, onComplete, onBack }: Step2FamilyProp
 
           {/* Beneficiary statuses */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-semibold text-muted-foreground">
               Beneficiary Status
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Check any that apply. These help us match you with eligible
               scholarships and accessibility accommodations.
             </p>
@@ -249,8 +249,8 @@ function BeneficiaryCheckbox({
         className="mt-0.5"
       />
       <label htmlFor={id} className="flex-1 cursor-pointer select-none space-y-0.5">
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-base font-medium">{label}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </label>
     </div>
   );

@@ -129,7 +129,7 @@ export default async function ConcernsPage() {
       >
         <Link
           href="/concerns/new"
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           New Concern
@@ -152,13 +152,13 @@ export default async function ConcernsPage() {
               <Inbox className="h-8 w-8 text-primary" />
             </div>
             <h3 className="mt-4 font-display font-semibold">No concerns yet</h3>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            <p className="mt-1 max-w-sm text-base text-muted-foreground">
               When you have an issue or question for TUP staff, submit it here.
               Our AI will help summarize and route it to the right department.
             </p>
             <Link
               href="/concerns/new"
-              className="mt-6 inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
+              className="mt-6 inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-base font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
             >
               <Sparkles className="h-4 w-4" />
               Submit your first concern
@@ -187,7 +187,7 @@ export default async function ConcernsPage() {
                         <p className="font-display font-semibold leading-tight text-balance">
                           {concern.subject_line}
                         </p>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
                           {timeAgo(concern.created_at)}
                         </span>
                       </div>
@@ -195,18 +195,18 @@ export default async function ConcernsPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={concern.status} />
                         <UrgencyBadge level={concern.urgency_level} />
-                        <Badge variant="secondary" className="h-5 text-[10px]">
+                        <Badge variant="secondary" className="h-5 text-sm">
                           {concernCategoryLabel(concern.category)}
                         </Badge>
                       </div>
 
                       {isProcessing ? (
-                        <p className="flex items-center gap-1.5 text-xs italic text-muted-foreground/70">
+                        <p className="flex items-center gap-1.5 text-sm italic text-muted-foreground/70">
                           <Sparkles className="h-3 w-3 animate-pulse" />
                           AI is analyzing your concern...
                         </p>
                       ) : concern.ai_summary ? (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-base text-muted-foreground line-clamp-2">
                           <span className="font-medium text-foreground/80">
                             AI summary:
                           </span>{" "}
@@ -215,7 +215,7 @@ export default async function ConcernsPage() {
                       ) : null}
 
                       {concern.suggested_dept && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           Routed to:{" "}
                           <span className="font-medium text-foreground">
                             {concern.suggested_dept}
@@ -251,7 +251,7 @@ function SummaryStat({ label, value, accent }: SummaryStatProps) {
   return (
     <Card>
       <CardContent className="py-4">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="text-sm font-medium text-muted-foreground">
           {label}
         </p>
         <p

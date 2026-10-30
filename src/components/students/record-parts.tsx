@@ -44,11 +44,11 @@ export function RecordSection({
   return (
     <section className="rounded-xl border border-border bg-card">
       <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
-        <h2 className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight">
+        <h2 className="flex items-center gap-2 font-display text-base font-semibold tracking-tight">
           <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           {title}
           {count !== undefined && (
-            <span className="text-[12px] font-normal tabular-nums text-muted-foreground">
+            <span className="text-sm font-normal tabular-nums text-muted-foreground">
               {count}
             </span>
           )}
@@ -56,7 +56,7 @@ export function RecordSection({
         {href && (
           <Link
             href={href}
-            className="inline-flex items-center gap-1 text-[12px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
           >
             {hrefLabel}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -69,7 +69,7 @@ export function RecordSection({
 }
 
 export function EmptyLine({ children }: { children: React.ReactNode }) {
-  return <p className="text-[13px] text-muted-foreground">{children}</p>;
+  return <p className="text-base text-muted-foreground">{children}</p>;
 }
 
 /** A list whose rows share edges and padding, so sections line up with each other. */
@@ -104,10 +104,10 @@ export function GlanceStrip({ items }: { items: GlanceItem[] }) {
     >
       {items.map((item) => (
         <div key={item.key} className="bg-card px-4 py-3">
-          <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <dt className="text-sm font-semibold text-muted-foreground">
             {item.label}
           </dt>
-          <dd className={cn("mt-0.5 font-display text-[15px] font-semibold", TONE_TEXT[item.tone])}>
+          <dd className={cn("mt-0.5 font-display text-base font-semibold", TONE_TEXT[item.tone])}>
             {item.value}
           </dd>
         </div>
@@ -155,17 +155,17 @@ export function NoticeLog({ notices }: { notices: NoticeRow[] }) {
         return (
           <Row key={notice.id}>
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-              <p className="text-[13px] font-medium">{notice.title}</p>
-              <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+              <p className="text-base font-medium">{notice.title}</p>
+              <span className="font-mono text-sm tabular-nums text-muted-foreground">
                 {formatManilaDateTime(notice.created_at)}
               </span>
             </div>
-            <p className={cn("mt-1 flex items-start gap-1.5 text-[12px]", TONE_TEXT[evidence.tone])}>
+            <p className={cn("mt-1 flex items-start gap-1.5 text-sm", TONE_TEXT[evidence.tone])}>
               <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               {evidence.headline}
             </p>
             {facts.length > 0 && (
-              <p className="mt-0.5 pl-5 text-[11px] text-muted-foreground">{facts.join(" · ")}</p>
+              <p className="mt-0.5 pl-5 text-sm text-muted-foreground">{facts.join(" · ")}</p>
             )}
           </Row>
         );

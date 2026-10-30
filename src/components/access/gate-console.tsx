@@ -90,15 +90,15 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
         <div className="rounded-xl border border-ai-accent bg-ai-accent-soft p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-ai-accent">
+              <p className="flex items-center gap-1.5 text-base font-semibold text-ai-accent">
                 <KeyRound className="h-4 w-4" />
                 Device key for {issuedKey.gate}
               </p>
-              <p className="mt-1 text-[13px] text-muted-foreground">
+              <p className="mt-1 text-base text-muted-foreground">
                 Copy it into the kiosk at <span className="font-mono">/kiosk</span> now — it is
                 shown once and stored only as a hash.
               </p>
-              <code className="mt-2 block overflow-x-auto rounded-md bg-background px-3 py-2 font-mono text-xs">
+              <code className="mt-2 block overflow-x-auto rounded-md bg-background px-3 py-2 font-mono text-sm">
                 {issuedKey.key}
               </code>
             </div>
@@ -142,14 +142,14 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
                       aria-hidden="true"
                       className={`h-2 w-2 rounded-full ${online ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
                     />
-                    <p className="truncate font-display text-[15px] font-semibold">{gate.name}</p>
+                    <p className="truncate font-display text-base font-semibold">{gate.name}</p>
                     {!gate.is_active && (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-sm font-medium text-muted-foreground">
                         Closed
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
                     <span className="font-mono">{gate.code}</span>
                     {gate.location ? ` · ${gate.location}` : ""}
                   </p>
@@ -177,7 +177,7 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
                 )}
               </div>
 
-              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <Meta label="Mode">
                   {gate.enforcement_mode === "enforce" ? (
                     <span className="inline-flex items-center gap-1 text-emerald-700">
@@ -203,7 +203,7 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
                   type="button"
                   onClick={() => handleRotate(gate)}
                   disabled={isPending}
-                  className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                 >
                   <KeyRound className="h-3 w-3" />
                   Issue new device key
@@ -216,7 +216,7 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
         {gates.length === 0 && (
           <div className="grid place-items-center gap-2 rounded-xl border border-dashed border-border p-10 text-center md:col-span-2">
             <DoorOpen className="h-6 w-6 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               No gates yet. Add the first turnstile lane to start logging scans.
             </p>
           </div>
@@ -242,7 +242,7 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
           className="space-y-4 rounded-xl border border-border bg-card p-5"
         >
           <div className="flex items-center justify-between">
-            <p className="font-display text-sm font-semibold">
+            <p className="font-display text-base font-semibold">
               {editing === "new" ? "New gate" : `Edit ${editing.name}`}
             </p>
             <button
@@ -389,7 +389,7 @@ export function GateConsole({ gates, canManage }: GateConsoleProps) {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";
 
 function Field({
   label,
@@ -402,9 +402,9 @@ function Field({
 }) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-sm font-medium">{label}</span>
       {children}
-      {hint && <span className="block text-[10px] text-muted-foreground">{hint}</span>}
+      {hint && <span className="block text-sm text-muted-foreground">{hint}</span>}
     </label>
   );
 }

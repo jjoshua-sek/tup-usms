@@ -133,7 +133,7 @@ export function DocumentUpload({
       className="grid gap-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
     >
       <label className="block space-y-1">
-        <span className="text-xs font-medium">Document</span>
+        <span className="text-sm font-medium">Document</span>
         <select name="document_type" defaultValue="rating_slip" className={inputClass}>
           <option value="rating_slip">Rating slip (grades)</option>
           <option value="certificate_of_registration">Certificate of Registration</option>
@@ -142,7 +142,7 @@ export function DocumentUpload({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">School year</span>
+        <span className="text-sm font-medium">School year</span>
         <input
           name="school_year"
           defaultValue={defaultSchoolYear}
@@ -153,7 +153,7 @@ export function DocumentUpload({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">Semester</span>
+        <span className="text-sm font-medium">Semester</span>
         <select name="semester" defaultValue={defaultSemester} className={inputClass}>
           <option>1st Semester</option>
           <option>2nd Semester</option>
@@ -162,14 +162,14 @@ export function DocumentUpload({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">File</span>
+        <span className="text-sm font-medium">File</span>
         <input
           type="file"
           name="file"
           // .php: ERS hands out the rating slip as rating_slip_main.php, a PDF.
           accept="image/jpeg,image/png,image/webp,application/pdf,.pdf,.php"
           required
-          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs file:mr-2 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs"
+          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm file:mr-2 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1 file:text-sm"
         />
       </label>
 
@@ -186,7 +186,7 @@ export function DocumentUpload({
         {reading ? "Reading your document…" : working ? "Uploading…" : "Upload document"}
       </Button>
 
-      <p className="text-[11px] leading-relaxed text-muted-foreground sm:col-span-2 lg:col-span-4">
+      <p className="text-sm leading-relaxed text-muted-foreground sm:col-span-2 lg:col-span-4">
         <FileUp className="mr-1 inline h-3 w-3" />
         Best: the file from ERS. For the COR, use Enrollment → Certificate of Registration. For the
         rating slip, open Grades → Student&apos;s Rating Slip, then Print → Save as PDF (its download
@@ -212,4 +212,4 @@ async function asPdfIfItIsOne(file: File): Promise<File> {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

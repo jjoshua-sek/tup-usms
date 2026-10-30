@@ -49,7 +49,7 @@ export function MarkAllReadButton({ disabled }: { disabled?: boolean }) {
           else toast.success("All caught up.");
         })
       }
-      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
     >
       {isPending ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />

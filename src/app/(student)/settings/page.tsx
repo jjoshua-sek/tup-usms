@@ -60,7 +60,7 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
             <EmailPreferencesForm initial={preferences} />
-            <div className="rounded-lg border border-border bg-muted/40 p-4 text-[13px]">
+            <div className="rounded-lg border border-border bg-muted/40 p-4 text-base">
               <p className="font-medium">Always emailed</p>
               <p className="mt-0.5 text-muted-foreground">
                 These notices ask something of you or start a deadline, so they are sent whatever you choose:

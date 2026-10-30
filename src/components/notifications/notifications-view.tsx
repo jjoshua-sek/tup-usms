@@ -128,23 +128,23 @@ export async function NotificationsView({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold">{notification.title}</p>
+                    <p className="text-base font-semibold">{notification.title}</p>
                     {notification.priority !== "normal" && (
                       <ToneBadge label={priority.label} tone={priority.tone} />
                     )}
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       {relativeTime(notification.created_at)}
                     </span>
                   </div>
 
-                  <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                  <p className="mt-1 text-base leading-relaxed text-muted-foreground">
                     {notification.body}
                   </p>
 
                   {notification.action_url && (
                     <Link
                       href={notification.action_url}
-                      className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
+                      className="mt-2 inline-flex items-center gap-1 text-base font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
                     >
                       {notification.action_label ?? "Open"}
                       <ArrowRight className="h-3.5 w-3.5" />
@@ -161,7 +161,7 @@ export async function NotificationsView({
         </ul>
       )}
 
-      {footer && <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">{footer}</p>}
+      {footer && <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{footer}</p>}
     </div>
   );
 }
@@ -189,7 +189,7 @@ function DeliveryNote({ status, sentAt }: { status: string | null; sentAt: strin
 
   const failed = status === "undeliverable" || status === "bounced";
 
-  return <p className={cn("mt-1.5 text-[11px]", failed ? "text-red-700" : "text-muted-foreground")}>{text}</p>;
+  return <p className={cn("mt-1.5 text-sm", failed ? "text-red-700" : "text-muted-foreground")}>{text}</p>;
 }
 
 function FilterTab({ href, label, active }: { href: string; label: string; active: boolean }) {
@@ -197,7 +197,7 @@ function FilterTab({ href, label, active }: { href: string; label: string; activ
     <Link
       href={href}
       className={cn(
-        "-mb-px border-b-2 px-3 py-2 text-[13px] font-medium transition-colors",
+        "-mb-px border-b-2 px-3 py-2 text-base font-medium transition-colors",
         active
           ? "border-tup-maroon-600 text-foreground"
           : "border-transparent text-muted-foreground hover:text-foreground",

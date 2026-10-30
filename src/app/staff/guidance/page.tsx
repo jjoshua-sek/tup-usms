@@ -124,7 +124,7 @@ export default async function StaffGuidancePage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-[13px] font-semibold capitalize">
+                    <p className="text-base font-semibold capitalize">
                       {session.session_type.replace(/_/g, " ")}
                     </p>
                     <ToneBadge
@@ -132,14 +132,14 @@ export default async function StaffGuidancePage() {
                       tone={STATUS_TONE[session.status] ?? "neutral"}
                     />
                     {session.confidentiality === "counselor_only" && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
                         <Lock className="h-3 w-3" />
                         counselor-only notes
                       </span>
                     )}
                   </div>
 
-                  <p className="mt-1 text-[13px]">
+                  <p className="mt-1 text-base">
                     {session.students ? (
                       <Link
                         href={`/staff/students/${session.students.id}`}
@@ -150,26 +150,26 @@ export default async function StaffGuidancePage() {
                     ) : (
                       "Unknown student"
                     )}
-                    <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                    <span className="ml-2 font-mono text-sm text-muted-foreground">
                       {session.students?.student_number}
                     </span>
                   </p>
 
                   {session.presenting_concern && (
-                    <p className="mt-1 text-[12px] text-muted-foreground">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {session.presenting_concern}
                       {session.concern_category ? ` · ${session.concern_category}` : ""}
                     </p>
                   )}
 
                   {session.summary && (
-                    <p className="mt-1.5 rounded-md bg-muted p-2 text-[12px]">
+                    <p className="mt-1.5 rounded-md bg-muted p-2 text-sm">
                       {session.summary}
                     </p>
                   )}
                 </div>
 
-                <div className="shrink-0 text-right text-[11px] text-muted-foreground">
+                <div className="shrink-0 text-right text-sm text-muted-foreground">
                   <p>{formatManilaDate(session.started_at ?? session.scheduled_at)}</p>
                   {session.follow_up_required && (
                     <p className="mt-0.5 text-amber-700">
@@ -183,7 +183,7 @@ export default async function StaffGuidancePage() {
         </ul>
       )}
 
-      <p className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
         Sessions marked counselor-only are readable by the counselor who wrote them and no
         one else — not the OSA head, not administrators. Discipline staff see that a session
         took place, never what was said.

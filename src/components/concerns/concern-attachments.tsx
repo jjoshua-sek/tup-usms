@@ -20,7 +20,7 @@ export function ConcernAttachments({ attachments }: { attachments: ConcernAttach
               href={`/api/concerns/attachments/${attachment.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-xs transition-colors hover:bg-accent"
+              className="group flex items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-sm transition-colors hover:bg-accent"
             >
               <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <span className="truncate group-hover:underline">{attachment.file_name}</span>

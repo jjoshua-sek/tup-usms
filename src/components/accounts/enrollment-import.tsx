@@ -96,23 +96,23 @@ export function EnrollmentImport() {
         <form action={check} className="space-y-3">
           {pasting ? (
             <label className="block space-y-1">
-              <span className="text-[12px] font-medium">Paste the list (CSV, with a header row)</span>
+              <span className="text-sm font-medium">Paste the list (CSV, with a header row)</span>
               <textarea
                 name="csv"
                 rows={6}
                 spellCheck={false}
                 placeholder={"student_number,first_name,last_name,email,program,year_level,section\nTUPM-99-0001,Juan,Dela Cruz,you+juan@gmail.com,BSIT,1st Year,A"}
-                className="w-full rounded-md border border-border bg-background px-2.5 py-2 font-mono text-[12px] focus:border-tup-maroon-600 focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-2.5 py-2 font-mono text-sm focus:border-tup-maroon-600 focus:outline-none"
               />
             </label>
           ) : (
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border px-4 py-6 text-center hover:bg-muted/40">
               <UploadCloud className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-              <span className="text-[13px] font-medium">Choose the enrollment list (.csv)</span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-base font-medium">Choose the enrollment list (.csv)</span>
+              <span className="text-sm text-muted-foreground">
                 Export it from a spreadsheet as CSV. Up to 1,000 students per file.
               </span>
-              <input name="file" type="file" accept=".csv,text/csv" className="text-[12px]" />
+              <input name="file" type="file" accept=".csv,text/csv" className="text-sm" />
             </label>
           )}
 
@@ -132,14 +132,14 @@ export function EnrollmentImport() {
             <button
               type="button"
               onClick={() => setPasting((value) => !value)}
-              className="text-[12px] text-muted-foreground underline-offset-2 hover:underline"
+              className="text-sm text-muted-foreground underline-offset-2 hover:underline"
             >
               {pasting ? "Upload a file instead" : "Paste the list instead"}
             </button>
             <a
               href="/templates/enrollment-template.csv"
               download
-              className="inline-flex items-center gap-1 text-[12px] text-tup-maroon-600 underline-offset-2 hover:underline"
+              className="inline-flex items-center gap-1 text-sm text-tup-maroon-600 underline-offset-2 hover:underline"
             >
               <Download className="h-3.5 w-3.5" aria-hidden="true" />
               Template
@@ -149,14 +149,14 @@ export function EnrollmentImport() {
       )}
 
       {preview?.fileErrors && preview.fileErrors.length > 0 && (
-        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-[13px] text-red-900">
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-base text-red-900">
           {preview.fileErrors.map((message) => (
             <p key={message}>{message}</p>
           ))}
           <button
             type="button"
             onClick={() => setPreview(null)}
-            className="mt-2 text-[12px] font-medium underline-offset-2 hover:underline"
+            className="mt-2 text-sm font-medium underline-offset-2 hover:underline"
           >
             Choose another file
           </button>
@@ -165,7 +165,7 @@ export function EnrollmentImport() {
 
       {rows.length > 0 && (
         <div className="space-y-3">
-          <p className="text-[13px]">
+          <p className="text-base">
             <span className="font-semibold text-emerald-700">{ready.length} ready</span>
             {existing.length > 0 && (
               <span className="text-muted-foreground"> · {existing.length} already have accounts (skipped)</span>
@@ -176,8 +176,8 @@ export function EnrollmentImport() {
           </p>
 
           <div className="max-h-80 overflow-auto rounded-lg border border-border">
-            <table className="w-full min-w-[640px] text-left text-[12px]">
-              <thead className="sticky top-0 bg-muted text-[10px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="sticky top-0 bg-muted text-sm text-muted-foreground font-medium">
                 <tr>
                   <th scope="col" className="px-3 py-2">Line</th>
                   <th scope="col" className="px-3 py-2">Student</th>
@@ -233,7 +233,7 @@ export function EnrollmentImport() {
                   style={{ width: `${Math.round((progress.done / Math.max(progress.total, 1)) * 100)}%` }}
                 />
               </div>
-              <p className="text-[11px] tabular-nums text-muted-foreground">
+              <p className="text-sm tabular-nums text-muted-foreground">
                 Created {progress.done} of {progress.total}…
               </p>
             </div>
@@ -257,7 +257,7 @@ export function EnrollmentImport() {
               type="button"
               disabled={isPending}
               onClick={() => setPreview(null)}
-              className="text-[12px] text-muted-foreground underline-offset-2 hover:underline"
+              className="text-sm text-muted-foreground underline-offset-2 hover:underline"
             >
               Start over
             </button>
@@ -266,7 +266,7 @@ export function EnrollmentImport() {
       )}
 
       {summary && (
-        <div role="status" className="rounded-lg border border-border bg-muted/40 p-3 text-[13px]">
+        <div role="status" className="rounded-lg border border-border bg-muted/40 p-3 text-base">
           <p>
             <span className="font-semibold">{summary.created} created.</span>
             {summary.exists > 0 && ` ${summary.exists} already had accounts.`}
@@ -275,13 +275,13 @@ export function EnrollmentImport() {
             )}
           </p>
           {summary.created > 0 && (
-            <p className="mt-1 text-[12px] text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Sign-in links go out automatically, a few each minute, and appear under Invitations
               below as they are sent.
             </p>
           )}
           {summary.failed.length > 0 && (
-            <ul className="mt-1 text-[12px] text-red-800">
+            <ul className="mt-1 text-sm text-red-800">
               {summary.failed.map((result, index) => (
                 <li key={`${result.student_number}-${index}`}>
                   {result.student_number}: {result.message}

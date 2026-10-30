@@ -31,9 +31,9 @@ export function EmptyState({
       )}
     >
       <Icon className="h-6 w-6 text-muted-foreground/50" />
-      <p className="text-sm font-medium">{title}</p>
+      <p className="text-base font-medium">{title}</p>
       {description && (
-        <p className="max-w-sm text-[13px] leading-relaxed text-muted-foreground">
+        <p className="max-w-sm text-base leading-relaxed text-muted-foreground">
           {description}
         </p>
       )}

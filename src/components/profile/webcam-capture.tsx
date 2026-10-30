@@ -203,7 +203,7 @@ export function WebcamCapture({ onCapture, onCancel }: WebcamCaptureProps) {
         />
         {/* Loading overlay until camera ready */}
         {!isReady && (
-          <div className="absolute inset-0 flex items-center justify-center text-white text-sm">
+          <div className="absolute inset-0 flex items-center justify-center text-white text-base">
             Starting camera...
           </div>
         )}
@@ -234,7 +234,7 @@ export function WebcamCapture({ onCapture, onCancel }: WebcamCaptureProps) {
         </Button>
       </div>
 
-      <p className="text-xs text-center text-muted-foreground">
+      <p className="text-sm text-center text-muted-foreground">
         Position your face inside the bordered area for the best ID photo.
       </p>
     </div>

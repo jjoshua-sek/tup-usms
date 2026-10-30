@@ -124,8 +124,8 @@ export default async function RecordsPage() {
           />
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <table className="w-full text-[13px]">
-              <thead className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full text-base">
+              <thead className="border-b border-border text-left text-sm text-muted-foreground font-medium">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Term</th>
                   <th className="px-4 py-2.5 font-medium">GWA</th>
@@ -203,16 +203,16 @@ export default async function RecordsPage() {
                 <li key={document.id} className="flex items-start gap-3 px-4 py-3">
                   <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium">
+                    <p className="truncate text-base font-medium">
                       {DOC_LABELS[document.document_type] ?? document.document_type}
                       <span className="ml-2 text-muted-foreground">
                         {document.semester}, {document.school_year}
                       </span>
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {document.file_name} · uploaded {formatManilaDate(document.uploaded_at)}
                     </p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                       {document.rejection_reason ?? meta.hint}
                     </p>
                   </div>
@@ -224,7 +224,7 @@ export default async function RecordsPage() {
         )}
       </section>
 
-      <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         <strong className="text-foreground">Why we ask:</strong> grades and units let the
         OSA spot students who may need academic support early, and let scholarship
         eligibility be checked against real figures instead of estimates. Files are private,

@@ -62,9 +62,9 @@ export function AccessFeed({ initialEvents }: AccessFeedProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <p className="font-display text-sm font-semibold">Live gate activity</p>
+        <p className="font-display text-base font-semibold">Live gate activity</p>
         <span
-          className={`inline-flex items-center gap-1.5 text-[11px] ${
+          className={`inline-flex items-center gap-1.5 text-sm ${
             live ? "text-emerald-600" : "text-muted-foreground"
           }`}
         >
@@ -74,7 +74,7 @@ export function AccessFeed({ initialEvents }: AccessFeedProps) {
       </div>
 
       {events.length === 0 ? (
-        <p className="p-8 text-center text-sm text-muted-foreground">
+        <p className="p-8 text-center text-base text-muted-foreground">
           No scans recorded yet today.
         </p>
       ) : (
@@ -94,19 +94,19 @@ export function AccessFeed({ initialEvents }: AccessFeedProps) {
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-medium">
+                  <p className="truncate text-base font-medium">
                     <span className="font-mono">
                       {event.normalized_student_number ?? "unreadable"}
                     </span>
                     <span className="ml-2 text-muted-foreground">{event.gate_label}</span>
                   </p>
-                  <p className="truncate text-[11px] text-muted-foreground">
+                  <p className="truncate text-sm text-muted-foreground">
                     {meta?.staffLabel ?? event.reason}
                     {monitorOnly ? " · monitor mode, not blocked" : ""}
                   </p>
                 </div>
 
-                <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
                   {event.direction === "entry" ? (
                     <ArrowDownLeft className="h-3 w-3" />
                   ) : (

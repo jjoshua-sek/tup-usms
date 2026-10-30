@@ -229,7 +229,7 @@ export function ConcernFormInline() {
             and staff can read student records regardless. Say so plainly
             rather than offer a promise the system cannot keep. */}
         <Field label="Who sees this">
-          <p className="flex min-h-9 items-center rounded-md border border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+          <p className="flex min-h-9 items-center rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground">
             OSA staff see your name and student details, so they can follow up with you.
           </p>
         </Field>
@@ -237,7 +237,7 @@ export function ConcernFormInline() {
 
       {isComplaint && (
         <div className="space-y-4 rounded-md border border-border bg-muted/40 p-4">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             A complaint against another student. The OSA reviews it and decides whether to file a case. If it does,
             the case names you only as &ldquo;a student&rdquo;, and you can follow it here in your concern.
           </p>
@@ -339,7 +339,7 @@ Examples: schedule conflicts, guidance consultations, document requests, account
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isPending || preparing}
-          className="w-full border-[1.5px] border-dashed border-border rounded-md p-6 text-center text-muted-foreground text-xs bg-accent hover:bg-muted transition-colors"
+          className="w-full border-[1.5px] border-dashed border-border rounded-md p-6 text-center text-muted-foreground text-sm bg-accent hover:bg-muted transition-colors"
         >
           {preparing ? (
             <>
@@ -355,8 +355,8 @@ Examples: schedule conflicts, guidance consultations, document requests, account
               </span>
             </>
           )}
-          <div className="mt-1 text-[11px]">{CONCERN_ATTACHMENT_HINT}</div>
-          <div className="text-[11px]">
+          <div className="mt-1 text-sm">{CONCERN_ATTACHMENT_HINT}</div>
+          <div className="text-sm">
             Photos are shrunk before upload. Only you and OSA staff can open them.
           </div>
         </button>
@@ -365,7 +365,7 @@ Examples: schedule conflicts, guidance consultations, document requests, account
             {attachments.map((file, i) => (
               <div
                 key={i}
-                className="flex justify-between items-center text-xs px-2.5 py-1.5 bg-muted rounded-md"
+                className="flex justify-between items-center text-sm px-2.5 py-1.5 bg-muted rounded-md"
               >
                 <span className="truncate">{file.name}</span>
                 <span className="flex items-center gap-1.5 shrink-0 ml-2">
@@ -482,16 +482,16 @@ interface FieldProps {
 function Field({ label, required, helper, rightHint, error, children }: FieldProps) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium">
+      <Label className="text-sm font-medium">
         {label}
         {required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
-      <div className="flex justify-between items-baseline text-[11px] text-muted-foreground">
+      <div className="flex justify-between items-baseline text-sm text-muted-foreground">
         <span>{helper}</span>
         {rightHint && <span className="tabular-nums">{rightHint}</span>}
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

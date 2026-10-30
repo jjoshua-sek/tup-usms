@@ -24,7 +24,7 @@ export async function AccountActivity({ userId }: { userId: string }) {
 
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-base text-muted-foreground">
         No account activity recorded yet. Your next sign-in will appear here.
       </p>
     );
@@ -32,7 +32,7 @@ export async function AccountActivity({ userId }: { userId: string }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-[13px]">
+      <table className="w-full text-left text-base">
         <thead className="border-b border-border text-muted-foreground">
           <tr>
             <th className="py-2 pr-4 font-medium">When</th>
@@ -49,16 +49,16 @@ export async function AccountActivity({ userId }: { userId: string }) {
                 <td className="whitespace-nowrap py-2 pr-4">{formatManilaDateTime(row.created_at)}</td>
                 <td className="py-2 pr-4">
                   <span className="font-medium">{label}</span>
-                  {note && <span className="block text-[12px] text-muted-foreground">{note}</span>}
+                  {note && <span className="block text-sm text-muted-foreground">{note}</span>}
                 </td>
                 <td className="py-2 pr-4">{describeUserAgent(row.user_agent)}</td>
-                <td className="py-2 font-mono text-[12px]">{row.ip_address ?? "—"}</td>
+                <td className="py-2 font-mono text-sm">{row.ip_address ?? "—"}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
-      <p className="mt-3 text-[12px] text-muted-foreground">
+      <p className="mt-3 text-sm text-muted-foreground">
         Don&apos;t recognise something? Change your password now, then tell the Office of Student Affairs.
       </p>
     </div>

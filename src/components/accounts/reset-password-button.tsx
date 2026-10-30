@@ -24,7 +24,7 @@ export function ResetPasswordButton({ invitationId }: { invitationId: string }) 
           else toast.success(result.message ?? "Reset link queued.");
         })
       }
-      className="inline-flex items-center gap-1 whitespace-nowrap text-[12px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline disabled:opacity-50"
+      className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline disabled:opacity-50"
     >
       {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
       Send password reset link

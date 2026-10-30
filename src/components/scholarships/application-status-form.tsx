@@ -65,4 +65,4 @@ export function ApplicationStatusForm({
 }
 
 const inputClass =
-  "rounded-md border border-border bg-background px-2 py-1 text-[11px] focus:border-tup-maroon-600 focus:outline-none";
+  "rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";

@@ -34,19 +34,19 @@ export default function ErrorScreen({
           <h1 className="font-display text-lg font-semibold">That didn&apos;t go through</h1>
         </div>
 
-        <p className="mt-3 text-[14px] leading-relaxed">
+        <p className="mt-3 text-base leading-relaxed">
           {readable ?? "Something went wrong on our side. Try again in a moment."}
         </p>
 
         {error.digest && (
-          <p className="mt-2 font-mono text-[11px] text-muted-foreground">Reference: {error.digest}</p>
+          <p className="mt-2 font-mono text-sm text-muted-foreground">Reference: {error.digest}</p>
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-tup-maroon-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-tup-maroon-700"
+            className="inline-flex items-center gap-1.5 rounded-md bg-tup-maroon-600 px-3.5 py-2 text-base font-medium text-white hover:bg-tup-maroon-700"
           >
             <RotateCw className="h-4 w-4" aria-hidden="true" />
             Reload the page
@@ -54,11 +54,11 @@ export default function ErrorScreen({
           <button
             type="button"
             onClick={reset}
-            className="rounded-md border border-border px-3.5 py-2 text-sm hover:bg-muted"
+            className="rounded-md border border-border px-3.5 py-2 text-base hover:bg-muted"
           >
             Try again
           </button>
-          <Link href="/login" className="rounded-md px-3.5 py-2 text-sm text-muted-foreground hover:bg-muted">
+          <Link href="/login" className="rounded-md px-3.5 py-2 text-base text-muted-foreground hover:bg-muted">
             Go to sign in
           </Link>
         </div>

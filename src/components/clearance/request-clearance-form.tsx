@@ -47,7 +47,7 @@ export function RequestClearanceForm() {
       className="space-y-3 rounded-xl border border-border bg-card p-5"
     >
       <div className="flex items-center justify-between">
-        <p className="font-display text-sm font-semibold">New clearance request</p>
+        <p className="font-display text-base font-semibold">New clearance request</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -59,7 +59,7 @@ export function RequestClearanceForm() {
       </div>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">What do you need?</span>
+        <span className="text-sm font-medium">What do you need?</span>
         <select name="request_type" defaultValue="good_moral" className={inputClass}>
           {TYPES.map((type) => (
             <option key={type.value} value={type.value}>
@@ -70,7 +70,7 @@ export function RequestClearanceForm() {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">What is it for?</span>
+        <span className="text-sm font-medium">What is it for?</span>
         <input
           name="purpose"
           required
@@ -78,7 +78,7 @@ export function RequestClearanceForm() {
           placeholder="e.g. Board exam application, employment requirement, transfer to another school"
           className={inputClass}
         />
-        <span className="block text-[11px] text-muted-foreground">
+        <span className="block text-sm text-muted-foreground">
           The purpose is printed on the certificate, so be specific.
         </span>
       </label>
@@ -96,4 +96,4 @@ export function RequestClearanceForm() {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

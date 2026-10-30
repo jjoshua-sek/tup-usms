@@ -132,7 +132,7 @@ export default async function DashboardPage() {
       >
         <Link
           href="/concerns/new"
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           Submit a Concern
@@ -187,7 +187,7 @@ export default async function DashboardPage() {
       {/* Quick Access section */}
       <div className="flex items-baseline justify-between mb-3.5">
         <h2 className="text-base font-semibold">Quick Access</h2>
-        <span className="text-xs text-muted-foreground font-mono">
+        <span className="text-sm text-muted-foreground font-mono">
           6 modules
         </span>
       </div>

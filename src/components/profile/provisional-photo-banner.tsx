@@ -41,10 +41,10 @@ export function ProvisionalPhotoBanner({
         <Clock className="h-4 w-4 text-amber-600" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+        <p className="text-base font-medium text-amber-900 dark:text-amber-200">
           You&apos;re using a provisional photo
         </p>
-        <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
+        <p className="text-sm text-amber-700/80 dark:text-amber-300/80">
           Replace it anytime with a clearer photo for your student ID.
         </p>
       </div>

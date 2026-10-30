@@ -248,11 +248,11 @@ export default async function StaffIdValidationPage({
             name="q"
             defaultValue={q ?? ""}
             placeholder="Student number or name, e.g. TUPM-22-0148"
-            className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm focus:border-tup-maroon-600 focus:outline-none"
+            className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-base focus:border-tup-maroon-600 focus:outline-none"
           />
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-base font-medium hover:bg-muted"
           >
             <Search className="h-4 w-4" />
             Find
@@ -261,7 +261,7 @@ export default async function StaffIdValidationPage({
 
         {tokens.length > 0 &&
           (matches.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No student matches &ldquo;{q}&rdquo;.</p>
+            <p className="text-base text-muted-foreground">No student matches &ldquo;{q}&rdquo;.</p>
           ) : (
             <ul className="space-y-2">
               {matches.map(({ student, record }) => (
@@ -269,7 +269,7 @@ export default async function StaffIdValidationPage({
                   <StudentPhoto student={student} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-display text-[15px] font-semibold">
+                      <p className="font-display text-base font-semibold">
                         {student.first_name} {student.last_name}
                       </p>
                       {record ? (
@@ -282,7 +282,7 @@ export default async function StaffIdValidationPage({
                   </div>
                   <div className="w-full sm:w-auto">
                     {!student.photo_url ? (
-                      <p className="max-w-[260px] text-[12px] text-muted-foreground">
+                      <p className="max-w-[260px] text-sm text-muted-foreground">
                         No profile photo on file. The student must add one before the ID can be validated.
                       </p>
                     ) : record && offline && OFFLINE_COUNTER_STATUSES.has(record.status) ? (
@@ -291,7 +291,7 @@ export default async function StaffIdValidationPage({
                       DECISIONS[record.status].length > 0 ? (
                         <ReviewControls validationId={record.id} decisions={DECISIONS[record.status]} />
                       ) : (
-                        <p className="text-[12px] text-muted-foreground">Handed in on clearance.</p>
+                        <p className="text-sm text-muted-foreground">Handed in on clearance.</p>
                       )
                     ) : (
                       <CounterValidateForm studentId={student.id} termLabel={term.label} />
@@ -314,14 +314,14 @@ export default async function StaffIdValidationPage({
             {reviews.map((review) => (
               <li key={review.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50/60 p-4 dark:border-amber-800 dark:bg-amber-950/20">
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-[15px] font-semibold">
+                  <p className="font-display text-base font-semibold">
                     {review.students ? `${review.students.first_name} ${review.students.last_name}` : "Unknown student"}
                     {review.students && (
-                      <span className="ml-2 font-mono text-[12px] font-normal text-muted-foreground">{review.students.student_number}</span>
+                      <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">{review.students.student_number}</span>
                     )}
                   </p>
-                  <p className="mt-0.5 text-[13px]">{review.detail}</p>
-                  <p className="mt-1 text-[12px] text-muted-foreground">Happened offline on {offlineMoment(review.occurred_at)}</p>
+                  <p className="mt-0.5 text-base">{review.detail}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Happened offline on {offlineMoment(review.occurred_at)}</p>
                 </div>
                 <OfflineReviewButton uploadId={review.id} />
               </li>
@@ -380,12 +380,12 @@ function CounterDocuments({ documents }: { documents: AcademicDocument[] }) {
   if (documents.length === 0) return null;
   return (
     <div className="w-full space-y-2 border-t border-border pt-3">
-      <p className="text-[12px] text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Uploads waiting for verification. Scan the stamped copies the student handed you.
       </p>
       {documents.map((document) => (
         <div key={document.id}>
-          <p className="mb-1 text-[11px] font-medium">
+          <p className="mb-1 text-sm font-medium">
             {DOCUMENT_LABELS[document.document_type]}
             <span className="ml-1.5 font-normal text-muted-foreground">
               {document.semester}, {document.school_year}
@@ -398,7 +398,7 @@ function CounterDocuments({ documents }: { documents: AcademicDocument[] }) {
               initial={document.scan_comparison}
             />
           ) : (
-            <p className="rounded-md bg-muted p-2 text-[11px] text-muted-foreground">
+            <p className="rounded-md bg-muted p-2 text-sm text-muted-foreground">
               Not read yet, so there is nothing to compare. Open it on Document Review and use Re-read with AI.
             </p>
           )}
@@ -423,9 +423,9 @@ function Section({
     <section className="mb-8">
       <h2 className="font-display text-lg font-semibold tracking-tight">
         {title}
-        {count !== undefined && <span className="ml-2 text-sm font-normal text-muted-foreground">{count}</span>}
+        {count !== undefined && <span className="ml-2 text-base font-normal text-muted-foreground">{count}</span>}
       </h2>
-      {note && <p className="mt-0.5 text-[13px] text-muted-foreground">{note}</p>}
+      {note && <p className="mt-0.5 text-base text-muted-foreground">{note}</p>}
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -440,7 +440,7 @@ function ValidationList({ rows, total, newestFirst }: { rows: ValidationRow[]; t
         ))}
       </ul>
       {total > rows.length && (
-        <p className="mt-2 text-[12px] text-muted-foreground">
+        <p className="mt-2 text-sm text-muted-foreground">
           Showing the {newestFirst ? "most recent" : "first"} {rows.length} of {total}. Use the counter search above to
           find a particular student.
         </p>
@@ -462,7 +462,7 @@ function StudentPhoto({ student }: { student: StudentSummary | null }) {
 
 function StudentLine({ student }: { student: StudentSummary | null }) {
   return (
-    <p className="font-mono text-[11px] text-muted-foreground">
+    <p className="font-mono text-sm text-muted-foreground">
       {student?.student_number ?? "—"}
       {student?.program ? ` · ${student.program}` : ""}
       {student?.year_level ? ` · ${student.year_level}` : ""}
@@ -480,19 +480,19 @@ function ValidationCard({ row }: { row: ValidationRow }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-display text-[15px] font-semibold">
+          <p className="font-display text-base font-semibold">
             {student ? `${student.first_name} ${student.last_name}` : "Unknown student"}
           </p>
           <ToneBadge label={meta.label} tone={meta.tone} />
         </div>
         <StudentLine student={student} />
-        <p className="mt-1 text-[11px] text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Requested {formatManilaMonthDayTime(row.submitted_at)}
           {row.validated_at ? ` · validated ${formatManilaMonthDayTime(row.validated_at)}` : ""}
           {row.validation_sticker_number ? ` · sticker ${row.validation_sticker_number}` : ""}
         </p>
         {row.rejection_reason && (
-          <p className="mt-1.5 rounded-md bg-muted p-2 text-[12px]">
+          <p className="mt-1.5 rounded-md bg-muted p-2 text-sm">
             <strong>Noted:</strong> {row.rejection_reason}
           </p>
         )}

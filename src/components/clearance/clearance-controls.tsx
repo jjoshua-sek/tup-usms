@@ -49,7 +49,7 @@ export function ResolveHoldButton({ holdId }: { holdId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
       >
         <CheckCircle2 className="h-3 w-3" />
         Clear hold
@@ -64,7 +64,7 @@ export function ResolveHoldButton({ holdId }: { holdId: string }) {
         onChange={(event) => setNotes(event.target.value)}
         maxLength={500}
         placeholder="How was it resolved?"
-        className="min-w-[160px] flex-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] focus:border-tup-maroon-600 focus:outline-none"
+        className="min-w-[160px] flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none"
       />
       <Button
         type="button"
@@ -146,4 +146,4 @@ export function AdvanceClearanceForm({ requestId, requestType }: { requestId: st
 }
 
 const inputClass =
-  "rounded-md border border-border bg-background px-2 py-1 text-[11px] focus:border-tup-maroon-600 focus:outline-none";
+  "rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";

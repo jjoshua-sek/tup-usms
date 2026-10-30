@@ -31,7 +31,7 @@ export function ViewFileButton({ documentId }: { documentId: string }) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-tup-maroon-600 transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium text-tup-maroon-600 transition-colors hover:bg-muted"
       >
         <ExternalLink className="h-3 w-3" />
         Open file (5 min link)
@@ -53,7 +53,7 @@ export function ViewFileButton({ documentId }: { documentId: string }) {
           setUrl(result.url);
         })
       }
-      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
     >
       {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
       View document
@@ -76,7 +76,7 @@ export function RerunExtractionButton({ documentId }: { documentId: string }) {
           else toast.success(result.message ?? "Read.");
         })
       }
-      className="inline-flex items-center gap-1 rounded-md border border-ai-accent px-2 py-1 text-[11px] font-medium text-ai-accent transition-colors hover:bg-ai-accent-soft"
+      className="inline-flex items-center gap-1 rounded-md border border-ai-accent px-2 py-1 text-sm font-medium text-ai-accent transition-colors hover:bg-ai-accent-soft"
     >
       {isPending ? (
         <Loader2 className="h-3 w-3 animate-spin" />
@@ -109,7 +109,7 @@ export function DocumentReviewForms({
         <button
           type="button"
           onClick={() => setMode("verify")}
-          className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+          className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
         >
           <ThumbsUp className="h-3 w-3" />
           Verify on screen
@@ -117,7 +117,7 @@ export function DocumentReviewForms({
         <button
           type="button"
           onClick={() => setMode("reject")}
-          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
         >
           <ThumbsDown className="h-3 w-3" />
           Reject
@@ -193,7 +193,7 @@ export function DocumentReviewForms({
       <Header title="Confirm the figures" onCancel={() => setMode("idle")} />
 
       {extracted && (
-        <p className="rounded-md bg-ai-accent-soft p-2 text-[11px] leading-relaxed text-ai-accent">
+        <p className="rounded-md bg-ai-accent-soft p-2 text-sm leading-relaxed text-ai-accent">
           <Sparkles className="mr-1 inline h-3 w-3" />
           Pre-filled from the document. Check each figure against the page before
           confirming — you are the one signing for these numbers.
@@ -204,7 +204,7 @@ export function DocumentReviewForms({
         {/* A COR has no grades yet — only what the student enrolled in. */}
         {!isCor && (
           <label className="block space-y-1">
-            <span className="text-[10px] font-medium">GWA</span>
+            <span className="text-sm font-medium">GWA</span>
             <input
               name="gwa"
               type="number"
@@ -218,7 +218,7 @@ export function DocumentReviewForms({
           </label>
         )}
         <label className="block space-y-1">
-          <span className="text-[10px] font-medium">Units enrolled</span>
+          <span className="text-sm font-medium">Units enrolled</span>
           <input
             name="units_enrolled"
             type="number"
@@ -231,7 +231,7 @@ export function DocumentReviewForms({
         {!isCor && (
           <>
             <label className="block space-y-1">
-              <span className="text-[10px] font-medium">Units passed</span>
+              <span className="text-sm font-medium">Units passed</span>
               <input
                 name="units_passed"
                 type="number"
@@ -242,7 +242,7 @@ export function DocumentReviewForms({
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-[10px] font-medium">Units failed</span>
+              <span className="text-sm font-medium">Units failed</span>
               <input
                 name="units_failed"
                 type="number"
@@ -255,7 +255,7 @@ export function DocumentReviewForms({
           </>
         )}
         <label className="block space-y-1">
-          <span className="text-[10px] font-medium">Standing</span>
+          <span className="text-sm font-medium">Standing</span>
           <input
             name="scholastic_status"
             maxLength={60}
@@ -268,7 +268,7 @@ export function DocumentReviewForms({
 
       {standing && (
         <div
-          className={`rounded-md p-2 text-[11px] leading-relaxed ${
+          className={`rounded-md p-2 text-sm leading-relaxed ${
             standing.standing === "regular"
               ? "bg-muted text-muted-foreground"
               : "bg-amber-50 text-amber-900"
@@ -300,7 +300,7 @@ export function DocumentReviewForms({
       {/* Subject-level read, so an officer can spot a misread row */}
       {(extracted?.subjects?.length ?? 0) > 0 && (
         <details className="rounded-md border border-border p-2">
-          <summary className="cursor-pointer text-[11px] font-medium">
+          <summary className="cursor-pointer text-sm font-medium">
             {extracted!.subjects!.length} subjects read
             {isCor
               ? ` · ${extracted!.subjects!.reduce(
@@ -311,7 +311,7 @@ export function DocumentReviewForms({
           </summary>
           <ul className="mt-2 space-y-1">
             {extracted!.subjects!.map((subject, index) => (
-              <li key={`${subject.subject_code ?? index}`} className="text-[11px]">
+              <li key={`${subject.subject_code ?? index}`} className="text-sm">
                 <span className="font-mono">{subject.subject_code ?? "—"}</span>
                 {subject.units != null && (
                   <span className="text-muted-foreground"> · {subject.units}u</span>
@@ -334,7 +334,7 @@ export function DocumentReviewForms({
             ))}
           </ul>
           {isCor && (
-            <p className="mt-2 text-[10px] text-muted-foreground">
+            <p className="mt-2 text-sm text-muted-foreground">
               Verifying imports these class times into the student&apos;s schedule, so
               hearings aren&apos;t booked on top of a lecture.
             </p>
@@ -365,7 +365,7 @@ export function DocumentReviewForms({
 function Header({ title, onCancel }: { title: string; onCancel: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <p className="text-xs font-semibold">{title}</p>
+      <p className="text-sm font-semibold">{title}</p>
       <button
         type="button"
         onClick={onCancel}
@@ -379,4 +379,4 @@ function Header({ title, onCancel }: { title: string; onCancel: () => void }) {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2 py-1 text-[11px] focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";

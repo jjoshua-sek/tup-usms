@@ -76,7 +76,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
               <div className="min-w-0">
                 {/* Campus time, not the viewer's: the meeting happens in Manila,
                     and the server prerender has to print the same thing. */}
-                <p className="text-[13px] font-medium">
+                <p className="text-base font-medium">
                   {formatManila(proposal.proposed_start, {
                     weekday: "long",
                     month: "long",
@@ -88,7 +88,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                   {formatManilaTime(proposal.proposed_end)}
                 </p>
                 {proposal.rationale && (
-                  <p className="mt-0.5 flex items-start gap-1 text-[11px] text-ai-accent">
+                  <p className="mt-0.5 flex items-start gap-1 text-sm text-ai-accent">
                     <Sparkles className="mt-0.5 h-3 w-3 shrink-0" />
                     {proposal.rationale}
                   </p>
@@ -96,7 +96,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="font-mono text-sm text-muted-foreground">
                   score {proposal.score.toFixed(2)}
                 </span>
                 <Button
@@ -127,7 +127,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                 <input type="hidden" name="proposal_id" value={proposal.id} />
 
                 <label className="block space-y-1">
-                  <span className="text-[11px] font-medium">Meeting type</span>
+                  <span className="text-sm font-medium">Meeting type</span>
                   <select name="hearing_type" defaultValue="conference" className={inputClass}>
                     {HEARING_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -138,7 +138,7 @@ export function ProposalPicker({ proposals }: { proposals: ProposalView[] }) {
                 </label>
 
                 <label className="block space-y-1">
-                  <span className="text-[11px] font-medium">Venue</span>
+                  <span className="text-sm font-medium">Venue</span>
                   <input
                     name="venue"
                     defaultValue="OSA Office"
@@ -259,7 +259,7 @@ export function CaseStatusForm({
       <input type="hidden" name="case_id" value={caseId} />
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Move case to</span>
+        <span className="text-sm font-medium">Move case to</span>
         <select name="status" defaultValue={currentStatus} className={inputClass}>
           {CASE_STATUSES.map((status) => (
             <option key={status} value={status}>
@@ -286,4 +286,4 @@ export function CaseStatusForm({
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

@@ -160,7 +160,7 @@ export function Step1Personal({
             <Alert variant="destructive">
               <AlertDescription>
                 <p className="font-medium mb-1">Please fix these issues:</p>
-                <ul className="list-disc ml-4 space-y-0.5 text-xs">
+                <ul className="list-disc ml-4 space-y-0.5 text-sm">
                   {errorEntries.slice(0, 5).map(([field, error]) => (
                     <li key={field}>
                       <span className="font-mono">{field.replace(/_/g, " ")}</span>:{" "}
@@ -179,7 +179,7 @@ export function Step1Personal({
 
           {/* Name */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-semibold text-muted-foreground">
               Full Name
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -202,7 +202,7 @@ export function Step1Personal({
 
           {/* Personal details */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-semibold text-muted-foreground">
               Personal Details
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -264,7 +264,7 @@ export function Step1Personal({
 
           {/* Contact */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-semibold text-muted-foreground">
               Contact
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -285,7 +285,7 @@ export function Step1Personal({
 
           {/* Address */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-semibold text-muted-foreground">
               Address
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -340,10 +340,10 @@ export function Step1Personal({
               </div>
               <div className="flex-1 space-y-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                  <p className="text-sm font-semibold text-primary">
                     Data Privacy Act Consent — Required
                   </p>
-                  <p className="text-sm mt-1">
+                  <p className="text-base mt-1">
                     Per RA 10173, we need your explicit consent before
                     collecting and processing your personal information.
                   </p>
@@ -388,7 +388,7 @@ export function Step1Personal({
                   />
                   <label
                     htmlFor="dpa_consent"
-                    className="text-sm flex-1 cursor-pointer select-none"
+                    className="text-base flex-1 cursor-pointer select-none"
                   >
                     I have read and consent to the collection and processing
                     of my personal data.
@@ -396,14 +396,14 @@ export function Step1Personal({
                 </div>
 
                 {!dpaConsent && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Open the notice above and choose &ldquo;I understand and
                     agree&rdquo; to continue.
                   </p>
                 )}
 
                 {errors.dpa_consent && (
-                  <p className="text-xs text-destructive">
+                  <p className="text-sm text-destructive">
                     {errors.dpa_consent.message}
                   </p>
                 )}
@@ -455,13 +455,13 @@ interface FieldProps {
 function Field({ label, required, error, hint, children }: FieldProps) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs">
+      <Label className="text-sm">
         {label}
         {required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
-      {hint && !error && <p className="text-[10px] text-muted-foreground">{hint}</p>}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {hint && !error && <p className="text-sm text-muted-foreground">{hint}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

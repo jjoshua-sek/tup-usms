@@ -49,7 +49,7 @@ export function StaffConcernForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-5 rounded-md border border-border bg-card p-5 sm:p-6">
       {error && (
-        <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-base text-destructive">
           {error}
         </p>
       )}
@@ -87,11 +87,11 @@ export function StaffConcernForm() {
           <Field label="Referred by" error={fieldError("referred_by")}>
             <input name="referred_by" required maxLength={120} placeholder="e.g. Prof. Maria Santos, CIT" className={inputClass} />
           </Field>
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex items-start gap-2 text-base">
             <input type="checkbox" name="follow_up" defaultChecked className="mt-0.5 accent-tup-maroon-600" />
             <span>
               Add the student to the At-Risk follow-up list
-              <span className="block text-xs text-muted-foreground">
+              <span className="block text-sm text-muted-foreground">
                 Opens a recommended guidance referral on the Interventions page.
               </span>
             </span>
@@ -144,12 +144,12 @@ export function StaffConcernForm() {
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-sm font-medium">{label}</span>
       {children}
-      {error && <span className="block text-xs text-destructive">{error}</span>}
+      {error && <span className="block text-sm text-destructive">{error}</span>}
     </label>
   );
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

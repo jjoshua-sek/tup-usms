@@ -123,7 +123,7 @@ export default async function StaffAuditPage({
             key={option.key}
             href={`/staff/audit?filter=${option.key}`}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-[13px] font-medium transition-colors",
+              "-mb-px border-b-2 px-3 py-2 text-base font-medium transition-colors",
               activeFilter === option.key
                 ? "border-tup-maroon-600 text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground",
@@ -142,8 +142,8 @@ export default async function StaffAuditPage({
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <table className="w-full text-[12px]">
-            <thead className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+          <table className="w-full text-sm">
+            <thead className="border-b border-border text-left text-sm text-muted-foreground font-medium">
               <tr>
                 <th className="px-4 py-2.5 font-medium">When</th>
                 <th className="px-4 py-2.5 font-medium">Who</th>
@@ -166,12 +166,12 @@ export default async function StaffAuditPage({
                     })}
                   </td>
                   <td className="px-4 py-2">{actors.get(log.user_id) ?? "—"}</td>
-                  <td className="px-4 py-2 font-mono text-[11px]">{log.action}</td>
+                  <td className="px-4 py-2 font-mono text-sm">{log.action}</td>
                   <td className="px-4 py-2 text-muted-foreground">{log.resource}</td>
                   <td className="max-w-[320px] px-4 py-2 text-muted-foreground">
                     <span className="line-clamp-2 break-words">{log.details ?? "—"}</span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-2 font-mono text-[11px] text-muted-foreground">
+                  <td className="whitespace-nowrap px-4 py-2 font-mono text-sm text-muted-foreground">
                     {log.ip_address ?? "—"}
                   </td>
                 </tr>
@@ -181,7 +181,7 @@ export default async function StaffAuditPage({
         </div>
       )}
 
-      <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         Showing the 150 most recent entries. Audit records are retained for the life of the
         student record and may be disclosed to the National Privacy Commission on request.
       </p>

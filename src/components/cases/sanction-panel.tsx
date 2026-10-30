@@ -25,12 +25,12 @@ import {
 } from "@/lib/osa/sanctions";
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2 py-1 text-[11px] focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";
 
 function Header({ title, onCancel }: { title: string; onCancel: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <p className="text-xs font-semibold">{title}</p>
+      <p className="text-sm font-semibold">{title}</p>
       <button
         type="button"
         onClick={onCancel}
@@ -102,21 +102,21 @@ export function CommunityServiceForm({ caseId }: { caseId: string }) {
       <Header title="Community service" onCancel={() => setOpen(false)} />
 
       {loading ? (
-        <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
           Counting prior offenses…
         </p>
       ) : (
         <>
           <div>
-            <p className="mb-1 text-[11px] font-medium">
+            <p className="mb-1 text-sm font-medium">
               Count prior minor offenses as
             </p>
             <div className="space-y-1">
               {(Object.keys(COUNT_BASIS_LABELS) as CountBasis[]).map((option) => (
                 <label
                   key={option}
-                  className="flex items-center gap-2 text-[11px]"
+                  className="flex items-center gap-2 text-sm"
                 >
                   <input
                     type="radio"
@@ -134,15 +134,15 @@ export function CommunityServiceForm({ caseId }: { caseId: string }) {
                 </label>
               ))}
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               The handbook doesn&apos;t say which period applies. Whichever you pick is
               recorded with the assignment.
             </p>
           </div>
 
-          <p className="rounded-md bg-muted p-2 text-[11px]">
+          <p className="rounded-md bg-muted p-2 text-sm">
             <strong>Offense no. {sequence}</strong> → {prescribed.label}
-            <span className="block text-[10px] text-muted-foreground">
+            <span className="block text-sm text-muted-foreground">
               {prescribed.handbookReference}
               {prescribed.note ? ` · ${prescribed.note}` : ""}
             </span>
@@ -150,7 +150,7 @@ export function CommunityServiceForm({ caseId }: { caseId: string }) {
 
           <div className="grid gap-2 sm:grid-cols-2">
             <label className="block space-y-1">
-              <span className="text-[11px] font-medium">
+              <span className="text-sm font-medium">
                 Hours{" "}
                 {prescribed.bandMin != null && (
                   <span className="text-muted-foreground">
@@ -169,13 +169,13 @@ export function CommunityServiceForm({ caseId }: { caseId: string }) {
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-[11px] font-medium">Complete by</span>
+              <span className="text-sm font-medium">Complete by</span>
               <input type="date" name="deadline" className={inputClass} />
             </label>
           </div>
 
           <label className="block space-y-1">
-            <span className="text-[11px] font-medium">What and where</span>
+            <span className="text-sm font-medium">What and where</span>
             <input
               name="service_detail"
               maxLength={500}
@@ -237,7 +237,7 @@ export function ServiceProgressForm({
       <input type="hidden" name="assignment_id" value={assignmentId} />
 
       <label className="block space-y-1">
-        <span className="text-[10px] font-medium">Hours served of {hoursRequired}</span>
+        <span className="text-sm font-medium">Hours served of {hoursRequired}</span>
         <input
           name="hours_completed"
           type="number"
@@ -250,7 +250,7 @@ export function ServiceProgressForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-[10px] font-medium">Verified by</span>
+        <span className="text-sm font-medium">Verified by</span>
         <input
           name="verifier_role"
           maxLength={120}
@@ -260,7 +260,7 @@ export function ServiceProgressForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-[10px] font-medium">Mark as</span>
+        <span className="text-sm font-medium">Mark as</span>
         <select name="mark" defaultValue="progress" className={inputClass}>
           <option value="progress">Progress only</option>
           <option value="completed">Completed</option>
@@ -294,7 +294,7 @@ export function NonAppearanceForm({ hearingId }: { hearingId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
       >
         <UserX className="h-3 w-3" />
         Did not appear
@@ -322,14 +322,14 @@ export function NonAppearanceForm({ hearingId }: { hearingId: string }) {
 
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Who did not appear</span>
+          <span className="text-sm font-medium">Who did not appear</span>
           <select name="party" defaultValue="student" className={inputClass}>
             <option value="student">The student</option>
             <option value="complainant">The complainant</option>
           </select>
         </label>
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Then</span>
+          <span className="text-sm font-medium">Then</span>
           <select name="proceeded" defaultValue="ex_parte" className={inputClass}>
             <option value="ex_parte">Proceeded ex-parte (Sec. 7.7)</option>
             <option value="reset">Reset — justifiable cause shown</option>
@@ -344,7 +344,7 @@ export function NonAppearanceForm({ hearingId }: { hearingId: string }) {
         className={inputClass}
       />
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Where a party fails to appear after due notice and without justifiable cause, the
         handbook has the fact noted and the proceeding continue ex-parte.
       </p>
@@ -391,11 +391,11 @@ export function ManualHearingForm({ caseId }: { caseId: string }) {
 
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Date and time</span>
+          <span className="text-sm font-medium">Date and time</span>
           <input type="datetime-local" name="scheduled_start" required className={inputClass} />
         </label>
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Minutes</span>
+          <span className="text-sm font-medium">Minutes</span>
           <input
             name="duration_minutes"
             type="number"
@@ -406,7 +406,7 @@ export function ManualHearingForm({ caseId }: { caseId: string }) {
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Type</span>
+          <span className="text-sm font-medium">Type</span>
           <select name="hearing_type" defaultValue="conference" className={inputClass}>
             <option value="counselling">Counselling</option>
             <option value="conference">Conference</option>
@@ -417,7 +417,7 @@ export function ManualHearingForm({ caseId }: { caseId: string }) {
           </select>
         </label>
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Venue</span>
+          <span className="text-sm font-medium">Venue</span>
           <input name="venue" defaultValue="OSA Office" maxLength={120} className={inputClass} />
         </label>
       </div>
@@ -497,7 +497,7 @@ export function AppealWindowForm({
       <Header title="Appeal window" onCancel={() => setOpen(false)} />
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Penalty imposed</span>
+        <span className="text-sm font-medium">Penalty imposed</span>
         <select
           name="penalty_basis"
           value={basis}
@@ -512,19 +512,19 @@ export function AppealWindowForm({
         </select>
       </label>
 
-      <p className="rounded-md bg-muted p-2 text-[11px]">
+      <p className="rounded-md bg-muted p-2 text-sm">
         Appealable to the <strong>{route.bodyLabel}</strong> within {route.days} days of the
         student&apos;s receipt of the Notice of Decision.
-        <span className="block text-[10px] text-muted-foreground">
+        <span className="block text-sm text-muted-foreground">
           {route.handbookReference}
           {route.furtherRecourse ? ` · ${route.furtherRecourse}` : ""}
         </span>
       </p>
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Notice of Decision received on</span>
+        <span className="text-sm font-medium">Notice of Decision received on</span>
         <input type="date" name="notice_received_on" required className={inputClass} />
-        <span className="block text-[10px] text-muted-foreground">
+        <span className="block text-sm text-muted-foreground">
           The clock runs from receipt, not from the date of the decision.
         </span>
       </label>
@@ -561,7 +561,7 @@ export function AppealOutcomeForm({ appealId }: { appealId: string }) {
 
       <div className="grid gap-2 sm:grid-cols-3">
         <label className="block space-y-1">
-          <span className="text-[10px] font-medium">Status</span>
+          <span className="text-sm font-medium">Status</span>
           <select
             name="status"
             value={status}
@@ -577,7 +577,7 @@ export function AppealOutcomeForm({ appealId }: { appealId: string }) {
 
         {status === "filed" && (
           <label className="block space-y-1">
-            <span className="text-[10px] font-medium">Filed on</span>
+            <span className="text-sm font-medium">Filed on</span>
             <input type="date" name="filed_on" className={inputClass} />
           </label>
         )}
@@ -585,7 +585,7 @@ export function AppealOutcomeForm({ appealId }: { appealId: string }) {
         {status === "decided" && (
           <>
             <label className="block space-y-1">
-              <span className="text-[10px] font-medium">Decision</span>
+              <span className="text-sm font-medium">Decision</span>
               <select name="outcome" defaultValue="upheld" className={inputClass}>
                 <option value="upheld">Upheld</option>
                 <option value="modified">Modified</option>
@@ -595,7 +595,7 @@ export function AppealOutcomeForm({ appealId }: { appealId: string }) {
               </select>
             </label>
             <label className="block space-y-1">
-              <span className="text-[10px] font-medium">Decided on</span>
+              <span className="text-sm font-medium">Decided on</span>
               <input type="date" name="decided_on" className={inputClass} />
             </label>
           </>

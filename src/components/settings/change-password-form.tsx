@@ -85,7 +85,7 @@ export function ChangePasswordForm() {
         />
       </div>
 
-      <ul className="space-y-0.5 text-[12px] text-muted-foreground">
+      <ul className="space-y-0.5 text-sm text-muted-foreground">
         {RULES.map((rule) => (
           <li key={rule}>· {rule}</li>
         ))}
@@ -95,7 +95,7 @@ export function ChangePasswordForm() {
         {isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <KeyRound className="mr-1.5 h-4 w-4" />}
         Change password
       </Button>
-      <p className="text-[12px] text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Changing it signs you out on every other device.
       </p>
     </form>

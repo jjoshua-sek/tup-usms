@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { APP_NAME } from "@/lib/brand";
 import { announceSignOut } from "@/components/auth/session-guard";
 import { useRouter } from "next/navigation";
+import { TextSizeSwitch } from "@/components/layout/text-size-switch";
 
 interface TupHeaderProps {
   onMenuClick: () => void;
@@ -66,8 +67,7 @@ export function TupHeader({
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center justify-between bg-tup-maroon-600 px-4 sm:px-6 py-2.5 text-white border-b-[3px] border-tup-gold-500"
-      style={{ minHeight: 60 }}
+      className="sticky top-0 z-40 flex min-h-[3.75rem] items-center justify-between bg-tup-maroon-600 px-4 sm:px-6 py-2.5 text-white border-b-[3px] border-tup-gold-500"
     >
       {/* LEFT: mobile menu + brand */}
       <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export function TupHeader({
         <Link href={role === "student" ? "/dashboard" : "/staff/dashboard"} className="flex items-center gap-3">
           {/* Gold TUP seal */}
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-tup-gold-500 text-tup-maroon-600 font-bold text-[13px] tracking-tight border-2 border-white shrink-0"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-tup-gold-500 text-tup-maroon-600 font-bold text-base tracking-tight border-2 border-white shrink-0"
             aria-label="TUP seal"
           >
             TUP
@@ -91,8 +91,8 @@ export function TupHeader({
 
           {/* Brand text */}
           <div className="hidden sm:block leading-tight">
-            <div className="text-[11px] tracking-wide opacity-85">
-              TUP — Manila{isStaffConsole && " · OSA Console"}
+            <div className="text-sm tracking-wide opacity-85">
+              TUP Manila{isStaffConsole && " · OSA Console"}
             </div>
             {/* The line above already says "OSA Console" on the staff side. */}
             <div className="text-base font-semibold tracking-tight">{APP_NAME}</div>
@@ -100,11 +100,13 @@ export function TupHeader({
         </Link>
       </div>
 
-      {/* RIGHT: Help, notifications, user */}
+      {/* RIGHT: text size, Help, notifications, user */}
       <div className="flex items-center gap-3 sm:gap-5">
+        <TextSizeSwitch className="hidden sm:flex" />
+
         <Link
           href="/help"
-          className="hidden sm:inline text-xs text-white/85 hover:text-white transition-colors"
+          className="hidden sm:inline text-sm text-white/85 hover:text-white transition-colors"
         >
           <HelpCircle className="h-4 w-4 inline mr-1 -mt-0.5" />
           Help
@@ -118,7 +120,7 @@ export function TupHeader({
           <Bell className="h-5 w-5" />
           {notificationCount > 0 && (
             <span
-              className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-tup-gold-500 text-tup-maroon-600 text-[10px] font-bold flex items-center justify-center font-mono"
+              className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-tup-gold-500 text-tup-maroon-600 text-sm font-bold flex items-center justify-center font-mono"
               aria-hidden="true"
             >
               {notificationCount > 99 ? "99+" : notificationCount}
@@ -130,7 +132,7 @@ export function TupHeader({
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2.5 pl-3 sm:pl-5 sm:border-l border-white/20 rounded-sm transition-colors">
             <div className="relative">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 border border-white/30 text-xs font-medium text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 border border-white/30 text-sm font-medium text-white">
                 {initials}
               </div>
               {photoIsProvisional && (
@@ -141,11 +143,11 @@ export function TupHeader({
               )}
             </div>
             <div className="hidden md:block text-left leading-tight">
-              <div className="text-xs font-medium text-white truncate max-w-[140px]">
+              <div className="text-sm font-medium text-white truncate max-w-[140px]">
                 {userName}
               </div>
               {userSubtitle && (
-                <div className="text-[11px] text-white/70 truncate max-w-[140px]">
+                <div className="text-sm text-white/70 truncate max-w-[140px]">
                   {userSubtitle}
                 </div>
               )}

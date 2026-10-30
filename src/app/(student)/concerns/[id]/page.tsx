@@ -180,7 +180,7 @@ export default async function ConcernDetailPage({
       {/* Back link */}
       <Link
         href="/concerns"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-1 text-base text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to my concerns
@@ -199,7 +199,7 @@ export default async function ConcernDetailPage({
             <h1 className="text-2xl font-display font-bold tracking-tight text-balance">
               {concern.subject_line}
             </h1>
-            <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+            <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-3 w-3" />
               {receivedVia(concern.received_via) === "online"
                 ? "Submitted"
@@ -221,12 +221,12 @@ export default async function ConcernDetailPage({
                   <Sparkles className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                  <p className="text-sm font-semibold text-primary">
                     AI Summary
                   </p>
-                  <p className="text-sm text-balance">{concern.ai_summary}</p>
+                  <p className="text-base text-balance">{concern.ai_summary}</p>
                   {concern.suggested_dept && (
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground pt-1">
+                    <p className="flex items-center gap-1 text-sm text-muted-foreground pt-1">
                       <Building2 className="h-3 w-3" />
                       Routed to:{" "}
                       <span className="font-medium text-foreground">
@@ -239,7 +239,7 @@ export default async function ConcernDetailPage({
             </div>
           ) : concern.ai_summary_status === "failed" ? null : (
             <div className="rounded-xl border border-dashed p-4">
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <p className="flex items-center gap-2 text-base text-muted-foreground">
                 <Sparkles className="h-4 w-4 animate-pulse" />
                 AI is still analyzing your concern. The summary should appear
                 within a minute — refresh to check.
@@ -249,17 +249,17 @@ export default async function ConcernDetailPage({
 
           {/* Full body */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            <p className="text-sm font-semibold text-muted-foreground mb-2">
               Your full concern
             </p>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            <p className="whitespace-pre-wrap text-base leading-relaxed">
               {concern.body_text}
             </p>
           </div>
 
           {attachments.length > 0 && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <p className="text-sm font-semibold text-muted-foreground mb-2">
                 Your attachments
               </p>
               <ConcernAttachments attachments={attachments} />
@@ -283,7 +283,7 @@ export default async function ConcernDetailPage({
         </CardHeader>
         <CardContent className="space-y-6">
           {responses.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-6">
+            <p className="text-center text-base text-muted-foreground py-6">
               No replies yet. Staff will respond here once they review your
               concern.
             </p>
@@ -302,7 +302,7 @@ export default async function ConcernDetailPage({
                     <Avatar className="h-8 w-8 shrink-0">
                       <AvatarFallback
                         className={cn(
-                          "text-xs",
+                          "text-sm",
                           isStaff
                             ? "bg-tup-maroon-900 text-white"
                             : "bg-secondary text-secondary-foreground"
@@ -313,7 +313,7 @@ export default async function ConcernDetailPage({
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="font-medium text-sm">
+                        <span className="font-medium text-base">
                           {name}
                           {isMine && (
                             <span className="text-muted-foreground font-normal">
@@ -325,16 +325,16 @@ export default async function ConcernDetailPage({
                         {isStaff && (
                           <Badge
                             variant="secondary"
-                            className="h-5 text-[10px] bg-tup-maroon-900/10 text-tup-maroon-900 dark:bg-tup-maroon-400/10 dark:text-tup-maroon-300"
+                            className="h-5 text-sm bg-tup-maroon-900/10 text-tup-maroon-900 dark:bg-tup-maroon-400/10 dark:text-tup-maroon-300"
                           >
                             Staff
                           </Badge>
                         )}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-sm text-muted-foreground">
                           {formatManilaDateTime(response.created_at)}
                         </span>
                       </div>
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
+                      <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed">
                         {response.response_text}
                       </p>
                     </div>

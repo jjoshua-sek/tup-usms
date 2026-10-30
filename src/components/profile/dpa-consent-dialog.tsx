@@ -108,7 +108,7 @@ export function DpaConsentDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-5 text-sm">
+        <div className="space-y-5 text-base">
           <p className="text-balance">
             Under the Data Privacy Act of 2012, the Technological University
             of the Philippines &mdash; Manila is required to obtain your
@@ -167,7 +167,7 @@ export function DpaConsentDialog({
 
           <Separator />
 
-          <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-xs">
+          <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
             <p>
               <strong>Data retention:</strong> {describeRecordRetention(retention)}, as set by the
               university&apos;s Data Protection Officer, then archived per CHED requirements.
@@ -221,11 +221,11 @@ function Section({ icon: Icon, title, items }: SectionProps) {
     <div>
       <div className="flex items-center gap-2 mb-1.5">
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-sm font-semibold text-muted-foreground">
           {title}
         </p>
       </div>
-      <ul className="space-y-1 ml-5 list-disc text-sm">
+      <ul className="space-y-1 ml-5 list-disc text-base">
         {items.map((item, i) => (
           <li key={i} className="text-balance">
             {item}

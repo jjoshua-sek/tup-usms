@@ -216,7 +216,7 @@ export default async function ViolationsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="font-mono text-sm text-muted-foreground">
                         {violationCase.case_number}
                       </span>
                       <ToneBadge label={classification.label} tone={classification.tone} />
@@ -225,17 +225,17 @@ export default async function ViolationsPage() {
                         tone={statusMeta?.tone ?? "neutral"}
                       />
                     </div>
-                    <p className="mt-1.5 font-display text-[15px] font-semibold">
+                    <p className="mt-1.5 font-display text-base font-semibold">
                       {violationCase.violation_types?.name ?? "Violation"}
                     </p>
                   </div>
                 </div>
 
-                <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                   {violationCase.description}
                 </p>
 
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-muted-foreground">
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
                     <CalendarDays className="h-3 w-3" />
                     {formatManilaLongDate(violationCase.incident_date)}
@@ -249,7 +249,7 @@ export default async function ViolationsPage() {
                 </div>
 
                 {violationCase.sanction_applied && (
-                  <p className="mt-3 rounded-lg bg-muted p-3 text-[12px]">
+                  <p className="mt-3 rounded-lg bg-muted p-3 text-sm">
                     <strong>Sanction:</strong> {violationCase.sanction_applied}
                   </p>
                 )}
@@ -271,23 +271,23 @@ export default async function ViolationsPage() {
                   return (
                     <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-[12px] font-semibold">Apology letter</p>
+                        <p className="text-sm font-semibold">Apology letter</p>
                         {meta && <ToneBadge label={meta.label} tone={meta.tone} />}
                       </div>
 
                       {meta ? (
-                        <p className="mt-1 text-[12px] text-muted-foreground">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {meta.hint}
                         </p>
                       ) : (
-                        <p className="mt-1 text-[12px] text-muted-foreground">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           This case closes once you send a written apology and the OSA
                           accepts it.
                         </p>
                       )}
 
                       {latest?.reviewer_notes && (
-                        <p className="mt-2 rounded-md bg-background p-2 text-[12px]">
+                        <p className="mt-2 rounded-md bg-background p-2 text-sm">
                           <strong>OSA note:</strong> {latest.reviewer_notes}
                         </p>
                       )}
@@ -322,11 +322,11 @@ export default async function ViolationsPage() {
                       className="mt-4 rounded-lg border border-border bg-muted/40 p-3"
                     >
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-[12px] font-semibold">Community service</p>
+                        <p className="text-sm font-semibold">Community service</p>
                         <ToneBadge label={meta.label} tone={meta.tone} />
                       </div>
 
-                      <p className="mt-1.5 text-[13px]">
+                      <p className="mt-1.5 text-base">
                         <strong>
                           {service.hours_completed} of {service.hours_required} hours
                         </strong>{" "}
@@ -351,10 +351,10 @@ export default async function ViolationsPage() {
                       </div>
 
                       {service.service_detail && (
-                        <p className="mt-2 text-[12px]">{service.service_detail}</p>
+                        <p className="mt-2 text-sm">{service.service_detail}</p>
                       )}
 
-                      <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      <p className="mt-1.5 text-sm text-muted-foreground">
                         {service.deadline
                           ? `Complete by ${formatManilaLongDate(service.deadline)}.`
                           : "No deadline set."}{" "}
@@ -378,7 +378,7 @@ export default async function ViolationsPage() {
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <p
-                          className={`text-[12px] font-semibold ${open ? "text-amber-900" : ""}`}
+                          className={`text-sm font-semibold ${open ? "text-amber-900" : ""}`}
                         >
                           Your right to appeal
                         </p>
@@ -394,7 +394,7 @@ export default async function ViolationsPage() {
                         )}
                       </div>
 
-                      <p className={`mt-1.5 text-[12px] leading-relaxed ${open ? "text-amber-900" : ""}`}>
+                      <p className={`mt-1.5 text-sm leading-relaxed ${open ? "text-amber-900" : ""}`}>
                         {open ? (
                           <>
                             You may appeal this decision to the{" "}
@@ -427,7 +427,7 @@ export default async function ViolationsPage() {
                         )}
                       </p>
                       {open && <FileAppealForm appealId={appeal.id} bodyLabel={route.bodyLabel} />}
-                      <p className="mt-1 text-[10px] text-muted-foreground">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {route.handbookReference}
                       </p>
                     </div>
@@ -447,7 +447,7 @@ export default async function ViolationsPage() {
                       className="mt-4 rounded-lg border border-border bg-muted/40 p-3"
                     >
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-[12px] font-semibold">Settlement</p>
+                        <p className="text-sm font-semibold">Settlement</p>
                         {settlement.is_complied ? (
                           <ToneBadge label="Completed" tone="success" />
                         ) : settlement.student_signed_at ? (
@@ -460,16 +460,16 @@ export default async function ViolationsPage() {
                         )}
                       </div>
 
-                      <p className="mt-2 whitespace-pre-wrap rounded-md bg-background p-3 text-[12px] leading-relaxed">
+                      <p className="mt-2 whitespace-pre-wrap rounded-md bg-background p-3 text-sm leading-relaxed">
                         {settlement.terms}
                       </p>
 
                       {settlement.student_obligations && (
-                        <p className="mt-2 text-[12px]">
+                        <p className="mt-2 text-sm">
                           <strong>What you agreed to do:</strong>{" "}
                           {settlement.student_obligations}
                           {settlement.compliance_deadline && (
-                            <span className="block text-[11px] text-muted-foreground">
+                            <span className="block text-sm text-muted-foreground">
                               Complete by{" "}
                               {formatManilaLongDate(settlement.compliance_deadline)}. The OSA closes the
                               case once you have.
@@ -481,7 +481,7 @@ export default async function ViolationsPage() {
                       {!settlement.student_signed_at && (
                         <div className="mt-3">
                           <SignSettlementButton settlementId={settlement.id} />
-                          <p className="mt-1.5 text-[11px] text-muted-foreground">
+                          <p className="mt-1.5 text-sm text-muted-foreground">
                             Read the terms carefully. If you don&apos;t agree with them, talk
                             to the OSA before accepting — mediation can continue.
                           </p>
@@ -493,13 +493,13 @@ export default async function ViolationsPage() {
 
                 {/* MAJOR path: committee referral, explained */}
                 {COMMITTEE_EXPLANATIONS[violationCase.status] && (
-                  <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-900">
+                  <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-relaxed text-amber-900">
                     {COMMITTEE_EXPLANATIONS[violationCase.status]}
                   </p>
                 )}
 
                 {!statusMeta?.isTerminal && (
-                  <p className="mt-3 text-[12px] text-muted-foreground">
+                  <p className="mt-3 text-sm text-muted-foreground">
                     Check <strong className="text-foreground">My Appointments</strong> for any
                     meeting scheduled for this case.
                   </p>

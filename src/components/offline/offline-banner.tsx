@@ -42,7 +42,7 @@ export async function OfflineBanner() {
     <div
       role="status"
       className={cn(
-        "sticky top-0 z-50 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-4 py-2 text-center text-[13px] font-medium text-white",
+        "sticky top-0 z-50 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-4 py-2 text-center text-base font-medium text-white",
         stale ? "bg-red-700" : "bg-amber-600",
       )}
     >

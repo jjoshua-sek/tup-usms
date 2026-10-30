@@ -23,15 +23,15 @@ export function RetentionForm({ current }: { current: RetentionSettings }) {
       className="grid gap-3 sm:grid-cols-3 sm:items-end"
     >
       <label className="block space-y-1">
-        <span className="text-[12px] font-medium">Student records (years after graduation)</span>
+        <span className="text-sm font-medium">Student records (years after graduation)</span>
         <input id="recordYears" name="recordYears" type="number" min={1} max={50} required defaultValue={current.recordYears} className={inputClass} />
       </label>
       <label className="block space-y-1">
-        <span className="text-[12px] font-medium">Gate scan logs (days)</span>
+        <span className="text-sm font-medium">Gate scan logs (days)</span>
         <input id="accessLogDays" name="accessLogDays" type="number" min={30} max={3650} required defaultValue={current.accessLogDays} className={inputClass} />
       </label>
       <label className="block space-y-1">
-        <span className="text-[12px] font-medium">DPO memo or reference</span>
+        <span className="text-sm font-medium">DPO memo or reference</span>
         <input
           id="dpoReference"
           name="dpoReference"
@@ -54,4 +54,4 @@ export function RetentionForm({ current }: { current: RetentionSettings }) {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

@@ -77,7 +77,7 @@ export function PhotoChoiceDialog({
               <p className="font-medium text-emerald-900 dark:text-emerald-200">
                 Set as my profile photo
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 I&apos;m happy with this photo — no reminders needed.
               </p>
             </div>
@@ -96,7 +96,7 @@ export function PhotoChoiceDialog({
               <p className="font-medium text-amber-900 dark:text-amber-200">
                 Use for now — I&apos;ll update later
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Acceptable for now, but I want a reminder to replace it.
               </p>
             </div>
@@ -109,7 +109,7 @@ export function PhotoChoiceDialog({
           </Button>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground">
           You can always change your photo later from your profile.
         </p>
       </DialogContent>

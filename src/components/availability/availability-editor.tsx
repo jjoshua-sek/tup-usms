@@ -27,7 +27,7 @@ export function AddBlockForm() {
       className="grid gap-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-[1fr_auto_auto_1.4fr_auto] sm:items-end"
     >
       <label className="block space-y-1">
-        <span className="text-xs font-medium">Day</span>
+        <span className="text-sm font-medium">Day</span>
         <select name="day_of_week" defaultValue="Monday" className={inputClass}>
           {DAYS.map((day) => (
             <option key={day} value={day}>
@@ -38,17 +38,17 @@ export function AddBlockForm() {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">From</span>
+        <span className="text-sm font-medium">From</span>
         <input type="time" name="start_time" defaultValue="09:00" required className={inputClass} />
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">To</span>
+        <span className="text-sm font-medium">To</span>
         <input type="time" name="end_time" defaultValue="10:30" required className={inputClass} />
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">What is it? (optional)</span>
+        <span className="text-sm font-medium">What is it? (optional)</span>
         <input
           name="label"
           placeholder="e.g. IT 301 lecture"
@@ -100,4 +100,4 @@ export function DeleteBlockButton({ blockId }: { blockId: string }) {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

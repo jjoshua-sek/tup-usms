@@ -71,7 +71,7 @@ export function AnomalyList({ anomalies, canManage }: AnomalyListProps) {
     return (
       <div className="grid place-items-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
         <ShieldCheck className="h-6 w-6 text-emerald-600/60" />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           No open anomalies. Gate traffic looks normal.
         </p>
       </div>
@@ -87,17 +87,17 @@ export function AnomalyList({ anomalies, canManage }: AnomalyListProps) {
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-sm font-semibold">
+              <p className="flex items-center gap-1.5 text-base font-semibold">
                 <ShieldAlert className="h-4 w-4" />
                 {TYPE_LABELS[anomaly.anomaly_type]}
                 {anomaly.occurrence_count > 1 && (
-                  <span className="rounded-full bg-white/60 px-1.5 py-0.5 text-[10px]">
+                  <span className="rounded-full bg-white/60 px-1.5 py-0.5 text-sm">
                     ×{anomaly.occurrence_count}
                   </span>
                 )}
               </p>
 
-              <p className="mt-1 text-[13px]">
+              <p className="mt-1 text-base">
                 {anomaly.students
                   ? `${anomaly.students.first_name} ${anomaly.students.last_name} · `
                   : ""}
@@ -108,11 +108,11 @@ export function AnomalyList({ anomalies, canManage }: AnomalyListProps) {
                 </span>
               </p>
 
-              <p className="mt-1.5 text-[12px] opacity-80">
+              <p className="mt-1.5 text-sm opacity-80">
                 {TYPE_EXPLANATIONS[anomaly.anomaly_type]}
               </p>
 
-              <p className="mt-1.5 text-[11px] opacity-70">
+              <p className="mt-1.5 text-sm opacity-70">
                 Last seen{" "}
                 {formatManilaMonthDayTime(anomaly.last_detected_at)}
                 {anomaly.details?.gate_label ? ` · ${String(anomaly.details.gate_label)}` : ""}

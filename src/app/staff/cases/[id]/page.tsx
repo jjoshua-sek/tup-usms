@@ -337,9 +337,9 @@ export default async function StaffCaseDetailPage({
           {/* Facts */}
           <section className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-3 font-display text-base font-semibold">The complaint</h2>
-            <p className="text-[13px] leading-relaxed">{violationCase.description}</p>
+            <p className="text-base leading-relaxed">{violationCase.description}</p>
 
-            <dl className="mt-4 grid gap-x-6 gap-y-2 text-[12px] sm:grid-cols-2">
+            <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
               <Detail label="Student">
                 {violationCase.students ? (
                   <Link
@@ -368,7 +368,7 @@ export default async function StaffCaseDetailPage({
             </dl>
 
             {staff.isOsa && canClassify({ in_handbook: violationCase.violation_types?.in_handbook, status: violationCase.status }) && (
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 text-[13px]">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 text-base">
                 <p className="min-w-0">
                   {classificationPending ? (
                     <>
@@ -388,7 +388,7 @@ export default async function StaffCaseDetailPage({
             )}
 
             {restricted && (
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50/60 p-3 text-[13px] dark:border-amber-800 dark:bg-amber-950/20">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50/60 p-3 text-base dark:border-amber-800 dark:bg-amber-950/20">
                 <p className="min-w-0">
                   <span className="font-semibold">Restricted.</span> Only the OSA head, the administrator and the
                   assigned officer{assignedOfficer ? ` (${assignedOfficer.full_name})` : ""} can see this case.
@@ -401,7 +401,7 @@ export default async function StaffCaseDetailPage({
             )}
 
             {violationCase.sanction_applied && (
-              <p className="mt-4 rounded-lg bg-muted p-3 text-[12px]">
+              <p className="mt-4 rounded-lg bg-muted p-3 text-sm">
                 <strong>Sanction:</strong> {violationCase.sanction_applied}
               </p>
             )}
@@ -425,11 +425,11 @@ export default async function StaffCaseDetailPage({
                   <li key={hearing.id} className="rounded-lg border border-border p-3">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-[13px] font-medium">
+                        <p className="text-base font-medium">
                           <CalendarClock className="mr-1.5 inline h-3.5 w-3.5 text-muted-foreground" />
                           {formatManilaDateTime(hearing.scheduled_start)}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                           <MapPin className="mr-1 inline h-3 w-3" />
                           {hearing.venue} · {hearing.hearing_type.replace(/_/g, " ")}
                         </p>
@@ -456,7 +456,7 @@ export default async function StaffCaseDetailPage({
                     </div>
 
                     {hearing.status === "awaiting_complainant" && (
-                      <p className="mt-2 text-[11px] text-muted-foreground">
+                      <p className="mt-2 text-sm text-muted-foreground">
                         Waiting for the faculty complainant to approve this date. The student is
                         summoned as soon as it is approved{staff.isOsa ? "; the OSA can approve it for them on a written approval" : ""}.
                       </p>
@@ -468,7 +468,7 @@ export default async function StaffCaseDetailPage({
 
             {proposals.length > 0 ? (
               <>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="mb-2 text-sm font-semibold text-muted-foreground">
                   Proposed slots — both parties free
                 </p>
                 <ProposalPicker proposals={proposals} />
@@ -477,7 +477,7 @@ export default async function StaffCaseDetailPage({
               hearings.length === 0 && (
                 <div className="grid place-items-center gap-2 rounded-lg border border-dashed border-border p-8 text-center">
                   <CalendarSearch className="h-5 w-5 text-muted-foreground/50" />
-                  <p className="text-[13px] text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     No meeting scheduled. Run the scheduler to cross-check the
                     complainant&apos;s and the student&apos;s class schedules.
                   </p>
@@ -495,7 +495,7 @@ export default async function StaffCaseDetailPage({
               </h2>
 
               {apologies.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border p-6 text-center text-[13px] text-muted-foreground">
+                <p className="rounded-lg border border-dashed border-border p-6 text-center text-base text-muted-foreground">
                   Waiting for the student to submit. They were notified when this case moved
                   to &ldquo;awaiting apology&rdquo; and can submit from their violations page.
                 </p>
@@ -509,7 +509,7 @@ export default async function StaffCaseDetailPage({
                             label={APOLOGY_LABEL[letter.review_status]}
                             tone={APOLOGY_TONE[letter.review_status]}
                           />
-                          <span className="text-[11px] text-muted-foreground">
+                          <span className="text-sm text-muted-foreground">
                             submitted {formatManilaDateTime(letter.submitted_at)}
                             {index > 0 ? " · earlier version" : ""}
                           </span>
@@ -518,17 +518,17 @@ export default async function StaffCaseDetailPage({
                       </div>
 
                       {letter.letter_text ? (
-                        <p className="mt-2 whitespace-pre-wrap rounded-md bg-muted p-3 text-[13px] leading-relaxed">
+                        <p className="mt-2 whitespace-pre-wrap rounded-md bg-muted p-3 text-base leading-relaxed">
                           {letter.letter_text}
                         </p>
                       ) : (
-                        <p className="mt-2 text-[12px] text-muted-foreground">
+                        <p className="mt-2 text-sm text-muted-foreground">
                           Submitted as an attachment only.
                         </p>
                       )}
 
                       {letter.reviewer_notes && (
-                        <p className="mt-2 text-[12px] text-muted-foreground">
+                        <p className="mt-2 text-sm text-muted-foreground">
                           <strong>Your note:</strong> {letter.reviewer_notes}
                         </p>
                       )}
@@ -547,7 +547,7 @@ export default async function StaffCaseDetailPage({
           {staff.isOsa && canChooseMinorProcess(violationCase) && !classificationPending && (
             <section className="rounded-xl border border-border bg-card p-5">
               <h2 className="mb-1 font-display text-base font-semibold">How this minor case is handled</h2>
-              <p className="mb-3 text-[13px] text-muted-foreground">
+              <p className="mb-3 text-base text-muted-foreground">
                 Counselling then an apology letter is the usual process. For a light first offense, an apology
                 letter alone or a written warning may be enough.
               </p>
@@ -569,7 +569,7 @@ export default async function StaffCaseDetailPage({
               </div>
 
               {serviceAssignments.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   A first minor offense carries a warning and a letter of apology. From the
                   second, the handbook prescribes community service &mdash; 10 to 20 hours,
                   then 30 to 50. Assigning it here counts the student&rsquo;s prior offenses
@@ -586,7 +586,7 @@ export default async function StaffCaseDetailPage({
                     return (
                       <li key={assignment.id} className="rounded-lg border border-border p-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-display text-[15px] font-semibold">
+                          <span className="font-display text-base font-semibold">
                             {assignment.hours_completed} / {assignment.hours_required} hours
                           </span>
                           <ToneBadge
@@ -596,7 +596,7 @@ export default async function StaffCaseDetailPage({
                           {overdue && <ToneBadge label="Past the deadline" tone="danger" />}
                         </div>
 
-                        <p className="mt-1 text-[11px] text-muted-foreground">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           Offense no. {assignment.offense_sequence} &middot;{" "}
                           {assignment.band_min != null
                             ? `band ${assignment.band_min}–${assignment.band_max} hours`
@@ -608,12 +608,12 @@ export default async function StaffCaseDetailPage({
                         </p>
 
                         {assignment.service_detail && (
-                          <p className="mt-1.5 rounded-md bg-muted p-2 text-[12px]">
+                          <p className="mt-1.5 rounded-md bg-muted p-2 text-sm">
                             {assignment.service_detail}
                           </p>
                         )}
 
-                        <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        <p className="mt-1.5 text-sm text-muted-foreground">
                           {assignment.deadline
                             ? `Due ${formatManilaLongDate(assignment.deadline)}`
                             : "No deadline set"}
@@ -623,7 +623,7 @@ export default async function StaffCaseDetailPage({
                         </p>
 
                         {assignment.verification_notes && (
-                          <p className="mt-1 text-[12px]">{assignment.verification_notes}</p>
+                          <p className="mt-1 text-sm">{assignment.verification_notes}</p>
                         )}
 
                         {["assigned", "in_progress", "not_served"].includes(
@@ -665,7 +665,7 @@ export default async function StaffCaseDetailPage({
               </div>
 
               {appeals.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Once the Notice of Decision has been served, record the date the student
                   received it. The appellate body and the 10-day deadline follow from the
                   penalty, and the student is told both. The OSA does not decide the appeal.
@@ -683,7 +683,7 @@ export default async function StaffCaseDetailPage({
                           />
                           {appeal.status === "window_open" && (
                             <span
-                              className={`text-[11px] font-medium ${window.daysRemaining <= 2 ? "text-red-600" : "text-muted-foreground"}`}
+                              className={`text-sm font-medium ${window.daysRemaining <= 2 ? "text-red-600" : "text-muted-foreground"}`}
                             >
                               {window.isOpen
                                 ? `${window.daysRemaining} day${window.daysRemaining === 1 ? "" : "s"} left`
@@ -691,15 +691,15 @@ export default async function StaffCaseDetailPage({
                             </span>
                           )}
                           {appeal.external_reference && (
-                            <span className="font-mono text-[11px] text-muted-foreground">
+                            <span className="font-mono text-sm text-muted-foreground">
                               {appeal.external_reference}
                             </span>
                           )}
                         </div>
 
-                        <p className="mt-1.5 text-[13px]">
+                        <p className="mt-1.5 text-base">
                           {resolveAppealRoute(appeal.penalty_basis as PenaltyBasis).bodyLabel}
-                          <span className="block text-[11px] text-muted-foreground">
+                          <span className="block text-sm text-muted-foreground">
                             Notice received{" "}
                             {formatManilaLongDate(appeal.notice_received_on)}{" "}
                             &middot; deadline {formatManilaLongDate(appeal.appeal_deadline)}
@@ -710,7 +710,7 @@ export default async function StaffCaseDetailPage({
                         </p>
 
                         {appeal.grounds && (
-                          <div className="mt-2 rounded-md border border-border p-2 text-[12px]">
+                          <div className="mt-2 rounded-md border border-border p-2 text-sm">
                             <p className="mb-1 font-semibold">
                               The student&apos;s appeal{appeal.filed_by_student ? ", filed through STARS" : ""}
                             </p>
@@ -720,7 +720,7 @@ export default async function StaffCaseDetailPage({
 
                         {appeal.status === "filed" &&
                           (appeal.forwarded_at ? (
-                            <p className="mt-2 text-[12px] text-muted-foreground">
+                            <p className="mt-2 text-sm text-muted-foreground">
                               Forwarded {formatManilaLongDate(appeal.forwarded_at)}. Record the decision below when it comes back.
                             </p>
                           ) : (
@@ -731,7 +731,7 @@ export default async function StaffCaseDetailPage({
                           ))}
 
                         {appeal.outcome && (
-                          <p className="mt-2 rounded-md bg-muted p-2 text-[12px]">
+                          <p className="mt-2 rounded-md bg-muted p-2 text-sm">
                             <strong>{appeal.outcome}</strong>
                             {appeal.decided_on
                               ? ` on ${formatManilaLongDate(appeal.decided_on)}`
@@ -771,7 +771,7 @@ export default async function StaffCaseDetailPage({
               </div>
 
               {settlements.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Nothing agreed yet. Draft the terms once mediation has produced an
                   agreement — the student is then asked to accept them in the portal.
                 </p>
@@ -785,15 +785,15 @@ export default async function StaffCaseDetailPage({
 
                     return (
                       <li key={settlement.id} className="rounded-lg border border-border p-3">
-                        <p className="whitespace-pre-wrap text-[13px] leading-relaxed">
+                        <p className="whitespace-pre-wrap text-base leading-relaxed">
                           {settlement.terms}
                         </p>
 
                         {settlement.student_obligations && (
-                          <p className="mt-2 rounded-md bg-muted p-2 text-[12px]">
+                          <p className="mt-2 rounded-md bg-muted p-2 text-sm">
                             <strong>Student must:</strong> {settlement.student_obligations}
                             {settlement.compliance_deadline && (
-                              <span className="block text-[11px] text-muted-foreground">
+                              <span className="block text-sm text-muted-foreground">
                                 by {formatManilaLongDate(settlement.compliance_deadline)}
                               </span>
                             )}
@@ -833,14 +833,14 @@ export default async function StaffCaseDetailPage({
                         </div>
 
                         {!settlement.student_signed_at && (
-                          <p className="mt-2 text-[11px] text-muted-foreground">
+                          <p className="mt-2 text-sm text-muted-foreground">
                             Waiting on the student. They were notified and can accept from
                             their violations page.
                           </p>
                         )}
 
                         {settlement.is_complied != null && (
-                          <p className="mt-2 text-[12px]">
+                          <p className="mt-2 text-sm">
                             <ToneBadge
                               label={settlement.is_complied ? "Obligations met" : "Not yet met"}
                               tone={settlement.is_complied ? "success" : "warning"}
@@ -871,7 +871,7 @@ export default async function StaffCaseDetailPage({
               </div>
 
               {escalations.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Not referred. Escalate when the OSA&apos;s own process can&apos;t resolve
                   the matter — the committee&apos;s decision comes back here.
                 </p>
@@ -880,7 +880,7 @@ export default async function StaffCaseDetailPage({
                   {escalations.map((escalation) => (
                     <li key={escalation.id} className="rounded-lg border border-border p-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-display text-[14px] font-semibold">
+                        <span className="font-display text-base font-semibold">
                           {escalation.escalated_to}
                         </span>
                         <ToneBadge
@@ -899,7 +899,7 @@ export default async function StaffCaseDetailPage({
                                   : "info"
                           }
                         />
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-sm text-muted-foreground">
                           referred {formatManilaDateTime(escalation.escalated_at)}
                           {escalation.external_reference
                             ? ` · ${escalation.external_reference}`
@@ -907,17 +907,17 @@ export default async function StaffCaseDetailPage({
                         </span>
                       </div>
 
-                      <p className="mt-1.5 text-[12px] text-muted-foreground">
+                      <p className="mt-1.5 text-sm text-muted-foreground">
                         {escalation.reason}
                       </p>
 
                       {escalation.sanction_recommended && (
-                        <p className="mt-2 rounded-md bg-red-50 p-2 text-[12px] text-red-900">
+                        <p className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-900">
                           <strong>Sanction:</strong> {escalation.sanction_recommended}
                         </p>
                       )}
                       {escalation.outcome_notes && (
-                        <p className="mt-1.5 text-[12px]">{escalation.outcome_notes}</p>
+                        <p className="mt-1.5 text-sm">{escalation.outcome_notes}</p>
                       )}
 
                       {(!escalation.outcome || escalation.outcome === "pending") && (
@@ -938,7 +938,7 @@ export default async function StaffCaseDetailPage({
             </h2>
 
             {timeline.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground">Nothing recorded yet.</p>
+              <p className="text-base text-muted-foreground">Nothing recorded yet.</p>
             ) : (
               <ol className="space-y-3 border-l border-border pl-4">
                 {timeline.map((entry) => (
@@ -947,8 +947,8 @@ export default async function StaffCaseDetailPage({
                       aria-hidden="true"
                       className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-tup-maroon-600"
                     />
-                    <p className="text-[13px]">{entry.summary}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-base">{entry.summary}</p>
+                    <p className="text-sm text-muted-foreground">
                       {entry.actor_label ?? "System"} · {formatManilaDateTime(entry.occurred_at)}
                       {entry.to_status ? ` · → ${entry.to_status}` : ""}
                     </p>
@@ -963,22 +963,22 @@ export default async function StaffCaseDetailPage({
         <div className="space-y-4">
           {violationCase.students && (
             <section className="rounded-xl border border-border bg-card p-4">
-              <h2 className="mb-2 flex items-center gap-1.5 font-display text-sm font-semibold">
+              <h2 className="mb-2 flex items-center gap-1.5 font-display text-base font-semibold">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
                 Student
               </h2>
-              <p className="text-[13px] font-medium">
+              <p className="text-base font-medium">
                 {violationCase.students.first_name} {violationCase.students.last_name}
               </p>
-              <p className="font-mono text-[11px] text-muted-foreground">
+              <p className="font-mono text-sm text-muted-foreground">
                 {violationCase.students.student_number}
               </p>
-              <p className="mt-0.5 text-[12px] text-muted-foreground">
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 {violationCase.students.program} · {violationCase.students.year_level}
               </p>
               <Link
                 href={`/staff/students/${violationCase.students.id}`}
-                className="mt-2 inline-block text-[12px] text-tup-maroon-600 underline-offset-2 hover:underline"
+                className="mt-2 inline-block text-sm text-tup-maroon-600 underline-offset-2 hover:underline"
               >
                 Open full record
               </Link>
@@ -987,12 +987,12 @@ export default async function StaffCaseDetailPage({
 
           {staff.isOsa && (
             <section className="rounded-xl border border-border bg-card p-4">
-              <h2 className="mb-2 font-display text-sm font-semibold">Update case</h2>
+              <h2 className="mb-2 font-display text-base font-semibold">Update case</h2>
               <CaseStatusForm caseId={violationCase.id} currentStatus={violationCase.status} />
             </section>
           )}
 
-          <p className="rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
             Everything on this page is recorded in the case history with your name. The
             history is append-only — entries can be added, never edited or removed.
           </p>
@@ -1011,7 +1011,7 @@ function SignatureChip({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm ${
         signedAt
           ? "border-emerald-200 bg-emerald-50 text-emerald-800"
           : "border-border text-muted-foreground"
@@ -1026,7 +1026,7 @@ function SignatureChip({
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dt className="text-sm text-muted-foreground font-medium">{label}</dt>
       <dd className="mt-0.5">{children}</dd>
     </div>
   );

@@ -53,13 +53,13 @@ export default function AuthLayout({
               TUP
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-widest opacity-80 mb-0.5">
+              <div className="text-sm opacity-80 mb-0.5 font-medium">
                 Technological University of the Philippines · Manila
               </div>
-              <div className="text-[22px] font-semibold tracking-tight leading-tight">
+              <div className="text-xl font-semibold tracking-tight leading-tight">
                 {APP_NAME}
               </div>
-              <div className="text-[12px] leading-snug opacity-85">{APP_FULL_NAME}</div>
+              <div className="text-sm leading-snug opacity-85">{APP_FULL_NAME}</div>
             </div>
           </div>
 
@@ -70,7 +70,7 @@ export default function AuthLayout({
               <br />
               Every student service.
             </h2>
-            <p className="text-sm leading-relaxed opacity-85 max-w-sm">
+            <p className="text-base leading-relaxed opacity-85 max-w-sm">
               Guidance, scholarships, student violations, clearance and ID
               validation — with early warning for students who may need support.
             </p>
@@ -86,7 +86,7 @@ export default function AuthLayout({
               ].map((label) => (
                 <div
                   key={label}
-                  className="inline-flex items-center gap-2 text-xs opacity-85"
+                  className="inline-flex items-center gap-2 text-sm opacity-85"
                 >
                   <span
                     className="text-tup-gold-500 font-bold"
@@ -101,7 +101,7 @@ export default function AuthLayout({
           </div>
 
           {/* Footer note */}
-          <div className="relative z-10 text-[11px] opacity-60 border-t border-white/15 pt-4">
+          <div className="relative z-10 text-sm opacity-60 border-t border-white/15 pt-4">
             © {manilaWallClock(new Date()).year} TUP — Manila · College of Science · Capstone Project
             <br />
             Protected under RA 10173 (Data Privacy Act of 2012)

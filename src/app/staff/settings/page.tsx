@@ -78,10 +78,10 @@ export default async function StaffSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+            <dl className="grid gap-x-6 gap-y-3 text-base sm:grid-cols-2">
               {details.map(([label, value]) => (
                 <div key={label}>
-                  <dt className="text-[12px] text-muted-foreground">{label}</dt>
+                  <dt className="text-sm text-muted-foreground">{label}</dt>
                   <dd className="font-medium">{value}</dd>
                 </div>
               ))}
@@ -123,17 +123,17 @@ export default async function StaffSettingsPage() {
             {isAdminUser ? (
               <RetentionForm current={retention} />
             ) : (
-              <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+              <dl className="grid gap-x-6 gap-y-3 text-base sm:grid-cols-3">
                 <div>
-                  <dt className="text-[12px] text-muted-foreground">Student records</dt>
+                  <dt className="text-sm text-muted-foreground">Student records</dt>
                   <dd className="font-medium">{describeRecordRetention(retention)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[12px] text-muted-foreground">Gate scan logs</dt>
+                  <dt className="text-sm text-muted-foreground">Gate scan logs</dt>
                   <dd className="font-medium">{describeAccessLogRetention(retention)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[12px] text-muted-foreground">DPO reference</dt>
+                  <dt className="text-sm text-muted-foreground">DPO reference</dt>
                   <dd className="font-medium">{retention.dpoReference ?? "Not yet issued"}</dd>
                 </div>
               </dl>

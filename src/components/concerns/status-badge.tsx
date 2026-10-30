@@ -52,7 +52,7 @@ export function StatusBadge({ status, showIcon = true, className }: StatusBadgeP
     return (
       <span
         className={cn(
-          "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
+          "inline-flex items-center rounded-md border px-2 py-0.5 text-sm font-medium",
           "bg-muted text-muted-foreground border-border",
           className
         )}
@@ -67,7 +67,7 @@ export function StatusBadge({ status, showIcon = true, className }: StatusBadgeP
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-sm font-medium",
         config.className,
         className
       )}

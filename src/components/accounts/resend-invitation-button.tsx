@@ -21,7 +21,7 @@ export function ResendInvitationButton({ invitationId }: { invitationId: string 
           else toast.success(result.message ?? "Queued.");
         })
       }
-      className="inline-flex items-center gap-1 text-[12px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline disabled:opacity-50"
+      className="inline-flex items-center gap-1 text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline disabled:opacity-50"
     >
       {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
       Resend link

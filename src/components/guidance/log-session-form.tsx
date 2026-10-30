@@ -50,7 +50,7 @@ export function LogSessionForm() {
       className="space-y-3 rounded-xl border border-border bg-card p-5"
     >
       <div className="flex items-center justify-between">
-        <p className="font-display text-sm font-semibold">Log a counselling session</p>
+        <p className="font-display text-base font-semibold">Log a counselling session</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -63,7 +63,7 @@ export function LogSessionForm() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block space-y-1">
-          <span className="text-xs font-medium">Student number</span>
+          <span className="text-sm font-medium">Student number</span>
           <input
             name="student_number"
             required
@@ -73,7 +73,7 @@ export function LogSessionForm() {
         </label>
 
         <label className="block space-y-1">
-          <span className="text-xs font-medium">Session type</span>
+          <span className="text-sm font-medium">Session type</span>
           <select name="session_type" defaultValue="walk_in" className={inputClass}>
             {TYPES.map((type) => (
               <option key={type} value={type}>
@@ -84,7 +84,7 @@ export function LogSessionForm() {
         </label>
 
         <label className="block space-y-1">
-          <span className="text-xs font-medium">Category</span>
+          <span className="text-sm font-medium">Category</span>
           <input
             name="concern_category"
             maxLength={60}
@@ -95,7 +95,7 @@ export function LogSessionForm() {
       </div>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">Presenting concern</span>
+        <span className="text-sm font-medium">Presenting concern</span>
         <input
           name="presenting_concern"
           maxLength={300}
@@ -105,14 +105,14 @@ export function LogSessionForm() {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">
+        <span className="text-sm font-medium">
           Summary <span className="text-muted-foreground">(other OSA staff can read this)</span>
         </span>
         <textarea name="summary" rows={2} maxLength={2000} className={inputClass} />
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs font-medium">
+        <span className="text-sm font-medium">
           Confidential notes{" "}
           <span className="text-muted-foreground">(counselor-only — nobody else, ever)</span>
         </span>
@@ -120,12 +120,12 @@ export function LogSessionForm() {
       </label>
 
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex items-center gap-2 text-xs">
+        <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="follow_up_required" className="h-3.5 w-3.5" />
           Follow-up needed
         </label>
         <label className="block space-y-1">
-          <span className="text-xs font-medium">Follow-up date</span>
+          <span className="text-sm font-medium">Follow-up date</span>
           <input type="date" name="follow_up_date" className={inputClass} />
         </label>
       </div>
@@ -143,4 +143,4 @@ export function LogSessionForm() {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

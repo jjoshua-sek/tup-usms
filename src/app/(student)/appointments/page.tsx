@@ -145,7 +145,7 @@ export default async function AppointmentsPage() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-display text-[15px] font-semibold">
+                          <p className="font-display text-base font-semibold">
                             {HEARING_TYPE_LABELS[hearing.hearing_type] ?? "Meeting"}
                           </p>
                           <ToneBadge
@@ -153,7 +153,7 @@ export default async function AppointmentsPage() {
                             tone={HEARING_TONE[hearing.status]}
                           />
                         </div>
-                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                        <p className="mt-1 font-mono text-sm text-muted-foreground">
                           {hearing.violation_cases?.case_number}
                         </p>
                       </div>
@@ -163,7 +163,7 @@ export default async function AppointmentsPage() {
                       )}
                     </div>
 
-                    <div className="mt-3 space-y-1 text-[13px]">
+                    <div className="mt-3 space-y-1 text-base">
                       <p className="inline-flex items-center gap-1.5">
                         <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
                         {formatWhen(hearing.scheduled_start, hearing.scheduled_end)}
@@ -174,7 +174,7 @@ export default async function AppointmentsPage() {
                       </p>
                     </div>
 
-                    <p className="mt-3 rounded-lg bg-muted p-3 text-[12px] leading-relaxed">
+                    <p className="mt-3 rounded-lg bg-muted p-3 text-sm leading-relaxed">
                       Bring your validated TUP ID. If this time genuinely does not work,
                       reply through <strong>Concerns</strong> before the date — the OSA can
                       re-run the scheduler against your class schedule.
@@ -198,10 +198,10 @@ export default async function AppointmentsPage() {
                   >
                     <UserRound className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium capitalize">
+                      <p className="text-base font-medium capitalize">
                         {session.session_type.replace(/_/g, " ")}
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {session.scheduled_at
                           ? formatManila(session.scheduled_at, {
                               month: "long",
@@ -216,7 +216,7 @@ export default async function AppointmentsPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-[11px] text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground">
                 What you discuss with a counselor stays with the Guidance Office. Only the
                 fact that a session happened is visible to other OSA staff.
               </p>
@@ -232,13 +232,13 @@ export default async function AppointmentsPage() {
                 {past.map((hearing) => (
                   <li key={hearing.id} className="flex items-center gap-3 px-4 py-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-medium">
+                      <p className="truncate text-base font-medium">
                         {HEARING_TYPE_LABELS[hearing.hearing_type] ?? "Meeting"}
-                        <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                        <span className="ml-2 font-mono text-sm text-muted-foreground">
                           {hearing.violation_cases?.case_number}
                         </span>
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {formatWhen(hearing.scheduled_start, hearing.scheduled_end)}
                       </p>
                     </div>

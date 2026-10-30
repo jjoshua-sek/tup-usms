@@ -137,10 +137,10 @@ export default async function ClearancePage() {
                           </h2>
                           <ToneBadge label={meta.label} tone={meta.tone} />
                         </div>
-                        <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                        <p className="mt-0.5 font-mono text-sm text-muted-foreground">
                           {request.request_number} · filed {formatManilaDate(request.created_at)}
                         </p>
-                        <p className="mt-2 text-[13px] leading-relaxed">
+                        <p className="mt-2 text-base leading-relaxed">
                           {STATUS_GUIDANCE[request.status]}
                         </p>
                       </div>
@@ -150,7 +150,7 @@ export default async function ClearancePage() {
                           <p className="font-mono text-lg font-semibold tabular-nums">
                             ₱{Number(request.fee_amount).toFixed(2)}
                           </p>
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             {request.fee_paid_at
                               ? `Paid · OR ${request.or_number ?? "—"}`
                               : "Unpaid"}
@@ -161,7 +161,7 @@ export default async function ClearancePage() {
 
                     {openHolds.length > 0 && (
                       <div className="border-b border-border bg-red-50/50 p-5">
-                        <p className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-red-900">
+                        <p className="mb-3 flex items-center gap-1.5 text-base font-semibold text-red-900">
                           <AlertTriangle className="h-4 w-4" />
                           {openHolds.length} item{openHolds.length === 1 ? "" : "s"} blocking
                           this clearance
@@ -169,20 +169,20 @@ export default async function ClearancePage() {
                         <ol className="space-y-3">
                           {openHolds.map((hold, index) => (
                             <li key={hold.id} className="flex gap-3">
-                              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-red-200 text-[11px] font-semibold text-red-900">
+                              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-red-200 text-sm font-semibold text-red-900">
                                 {index + 1}
                               </span>
                               <div className="min-w-0">
-                                <p className="text-[13px] font-medium text-red-900">
+                                <p className="text-base font-medium text-red-900">
                                   {HOLD_LABELS[hold.hold_reason] ?? hold.hold_reason}
                                 </p>
-                                <p className="text-[12px] text-red-900/80">
+                                <p className="text-sm text-red-900/80">
                                   {hold.description}
                                 </p>
-                                <p className="mt-1 rounded-md bg-white/70 p-2 text-[12px] leading-relaxed">
+                                <p className="mt-1 rounded-md bg-white/70 p-2 text-sm leading-relaxed">
                                   <strong>What to do:</strong> {hold.resolution_instructions}
                                   {hold.responsible_office && (
-                                    <span className="block text-[11px] text-muted-foreground">
+                                    <span className="block text-sm text-muted-foreground">
                                       Office: {hold.responsible_office}
                                     </span>
                                   )}
@@ -196,11 +196,11 @@ export default async function ClearancePage() {
 
                     {resolvedHolds.length > 0 && (
                       <div className="border-b border-border p-5">
-                        <p className="mb-2 flex items-center gap-1.5 text-[13px] font-medium text-emerald-700">
+                        <p className="mb-2 flex items-center gap-1.5 text-base font-medium text-emerald-700">
                           <FileCheck2 className="h-4 w-4" />
                           {resolvedHolds.length} already cleared
                         </p>
-                        <ul className="space-y-1 text-[12px] text-muted-foreground">
+                        <ul className="space-y-1 text-sm text-muted-foreground">
                           {resolvedHolds.map((hold) => (
                             <li key={hold.id}>
                               {HOLD_LABELS[hold.hold_reason] ?? hold.hold_reason} — resolved{" "}
@@ -212,12 +212,12 @@ export default async function ClearancePage() {
                     )}
 
                     {request.rejection_reason && (
-                      <p className="border-b border-border p-5 text-[13px]">
+                      <p className="border-b border-border p-5 text-base">
                         <strong>Reason:</strong> {request.rejection_reason}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 p-4 text-[11px] text-muted-foreground">
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 p-4 text-sm text-muted-foreground">
                       <span>Purpose: {request.purpose ?? "—"}</span>
                       {request.verified_at && (
                         <span>Verified {formatManilaDate(request.verified_at)}</span>
@@ -244,10 +244,10 @@ export default async function ClearancePage() {
                     <li key={request.id} className="flex items-center gap-3 px-4 py-3">
                       <Receipt className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-medium">
+                        <p className="truncate text-base font-medium">
                           {TYPE_LABELS[request.request_type] ?? request.request_type}
                         </p>
-                        <p className="font-mono text-[11px] text-muted-foreground">
+                        <p className="font-mono text-sm text-muted-foreground">
                           {request.request_number} ·{" "}
                           {request.issued_at
                             ? `released ${formatManilaDate(request.issued_at)}`

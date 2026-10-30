@@ -113,9 +113,9 @@ function Toggle({
         disabled={disabled}
         className="mt-0.5 h-4 w-4 accent-tup-maroon-600"
       />
-      <label htmlFor={id} className="text-sm leading-tight">
+      <label htmlFor={id} className="text-base leading-tight">
         <span className="font-medium">{label}</span>
-        <span className="block text-[12px] text-muted-foreground">{hint}</span>
+        <span className="block text-sm text-muted-foreground">{hint}</span>
       </label>
     </div>
   );

@@ -36,7 +36,7 @@ export function ActivateModelButton({ versionId, label }: { versionId: string; l
       className="flex flex-wrap items-center justify-end gap-1.5"
     >
       <input type="hidden" name="version_id" value={versionId} />
-      <span className="text-[11px] text-muted-foreground">Rescore everyone with {label}?</span>
+      <span className="text-sm text-muted-foreground">Rescore everyone with {label}?</span>
       <Button
         type="submit"
         size="sm"

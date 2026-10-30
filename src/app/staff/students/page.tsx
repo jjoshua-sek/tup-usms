@@ -99,7 +99,7 @@ export default async function StaffStudentsPage({
 
       <form method="get" className="mb-5 flex flex-wrap items-end gap-3" role="search">
         <div className="min-w-0 flex-1 basis-64">
-          <label htmlFor="student-search" className="mb-1 block text-[12px] font-medium">
+          <label htmlFor="student-search" className="mb-1 block text-sm font-medium">
             Name, student number or program
           </label>
           <div className="relative">
@@ -113,20 +113,20 @@ export default async function StaffStudentsPage({
               type="search"
               defaultValue={query}
               placeholder="e.g. Dela Cruz, TUPM-24-0123, BSIT"
-              className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-tup-maroon-600/40"
+              className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-tup-maroon-600/40"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="student-year" className="mb-1 block text-[12px] font-medium">
+          <label htmlFor="student-year" className="mb-1 block text-sm font-medium">
             Year level
           </label>
           <select
             id="student-year"
             name="year"
             defaultValue={year ?? ""}
-            className="h-9 rounded-md border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-tup-maroon-600/40"
+            className="h-9 rounded-md border border-input bg-background px-2.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-tup-maroon-600/40"
           >
             <option value="">All years</option>
             {YEAR_LEVELS.map((level) => (
@@ -139,7 +139,7 @@ export default async function StaffStudentsPage({
 
         <button
           type="submit"
-          className="h-9 rounded-md bg-tup-maroon-600 px-4 text-sm font-medium text-white hover:bg-tup-maroon-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tup-maroon-600/40 focus-visible:ring-offset-2"
+          className="h-9 rounded-md bg-tup-maroon-600 px-4 text-base font-medium text-white hover:bg-tup-maroon-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tup-maroon-600/40 focus-visible:ring-offset-2"
         >
           Search
         </button>
@@ -147,7 +147,7 @@ export default async function StaffStudentsPage({
         {filtered && (
           <Link
             href="/staff/students"
-            className="h-9 content-center text-[13px] text-muted-foreground underline-offset-2 hover:underline"
+            className="h-9 content-center text-base text-muted-foreground underline-offset-2 hover:underline"
           >
             Clear
           </Link>
@@ -166,7 +166,7 @@ export default async function StaffStudentsPage({
         />
       ) : (
         <>
-          <p className="mb-2 text-[12px] text-muted-foreground">
+          <p className="mb-2 text-sm text-muted-foreground">
             <span className="tabular-nums">{total}</span> student{total === 1 ? "" : "s"}
             {filtered ? " match" : ""}
             {pageCount > 1 && (
@@ -179,8 +179,8 @@ export default async function StaffStudentsPage({
           </p>
 
           <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <table className="w-full min-w-[640px] text-left text-[13px]">
-              <thead className="border-b border-border bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full min-w-[640px] text-left text-base">
+              <thead className="border-b border-border bg-muted/40 text-sm text-muted-foreground font-medium">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">
                     Student
@@ -210,7 +210,7 @@ export default async function StaffStudentsPage({
                         {student.last_name}, {student.first_name}
                       </Link>
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-[12px] tabular-nums">
+                    <td className="px-4 py-2.5 font-mono text-sm tabular-nums">
                       {student.student_number}
                     </td>
                     <td className="px-4 py-2.5">{student.program}</td>
@@ -230,7 +230,7 @@ export default async function StaffStudentsPage({
           </div>
 
           {pageCount > 1 && (
-            <nav aria-label="Pages" className="mt-4 flex items-center justify-between text-[13px]">
+            <nav aria-label="Pages" className="mt-4 flex items-center justify-between text-base">
               {page > 1 ? (
                 <Link
                   href={hrefFor(page - 1)}

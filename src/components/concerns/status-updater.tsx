@@ -78,7 +78,7 @@ export function StatusUpdater({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       <div className="flex items-center gap-2 flex-1">
-        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
           Status:
         </span>
         <Select
@@ -160,7 +160,7 @@ export function MarkResolvedButton({
       type="button"
       onClick={handleClick}
       disabled={done || isPending}
-      className="px-3 py-2 rounded-md text-xs font-medium bg-card border border-border hover:bg-muted transition-colors inline-flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none"
+      className="px-3 py-2 rounded-md text-sm font-medium bg-card border border-border hover:bg-muted transition-colors inline-flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none"
     >
       {isPending ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />

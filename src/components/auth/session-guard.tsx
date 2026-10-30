@@ -275,7 +275,7 @@ export function SessionGuard({ idleMinutes }: { idleMinutes: number }) {
             Are you still there?
           </h2>
         </div>
-        <p id="session-warning-body" className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+        <p id="session-warning-body" className="mt-2 text-base leading-relaxed text-muted-foreground">
           For your security you&apos;ll be signed out in{" "}
           <span className="font-mono font-semibold tabular-nums text-foreground">
             {minutes}:{seconds}
@@ -286,7 +286,7 @@ export function SessionGuard({ idleMinutes }: { idleMinutes: number }) {
           <button
             type="button"
             onClick={() => void endSession("idle")}
-            className="rounded-md px-3 py-1.5 text-[13px] text-muted-foreground hover:bg-muted"
+            className="rounded-md px-3 py-1.5 text-base text-muted-foreground hover:bg-muted"
           >
             Sign out now
           </button>
@@ -294,7 +294,7 @@ export function SessionGuard({ idleMinutes }: { idleMinutes: number }) {
             type="button"
             autoFocus
             onClick={recordActivity}
-            className="rounded-md bg-tup-maroon-600 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-tup-maroon-700"
+            className="rounded-md bg-tup-maroon-600 px-3 py-1.5 text-base font-medium text-white hover:bg-tup-maroon-700"
           >
             Stay signed in
           </button>

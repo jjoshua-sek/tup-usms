@@ -176,14 +176,14 @@ export default async function StaffDashboardPage() {
       >
         <button
           type="button"
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-card border border-border hover:bg-muted transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-card border border-border hover:bg-muted transition-colors"
         >
           <Download className="h-3.5 w-3.5" />
           Export Report
         </button>
         <Link
           href="/staff/cases/new"
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-tup-maroon-600 text-white hover:bg-tup-maroon-700 transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           File a Case
@@ -236,16 +236,16 @@ export default async function StaffDashboardPage() {
         <div className="lg:col-span-2 bg-card border border-border rounded-md p-5">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
             <div>
-              <h3 className="text-[15px] font-semibold tracking-tight">
+              <h3 className="text-base font-semibold tracking-tight">
                 Recent Activity
               </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 Latest concerns received across all categories
               </p>
             </div>
             <Link
               href="/staff/concerns"
-              className="text-xs font-medium text-tup-maroon-600 hover:underline inline-flex items-center gap-1"
+              className="text-sm font-medium text-tup-maroon-600 hover:underline inline-flex items-center gap-1"
             >
               View all
               <ArrowRight className="h-3 w-3" />
@@ -253,7 +253,7 @@ export default async function StaffDashboardPage() {
           </div>
 
           {recentConcerns.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
+            <p className="text-base text-muted-foreground py-8 text-center">
               No recent activity. New concerns will appear here.
             </p>
           ) : (
@@ -271,15 +271,15 @@ export default async function StaffDashboardPage() {
             <div className="w-7 h-7 rounded-md bg-ai-accent-soft text-ai-accent flex items-center justify-center">
               <Zap className="h-3.5 w-3.5" />
             </div>
-            <h3 className="text-[15px] font-semibold tracking-tight">
+            <h3 className="text-base font-semibold tracking-tight">
               AI Triage Status
             </h3>
           </div>
 
-          <div className="space-y-3 text-[13px]">
+          <div className="space-y-3 text-base">
             <div className="flex justify-between items-baseline">
               <span className="text-muted-foreground">Model</span>
-              <span className="font-mono text-[11px]">{triageModel} · Groq</span>
+              <span className="font-mono text-sm">{triageModel} · Groq</span>
             </div>
             <div className="flex justify-between items-baseline">
               <span className="text-muted-foreground">Awaiting summary</span>
@@ -293,7 +293,7 @@ export default async function StaffDashboardPage() {
               <span className="text-muted-foreground">Status</span>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 text-xs font-medium",
+                  "inline-flex items-center gap-1 text-sm font-medium",
                   triageStatus.tone === "success" && "text-[#16a34a]",
                   triageStatus.tone === "warning" && "text-[#b45309]",
                   triageStatus.tone === "danger" && "text-destructive",
@@ -307,7 +307,7 @@ export default async function StaffDashboardPage() {
           </div>
 
           <div className="mt-4 pt-3 border-t border-border bg-ai-accent-soft -mx-5 -mb-5 px-5 pb-5 rounded-b-md">
-            <p className="text-[11px] text-ai-accent leading-relaxed">
+            <p className="text-sm text-ai-accent leading-relaxed">
               AI generates routing summaries to assist triage. Final review and
               decisions remain with human staff.
             </p>
@@ -342,17 +342,17 @@ function ActivityRow({ concern }: { concern: ConcernRow }) {
       <div className="min-w-0">
         <Link
           href={`/staff/concerns/${concern.id}`}
-          className="text-[13px] font-medium leading-tight hover:underline truncate block"
+          className="text-base font-medium leading-tight hover:underline truncate block"
         >
           {concern.subject_line}
         </Link>
-        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+        <p className="text-sm text-muted-foreground mt-0.5 truncate">
           {studentName} ·{" "}
           <span className="font-mono">{concern.students?.student_number}</span>{" "}
           · {concernCategoryLabel(concern.category)}
         </p>
       </div>
-      <div className="text-[10px] text-muted-foreground font-mono shrink-0">
+      <div className="text-sm text-muted-foreground font-mono shrink-0">
         {timeAgo(concern.created_at)}
       </div>
     </li>

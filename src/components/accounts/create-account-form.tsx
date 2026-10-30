@@ -49,7 +49,7 @@ export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean 
 
       {allowStaff && (
       <fieldset>
-        <legend className="mb-1.5 text-[12px] font-medium">Account for</legend>
+        <legend className="mb-1.5 text-sm font-medium">Account for</legend>
         <div className="inline-flex rounded-md border border-border p-0.5" role="radiogroup">
           {(["student", "staff"] as const).map((option) => (
             <button
@@ -59,7 +59,7 @@ export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean 
               aria-checked={kind === option}
               onClick={() => setKind(option)}
               className={cn(
-                "rounded px-3 py-1 text-[13px] font-medium",
+                "rounded px-3 py-1 text-base font-medium",
                 kind === option ? "bg-tup-maroon-600 text-white" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -101,8 +101,8 @@ export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean 
           </div>
 
           <fieldset className="sm:col-span-2">
-            <legend className="mb-1.5 text-[12px] font-medium">How the student gets in</legend>
-            <div className="space-y-1.5 text-[13px]">
+            <legend className="mb-1.5 text-sm font-medium">How the student gets in</legend>
+            <div className="space-y-1.5 text-base">
               <label className="flex items-start gap-2">
                 <input
                   type="radio"
@@ -114,7 +114,7 @@ export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean 
                 />
                 <span>
                   Email a one-time link to choose their own password
-                  <span className="block text-[11px] text-muted-foreground">Normal path. Nobody else ever knows the password.</span>
+                  <span className="block text-sm text-muted-foreground">Normal path. Nobody else ever knows the password.</span>
                 </span>
               </label>
               <label className="flex items-start gap-2">
@@ -128,7 +128,7 @@ export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean 
                 />
                 <span>
                   Set a password now and give it to them in person
-                  <span className="block text-[11px] text-muted-foreground">
+                  <span className="block text-sm text-muted-foreground">
                     For when the student can&apos;t receive email. No link is sent.
                   </span>
                 </span>
@@ -168,11 +168,11 @@ export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean 
           <Field label="Office" hint="Optional">
             <input name="office" maxLength={120} className={inputClass} />
           </Field>
-          <label className="flex items-start gap-2 text-[13px] sm:col-span-2">
+          <label className="flex items-start gap-2 text-base sm:col-span-2">
             <input type="checkbox" name="can_access_confidential" className="mt-1" />
             <span>
               Cleared for confidential (CODI) cases
-              <span className="block text-[11px] text-muted-foreground">
+              <span className="block text-sm text-muted-foreground">
                 Leave unticked unless this person sits on or supports the CODI.
               </span>
             </span>
@@ -212,7 +212,7 @@ export function CreateAccountForm({ allowStaff = true }: { allowStaff?: boolean 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1">
-      <span className="text-[12px] font-medium">
+      <span className="text-sm font-medium">
         {label}
         {hint && <span className="ml-1.5 font-normal text-muted-foreground">{hint}</span>}
       </span>
@@ -222,4 +222,4 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";

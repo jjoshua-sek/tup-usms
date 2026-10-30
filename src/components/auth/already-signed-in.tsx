@@ -22,7 +22,7 @@ export function AlreadySignedIn({ loginId, destination }: { loginId: string; des
     <div className="mx-auto w-full max-w-sm">
       <div className="mb-6">
         <h3 className="mb-1.5 text-2xl font-semibold tracking-tight">You&apos;re already signed in</h3>
-        <p className="text-[13px] text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           This browser is signed in as <span className="font-mono font-medium text-foreground">{loginId}</span>.
         </p>
       </div>
@@ -30,7 +30,7 @@ export function AlreadySignedIn({ loginId, destination }: { loginId: string; des
       <div className="space-y-2.5">
         <Link
           href={destination}
-          className="flex w-full items-center justify-center gap-1.5 rounded-md bg-tup-maroon-600 px-4 py-2 text-sm font-medium text-white hover:bg-tup-maroon-700"
+          className="flex w-full items-center justify-center gap-1.5 rounded-md bg-tup-maroon-600 px-4 py-2 text-base font-medium text-white hover:bg-tup-maroon-700"
         >
           Continue as {loginId}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -45,7 +45,7 @@ export function AlreadySignedIn({ loginId, destination }: { loginId: string; des
               window.location.replace("/login");
             })
           }
-          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2 text-base font-medium hover:bg-muted disabled:opacity-60"
         >
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

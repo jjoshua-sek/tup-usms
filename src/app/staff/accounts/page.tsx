@@ -142,10 +142,10 @@ export default async function AccountsPage() {
         <section className="rounded-xl border border-border bg-card">
           <header className="flex items-center gap-2 border-b border-border px-5 py-3">
             <FileSpreadsheet className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <h2 className="font-display text-[15px] font-semibold tracking-tight">Import an enrollment list</h2>
+            <h2 className="font-display text-base font-semibold tracking-tight">Import an enrollment list</h2>
           </header>
           <div className="space-y-3 px-5 py-4">
-            <p className="text-[12px] leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               One account per student. Each is emailed a one-time link, at the personal address on
               the list, to choose their own password; their profile then opens with the program and
               year already filled in from the list.
@@ -157,7 +157,7 @@ export default async function AccountsPage() {
         <section className="rounded-xl border border-border bg-card">
           <header className="flex items-center gap-2 border-b border-border px-5 py-3">
             <UserPlus className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <h2 className="font-display text-[15px] font-semibold tracking-tight">Create one account</h2>
+            <h2 className="font-display text-base font-semibold tracking-tight">Create one account</h2>
           </header>
           <div className="px-5 py-4">
             <CreateAccountForm allowStaff={isAdmin} />
@@ -167,12 +167,12 @@ export default async function AccountsPage() {
 
       <section className="mt-6 rounded-xl border border-border bg-card">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3">
-          <h2 className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight">
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold tracking-tight">
             <MailCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             Invitations
-            <span className="text-[12px] font-normal tabular-nums text-muted-foreground">{invitations.length}</span>
+            <span className="text-sm font-normal tabular-nums text-muted-foreground">{invitations.length}</span>
           </h2>
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             <span className="tabular-nums">{counts.activated ?? 0}</span> set up ·{" "}
             <span className="tabular-nums">{counts.sent ?? 0}</span> waiting on the student ·{" "}
             <span className="tabular-nums">{waiting}</span> still sending
@@ -186,13 +186,13 @@ export default async function AccountsPage() {
         </header>
 
         {invitations.length === 0 ? (
-          <p className="px-5 py-6 text-[13px] text-muted-foreground">
+          <p className="px-5 py-6 text-base text-muted-foreground">
             No accounts created here yet. Import a list or create one above.
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-[13px]">
-              <thead className="border-b border-border bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full min-w-[760px] text-left text-base">
+              <thead className="border-b border-border bg-muted/40 text-sm text-muted-foreground font-medium">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Student</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Link sent to</th>
@@ -210,9 +210,9 @@ export default async function AccountsPage() {
                   return (
                     <tr key={row.id} className="align-top">
                       <td className="px-4 py-2.5">
-                        <span className="font-mono text-[12px]">{row.student_number}</span>
+                        <span className="font-mono text-sm">{row.student_number}</span>
                         {staffUserIds.has(row.user_id) && (
-                          <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-sm font-semibold text-muted-foreground">
                             Staff
                           </span>
                         )}
@@ -220,16 +220,16 @@ export default async function AccountsPage() {
                           {row.last_name}, {row.first_name}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-[12px]">{row.delivery_email}</td>
+                      <td className="px-4 py-2.5 text-sm">{row.delivery_email}</td>
                       <td className="px-4 py-2.5">
                         <ToneBadge label={status.label} tone={status.tone} />
                         {row.last_error && row.status !== "activated" && (
-                          <span className="mt-1 block max-w-xs text-[11px] text-muted-foreground">
+                          <span className="mt-1 block max-w-xs text-sm text-muted-foreground">
                             {row.last_error}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 font-mono text-[11px] text-muted-foreground">
+                      <td className="px-4 py-2.5 font-mono text-sm text-muted-foreground">
                         {row.activated_at
                           ? `Set up ${formatManilaDateTime(row.activated_at)}`
                           : row.sent_at
@@ -254,23 +254,23 @@ export default async function AccountsPage() {
       {isAdmin && (
       <section className="mt-6 rounded-xl border border-border bg-card">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3">
-          <h2 className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight">
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold tracking-tight">
             <ShieldCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             Staff accounts
-            <span className="text-[12px] font-normal tabular-nums text-muted-foreground">{staffMembers.length}</span>
+            <span className="text-sm font-normal tabular-nums text-muted-foreground">{staffMembers.length}</span>
           </h2>
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             A reset link lets them choose a new password that no one else sees. Their current one
             works until they use it.
           </p>
         </header>
 
         {staffMembers.length === 0 ? (
-          <p className="px-5 py-6 text-[13px] text-muted-foreground">No staff accounts yet.</p>
+          <p className="px-5 py-6 text-base text-muted-foreground">No staff accounts yet.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-[13px]">
-              <thead className="border-b border-border bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full min-w-[760px] text-left text-base">
+              <thead className="border-b border-border bg-muted/40 text-sm text-muted-foreground font-medium">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Staff member</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Role</th>
@@ -291,20 +291,20 @@ export default async function AccountsPage() {
                       <td className="px-4 py-2.5">
                         {member.full_name}
                         {member.position && (
-                          <span className="block text-[11px] text-muted-foreground">{member.position}</span>
+                          <span className="block text-sm text-muted-foreground">{member.position}</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-[12px]">{STAFF_ROLE_LABELS[member.role_type] ?? member.role_type}</td>
+                      <td className="px-4 py-2.5 text-sm">{STAFF_ROLE_LABELS[member.role_type] ?? member.role_type}</td>
                       <td className="px-4 py-2.5">
                         {resetStatus ? (
                           <ToneBadge label={resetStatus.label} tone={resetStatus.tone} />
                         ) : (
-                          <span className="text-[12px] text-muted-foreground">Never</span>
+                          <span className="text-sm text-muted-foreground">Never</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5">
                         {needsMigration ? (
-                          <span className="block text-right text-[11px] text-muted-foreground">
+                          <span className="block text-right text-sm text-muted-foreground">
                             Run migration 00022 to enable
                           </span>
                         ) : (

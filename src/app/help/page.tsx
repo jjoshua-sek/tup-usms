@@ -35,14 +35,14 @@ export default async function HelpPage() {
       <div className="mx-auto max-w-3xl">
         <Link
           href={back.href}
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-tup-maroon-600 hover:underline"
+          className="inline-flex items-center gap-1.5 text-base font-medium text-tup-maroon-600 hover:underline"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           {back.label}
         </Link>
 
         <h1 className="mt-4 text-2xl font-semibold tracking-tight">Help</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-base text-muted-foreground">
           How to sign in, where to find things, and who to ask when something is wrong.
         </p>
 
@@ -85,7 +85,7 @@ export default async function HelpPage() {
 
           <Section title="Where to find things (students)">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-[13px]">
+              <table className="w-full text-left text-base">
                 <thead className="border-b border-border text-muted-foreground">
                   <tr>
                     <th className="py-2 pr-4 font-medium">I want to…</th>
@@ -140,7 +140,7 @@ export default async function HelpPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-5 text-sm leading-relaxed">
+    <section className="rounded-lg border border-border bg-card p-5 text-base leading-relaxed">
       <h2 className="mb-2 text-base font-semibold">{title}</h2>
       {children}
     </section>

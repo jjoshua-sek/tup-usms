@@ -475,7 +475,7 @@ export default async function StaffStudentRecordPage({
         <GlanceStrip items={glance} />
 
         {!access.osaRecord && (
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             You are seeing the clearance and ID parts of this record. Disciplinary, early-warning
             and guidance records are limited to OSA staff.
           </p>
@@ -523,10 +523,10 @@ export default async function StaffStudentRecordPage({
                       {guidance.map((session) => (
                         <Row key={session.id}>
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-[13px]">{humanize(session.session_type)}</span>
+                            <span className="text-base">{humanize(session.session_type)}</span>
                             <span className="flex items-center gap-2">
                               <ToneBadge label={humanize(session.status)} tone="neutral" />
-                              <span className="font-mono text-[11px] text-muted-foreground">
+                              <span className="font-mono text-sm text-muted-foreground">
                                 {formatManilaDate(session.scheduled_at ?? session.created_at)}
                               </span>
                             </span>
@@ -537,12 +537,12 @@ export default async function StaffStudentRecordPage({
                   ) : (
                     <EmptyLine>No guidance sessions on record.</EmptyLine>
                   )}
-                  <p className="mt-3 text-[11px] text-muted-foreground">
+                  <p className="mt-3 text-sm text-muted-foreground">
                     Scheduling only. Session notes stay on the guidance screen, with the counselor.
                   </p>
                 </RecordSection>
               ) : (
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Counselling records are kept by Guidance and are not shown on this page.
                 </p>
               )}
@@ -564,15 +564,15 @@ export default async function StaffStudentRecordPage({
                     return (
                       <Row key={request.id}>
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-[13px]">
+                          <span className="text-base">
                             {REQUEST_TYPE_LABELS[request.request_type] ?? humanize(request.request_type)}
-                            <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">
+                            <span className="ml-1.5 font-mono text-sm text-muted-foreground">
                               {request.request_number}
                             </span>
                           </span>
                           <ToneBadge label={meta.label} tone={meta.tone} />
                         </div>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                           Filed {formatManilaDate(request.created_at)}
                           {openHolds > 0 && (
                             <span className="text-red-700">
@@ -605,10 +605,10 @@ export default async function StaffStudentRecordPage({
                     return (
                       <Row key={validation.id}>
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-[13px]">
+                          <span className="text-base">
                             {validation.semester}, {validation.school_year}
                             {isCurrent && (
-                              <span className="ml-1.5 text-[11px] text-muted-foreground">(this term)</span>
+                              <span className="ml-1.5 text-sm text-muted-foreground">(this term)</span>
                             )}
                           </span>
                           <ToneBadge label={meta.label} tone={meta.tone} />
@@ -635,7 +635,7 @@ export default async function StaffStudentRecordPage({
                       {scholarships.map((application) => (
                         <Row key={application.id}>
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-[13px]">
+                            <span className="text-base">
                               {application.scholarships?.name ?? "Scholarship"}
                             </span>
                             <ToneBadge
@@ -649,7 +649,7 @@ export default async function StaffStudentRecordPage({
                               }
                             />
                           </div>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          <p className="mt-0.5 text-sm text-muted-foreground">
                             {application.semester ? `${application.semester}, ` : ""}
                             {application.school_year}
                           </p>
@@ -672,7 +672,7 @@ export default async function StaffStudentRecordPage({
                       {documents.map((document) => (
                         <Row key={document.id}>
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-[13px]">
+                            <span className="text-base">
                               {DOCUMENT_LABELS[document.document_type] ?? humanize(document.document_type)}
                             </span>
                             <ToneBadge
@@ -687,7 +687,7 @@ export default async function StaffStudentRecordPage({
                               }
                             />
                           </div>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          <p className="mt-0.5 text-sm text-muted-foreground">
                             {document.semester}, {document.school_year} · uploaded{" "}
                             {formatManilaDate(document.uploaded_at)}
                           </p>
@@ -711,11 +711,11 @@ export default async function StaffStudentRecordPage({
                         <Row key={concern.id}>
                           <Link
                             href={`/staff/concerns/${concern.id}`}
-                            className="text-[13px] text-tup-maroon-600 underline-offset-2 hover:underline"
+                            className="text-base text-tup-maroon-600 underline-offset-2 hover:underline"
                           >
                             {concern.subject_line}
                           </Link>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          <p className="mt-0.5 text-sm text-muted-foreground">
                             {concernCategoryLabel(concern.category)} · {humanize(concern.status)}
                             {concern.urgency_level ? ` · ${concern.urgency_level} urgency` : ""} ·{" "}
                             {formatManilaDate(concern.created_at)}
@@ -783,10 +783,10 @@ function IdentityCard({
         <dl className="grid min-w-0 flex-1 grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-4">
           {details.map(([label, value]) => (
             <div key={label} className="min-w-0">
-              <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <dt className="text-sm font-semibold text-muted-foreground">
                 {label}
               </dt>
-              <dd className="truncate text-[13px]" title={value}>
+              <dd className="truncate text-base" title={value}>
                 {value}
               </dd>
             </div>
@@ -831,11 +831,11 @@ function DisciplineSection({
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
                     <Link
                       href={`/staff/cases/${violationCase.id}`}
-                      className="font-mono text-[12px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
+                      className="font-mono text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
                     >
                       {violationCase.case_number}
                     </Link>
-                    <span className="truncate text-[13px]">
+                    <span className="truncate text-base">
                       {violationCase.violation_types?.name ?? "Unclassified offense"}
                     </span>
                   </span>
@@ -850,7 +850,7 @@ function DisciplineSection({
                     <ToneBadge label={meta.label} tone={meta.tone} />
                   </span>
                 </div>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Incident {formatManilaDate(violationCase.incident_date)} · filed{" "}
                   {formatManilaDate(violationCase.created_at)}
                   {violationCase.sanction_applied ? ` · sanction: ${violationCase.sanction_applied}` : ""}
@@ -868,7 +868,7 @@ function DisciplineSection({
           {openService.map((row) => {
             const completed = Number(row.hours_completed);
             return (
-              <p key={row.id} className="text-[12px]">
+              <p key={row.id} className="text-sm">
                 <span className="font-medium">Community service:</span>{" "}
                 <span className="tabular-nums">
                   {completed} of {row.hours_required} hours
@@ -880,7 +880,7 @@ function DisciplineSection({
             );
           })}
           {openAppeals.map((appeal) => (
-            <p key={appeal.id} className="text-[12px]">
+            <p key={appeal.id} className="text-sm">
               <span className="font-medium">
                 {appeal.status === "filed" ? "Appeal filed" : "Appeal window open"}:
               </span>{" "}
@@ -904,7 +904,7 @@ function DisciplineSection({
         from being read as a guarantee.
       */}
       {!viewerSeesConfidential && (
-        <p className="mt-4 text-[11px] text-muted-foreground">
+        <p className="mt-4 text-sm text-muted-foreground">
           Cases referred to CODI are visible only to cleared personnel and are not counted here.
         </p>
       )}
@@ -928,17 +928,17 @@ function EarlyWarningSection({
           <div className="flex flex-wrap items-center gap-3">
             <p className="font-mono text-2xl font-semibold tabular-nums">
               {Math.round(risk.risk_score * 100)}
-              <span className="text-sm text-muted-foreground">%</span>
+              <span className="text-base text-muted-foreground">%</span>
             </p>
             <ToneBadge label={RISK_TIER_META[risk.risk_tier].label} tone={TIER_TONE[risk.risk_tier]} />
             {risk.lowConfidence && <ToneBadge label="Low confidence" tone="neutral" />}
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {Math.round(risk.dataCompleteness * 100)}% of signals on file
             </span>
           </div>
 
           <div>
-            <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
               What raises the score
             </p>
             {risk.topRiskFactors.length === 0 ? (
@@ -946,12 +946,12 @@ function EarlyWarningSection({
             ) : (
               <ul className="space-y-1.5">
                 {risk.topRiskFactors.slice(0, 3).map((factor) => (
-                  <li key={factor.feature} className="text-[12px]">
+                  <li key={factor.feature} className="text-sm">
                     <span className="font-medium">{factor.label}</span>
                     {factor.imputed && (
-                      <span className="ml-1 text-[10px] text-muted-foreground">(assumed — no data)</span>
+                      <span className="ml-1 text-sm text-muted-foreground">(assumed — no data)</span>
                     )}
-                    <span className="block text-[11px] text-muted-foreground">{factor.explanation}</span>
+                    <span className="block text-sm text-muted-foreground">{factor.explanation}</span>
                   </li>
                 ))}
               </ul>
@@ -963,7 +963,7 @@ function EarlyWarningSection({
       )}
 
       <div className="mt-4 border-t border-border pt-4">
-        <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
           Interventions
         </p>
         {interventions.length > 0 ? (
@@ -971,13 +971,13 @@ function EarlyWarningSection({
             {interventions.map((intervention) => (
               <Row key={intervention.id}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[13px]">{humanize(intervention.intervention_type)}</span>
+                  <span className="text-base">{humanize(intervention.intervention_type)}</span>
                   <span className="flex items-center gap-2">
                     <ToneBadge
                       label={humanize(intervention.status)}
                       tone={intervention.status === "completed" ? "success" : "info"}
                     />
-                    <span className="font-mono text-[11px] text-muted-foreground">
+                    <span className="font-mono text-sm text-muted-foreground">
                       {formatManilaDate(intervention.scheduled_for ?? intervention.created_at)}
                     </span>
                   </span>

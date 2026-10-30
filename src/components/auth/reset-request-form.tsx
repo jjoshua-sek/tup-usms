@@ -26,17 +26,17 @@ export function ResetRequestForm() {
           <MailCheck className="h-5 w-5" />
         </div>
         <h3 className="text-2xl font-semibold tracking-tight mb-1.5">Check your email</h3>
-        <p className="text-[13px] leading-relaxed text-muted-foreground">
+        <p className="text-base leading-relaxed text-muted-foreground">
           If the student number and email match our records, a link to choose a new password is on its way to
           that address. It can take a few minutes, works once, and expires after a short time.
         </p>
-        <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Your current password keeps working until you use the link. If nothing arrives, check your spam folder,
           then ask the Office of Student Affairs to send one.
         </p>
         <Link
           href="/login"
-          className="mt-6 inline-block text-[13px] font-medium text-tup-maroon-600 hover:underline"
+          className="mt-6 inline-block text-base font-medium text-tup-maroon-600 hover:underline"
         >
           ← Back to sign in
         </Link>
@@ -48,7 +48,7 @@ export function ResetRequestForm() {
     <div className="w-full max-w-sm mx-auto">
       <div className="mb-8">
         <h3 className="text-2xl font-semibold tracking-tight mb-1.5">Reset your password</h3>
-        <p className="text-[13px] leading-relaxed text-muted-foreground">
+        <p className="text-base leading-relaxed text-muted-foreground">
           Enter your student number and the personal email your sign-in link was sent to. We&apos;ll email a
           link to choose a new password.
         </p>
@@ -66,7 +66,7 @@ export function ResetRequestForm() {
         className="space-y-4"
       >
         <div className="space-y-1.5">
-          <Label htmlFor="login_id" className="text-[12px] font-medium">
+          <Label htmlFor="login_id" className="text-sm font-medium">
             Student Number
           </Label>
           <Input
@@ -80,7 +80,7 @@ export function ResetRequestForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-[12px] font-medium">
+          <Label htmlFor="email" className="text-sm font-medium">
             Personal email
           </Label>
           <Input
@@ -95,7 +95,7 @@ export function ResetRequestForm() {
         </div>
 
         {error && (
-          <p role="alert" className="text-xs text-destructive">
+          <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         )}
@@ -116,7 +116,7 @@ export function ResetRequestForm() {
         </Button>
       </form>
 
-      <p className="mt-6 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
         Staff accounts: ask the administrator to send a reset link.{" "}
         <Link href="/login" className="font-medium text-tup-maroon-600 hover:underline">
           Back to sign in

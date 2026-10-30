@@ -451,7 +451,7 @@ export function GateKiosk() {
       <Shell>
         <div className="grid place-items-center gap-3 text-white/60">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <p className="text-sm">Starting gate terminal…</p>
+          <p className="text-base">Starting gate terminal…</p>
         </div>
       </Shell>
     );
@@ -467,11 +467,11 @@ export function GateKiosk() {
             </div>
             <div>
               <h1 className="font-display text-lg font-semibold">Pair this gate</h1>
-              <p className="text-xs text-white/60">TUP–Manila · Campus Access Terminal</p>
+              <p className="text-sm text-white/60">TUP–Manila · Campus Access Terminal</p>
             </div>
           </div>
 
-          <label htmlFor="device-key" className="mb-1.5 block text-xs font-medium text-white/70">
+          <label htmlFor="device-key" className="mb-1.5 block text-sm font-medium text-white/70">
             Device key
           </label>
           <input
@@ -485,15 +485,15 @@ export function GateKiosk() {
             placeholder="usms_gate_…"
             autoComplete="off"
             spellCheck={false}
-            className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2.5 font-mono text-sm text-white placeholder:text-white/30 focus:border-tup-gold-500 focus:outline-none"
+            className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2.5 font-mono text-base text-white placeholder:text-white/30 focus:border-tup-gold-500 focus:outline-none"
           />
-          <p className="mt-2 text-xs text-white/50">
+          <p className="mt-2 text-sm text-white/50">
             Issued once from <span className="font-mono">Staff → Gates &amp; Access</span>. It is
             stored only in this browser.
           </p>
 
           {pairError && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-xs text-red-200">
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{pairError}</span>
             </div>
@@ -503,7 +503,7 @@ export function GateKiosk() {
             type="button"
             onClick={() => void handlePair()}
             disabled={pairing}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-tup-maroon-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-tup-maroon-700 disabled:opacity-60"
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-tup-maroon-600 px-4 py-2.5 text-base font-semibold text-white transition-colors hover:bg-tup-maroon-700 disabled:opacity-60"
           >
             {pairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
             {pairing ? "Pairing…" : "Pair terminal"}
@@ -530,9 +530,9 @@ export function GateKiosk() {
       }
     >
       {/* Top bar */}
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-4 text-xs text-white/70">
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-4 text-sm text-white/70">
         <div className="flex items-center gap-3">
-          <span className="font-display text-sm font-semibold text-white">
+          <span className="font-display text-base font-semibold text-white">
             {gate?.name ?? "Gate"}
           </span>
           {gate?.location && <span className="text-white/50">{gate.location}</span>}
@@ -594,12 +594,12 @@ export function GateKiosk() {
               ? "Hold the QR code on your ID or Digital ID inside the frame."
               : "Place the QR code on your ID under the scanner."}
           </p>
-          {termLabel && <p className="text-xs uppercase tracking-widest text-white/40">{termLabel}</p>}
+          {termLabel && <p className="text-sm text-white/40 font-medium">{termLabel}</p>}
         </div>
       )}
 
       {/* Bottom bar */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-6 py-4 text-[11px] text-white/45">
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-6 py-4 text-sm text-white/45">
         <span>
           {tally.allowed} allowed · {tally.denied} denied this session
         </span>
@@ -615,8 +615,8 @@ export function GateKiosk() {
 
       {/* Settings drawer */}
       {showSettings && (
-        <div className="absolute right-4 top-14 z-10 w-72 rounded-xl border border-white/15 bg-neutral-900/95 p-4 text-xs text-white/80 shadow-2xl backdrop-blur">
-          <p className="mb-3 font-display text-sm font-semibold text-white">Terminal</p>
+        <div className="absolute right-4 top-14 z-10 w-72 rounded-xl border border-white/15 bg-neutral-900/95 p-4 text-sm text-white/80 shadow-2xl backdrop-blur">
+          <p className="mb-3 font-display text-base font-semibold text-white">Terminal</p>
 
           <dl className="mb-4 space-y-1.5">
             <SettingRow label="Gate code" value={gate?.code ?? "—"} />
@@ -646,7 +646,7 @@ export function GateKiosk() {
                   placeholder="https://192.168.137.1"
                   autoComplete="off"
                   spellCheck={false}
-                  className="min-w-0 flex-1 rounded-md border border-white/15 bg-black/40 px-2 py-1.5 font-mono text-[11px] text-white placeholder:text-white/30 focus:border-tup-gold-500 focus:outline-none"
+                  className="min-w-0 flex-1 rounded-md border border-white/15 bg-black/40 px-2 py-1.5 font-mono text-sm text-white placeholder:text-white/30 focus:border-tup-gold-500 focus:outline-none"
                 />
                 <button type="button" onClick={saveLanUrl} className="rounded-md border border-white/15 px-2 font-medium hover:bg-white/10">
                   Save
@@ -748,9 +748,9 @@ function ResultPanel({
           )}
           <div>
             <p className="font-display text-2xl font-semibold">{result.student.name}</p>
-            <p className="font-mono text-sm text-white/70">{result.student.maskedNumber}</p>
+            <p className="font-mono text-base text-white/70">{result.student.maskedNumber}</p>
             {(result.student.program || result.student.yearLevel) && (
-              <p className="mt-0.5 text-sm text-white/60">
+              <p className="mt-0.5 text-base text-white/60">
                 {[result.student.program, result.student.yearLevel].filter(Boolean).join(" · ")}
               </p>
             )}
@@ -759,7 +759,7 @@ function ResultPanel({
       )}
 
       {monitorOnly && (
-        <p className="rounded-full bg-black/25 px-4 py-1.5 text-xs uppercase tracking-widest">
+        <p className="rounded-full bg-black/25 px-4 py-1.5 text-sm font-medium">
           Monitor mode — recorded, not blocked
         </p>
       )}
@@ -771,7 +771,7 @@ function SettingRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-white/50">{label}</dt>
-      <dd className="font-mono text-[11px] text-white">{value}</dd>
+      <dd className="font-mono text-sm text-white">{value}</dd>
     </div>
   );
 }

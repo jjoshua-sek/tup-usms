@@ -49,7 +49,7 @@ export function ApologyReviewControls({ letterId }: { letterId: string }) {
         <input type="hidden" name="decision" value={pending} />
 
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold">{copy.label}</p>
+          <p className="text-sm font-semibold">{copy.label}</p>
           <button
             type="button"
             onClick={() => setPending(null)}
@@ -66,11 +66,11 @@ export function ApologyReviewControls({ letterId }: { letterId: string }) {
           maxLength={1000}
           required={pending !== "accept"}
           placeholder={copy.prompt}
-          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs focus:border-tup-maroon-600 focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
         />
 
         {pending === "accept" && (
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Accepting closes the case on the counselling + apology path and notifies the
             student. It can&apos;t be undone from here.
           </p>
@@ -94,7 +94,7 @@ export function ApologyReviewControls({ letterId }: { letterId: string }) {
       <button
         type="button"
         onClick={() => setPending("accept")}
-        className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
       >
         <Check className="h-3 w-3" />
         Accept & close
@@ -102,7 +102,7 @@ export function ApologyReviewControls({ letterId }: { letterId: string }) {
       <button
         type="button"
         onClick={() => setPending("request_revision")}
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
       >
         <RotateCcw className="h-3 w-3" />
         Ask for changes
@@ -110,7 +110,7 @@ export function ApologyReviewControls({ letterId }: { letterId: string }) {
       <button
         type="button"
         onClick={() => setPending("reject")}
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
       >
         <X className="h-3 w-3" />
         Not accepted
@@ -130,7 +130,7 @@ export function ApologyFileLink({ letterId }: { letterId: string }) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-[11px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
+        className="inline-flex items-center gap-1 text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
       >
         <ExternalLink className="h-3 w-3" />
         Open signed copy (5 min link)
@@ -152,7 +152,7 @@ export function ApologyFileLink({ letterId }: { letterId: string }) {
           setUrl(result.url);
         })
       }
-      className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+      className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
     >
       {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
       View attached scan

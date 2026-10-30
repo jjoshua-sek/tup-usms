@@ -111,7 +111,7 @@ export function Step3Academic({
           <div className="rounded-xl border-2 border-muted bg-muted/30 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="text-sm font-semibold text-muted-foreground">
                 Set by the Registrar (read-only)
               </p>
             </div>
@@ -127,7 +127,7 @@ export function Step3Academic({
               />
             </div>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               If any of this is incorrect, please contact the{" "}
               <a
                 href="mailto:registrar@tup.edu.ph"
@@ -141,7 +141,7 @@ export function Step3Academic({
 
           {/* Editable: LRN */}
           <div className="space-y-1.5">
-            <Label className="text-xs">
+            <Label className="text-sm">
               Learner Reference Number (LRN) — optional
             </Label>
             <Input
@@ -152,9 +152,9 @@ export function Step3Academic({
               className="font-mono"
             />
             {errors.lrn && (
-              <p className="text-xs text-destructive">{errors.lrn.message}</p>
+              <p className="text-sm text-destructive">{errors.lrn.message}</p>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               12-digit number issued by DepEd. Found on your high school records.
               Skip if you don&apos;t have one.
             </p>
@@ -197,7 +197,7 @@ interface ReadOnlyFieldProps {
 function ReadOnlyField({ label, value }: ReadOnlyFieldProps) {
   return (
     <div className="space-y-0.5">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <p className="text-sm text-muted-foreground font-medium">
         {label}
       </p>
       <Badge variant="secondary" className="font-medium">

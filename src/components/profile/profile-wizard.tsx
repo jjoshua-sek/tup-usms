@@ -106,14 +106,14 @@ export function ProfileWizard({
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-4 w-4 text-tup-gold-100" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-tup-gold-100">
+            <span className="text-sm font-semibold text-tup-gold-100">
               Profile Setup
             </span>
           </div>
           <h1 className="text-2xl font-display font-bold tracking-tight text-white">
             Welcome to {APP_SITE_NAME}
           </h1>
-          <p className="mt-1 text-sm text-white/80">
+          <p className="mt-1 text-base text-white/80">
             Let&apos;s get your profile set up. This takes about 5 minutes
             and unlocks the rest of the system.
           </p>

@@ -54,7 +54,7 @@ export function ProgressStepper({ currentStep, className }: ProgressStepperProps
                 {isCompleted ? (
                   <Check className="h-4 w-4" />
                 ) : (
-                  <span className="font-display text-sm font-bold">
+                  <span className="font-display text-base font-bold">
                     {step.number}
                   </span>
                 )}
@@ -62,14 +62,14 @@ export function ProgressStepper({ currentStep, className }: ProgressStepperProps
               <div className="hidden sm:block text-center">
                 <p
                   className={cn(
-                    "text-xs font-medium",
+                    "text-sm font-medium",
                     isCurrent && "text-foreground",
                     !isCurrent && "text-muted-foreground"
                   )}
                 >
                   {step.label}
                 </p>
-                <p className="text-[10px] text-muted-foreground/70">
+                <p className="text-sm text-muted-foreground/70">
                   {step.description}
                 </p>
               </div>

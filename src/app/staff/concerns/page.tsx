@@ -128,19 +128,19 @@ export default async function StaffConcernsPage({
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium">Filters</CardTitle>
+            <CardTitle className="text-base font-medium">Filters</CardTitle>
             {(filterStatus !== "all" ||
               filterUrgency !== "all" ||
               filterCategory !== "all") && (
               <Link
                 href="/staff/concerns"
-                className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="ml-auto text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Clear all
               </Link>
             )}
           </div>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-sm">
             {concerns.length} concern{concerns.length === 1 ? "" : "s"} matching
           </CardDescription>
         </CardHeader>
@@ -194,7 +194,7 @@ export default async function StaffConcernsPage({
             <h3 className="mt-4 font-display font-semibold">
               No concerns match your filters
             </h3>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            <p className="mt-1 max-w-sm text-base text-muted-foreground">
               Try clearing some filters above, or check back later for new
               submissions.
             </p>
@@ -223,12 +223,12 @@ export default async function StaffConcernsPage({
                         <p className="font-display font-semibold leading-tight text-balance">
                           {concern.subject_line}
                         </p>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
                           {timeAgo(concern.created_at)}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
                         <span className="font-medium">{studentName}</span>
                         <span className="text-muted-foreground/60">·</span>
                         <span className="font-mono text-muted-foreground">
@@ -236,11 +236,11 @@ export default async function StaffConcernsPage({
                         </span>
                         <StatusBadge status={concern.status} />
                         <UrgencyBadge level={concern.urgency_level} />
-                        <Badge variant="secondary" className="h-5 text-[10px]">
+                        <Badge variant="secondary" className="h-5 text-sm">
                           {concernCategoryLabel(concern.category)}
                         </Badge>
                         {receivedVia(concern.received_via) !== "online" && (
-                          <Badge variant="outline" className="h-5 text-[10px]">
+                          <Badge variant="outline" className="h-5 text-sm">
                             {RECEIVED_VIA_LABEL[receivedVia(concern.received_via)]}
                             {concern.referred_by ? ` · ${concern.referred_by}` : ""}
                           </Badge>
@@ -248,22 +248,22 @@ export default async function StaffConcernsPage({
                       </div>
 
                       {isProcessing ? (
-                        <p className="flex items-center gap-1 text-xs italic text-muted-foreground/70">
+                        <p className="flex items-center gap-1 text-sm italic text-muted-foreground/70">
                           <Sparkles className="h-3 w-3 animate-pulse" />
                           AI summary processing...
                         </p>
                       ) : summaryFailed ? (
-                        <p className="text-xs text-amber-800">
+                        <p className="text-sm text-amber-800">
                           No AI summary — open the concern to read it or re-run the analysis.
                         </p>
                       ) : (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-base text-muted-foreground line-clamp-2">
                           {concern.ai_summary}
                         </p>
                       )}
 
                       {concern.suggested_dept && (
-                        <p className="text-xs">
+                        <p className="text-sm">
                           <span className="text-muted-foreground">
                             Suggested:
                           </span>{" "}
@@ -306,7 +306,7 @@ function FilterGroup({
 }: FilterGroupProps) {
   return (
     <div className="space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => {
           const newParams = new URLSearchParams();

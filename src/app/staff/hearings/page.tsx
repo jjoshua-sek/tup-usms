@@ -170,7 +170,7 @@ function Group({
     <section>
       <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
         {title}
-        <span className="ml-2 text-sm font-normal text-muted-foreground">
+        <span className="ml-2 text-base font-normal text-muted-foreground">
           {hearings.length}
         </span>
       </h2>
@@ -184,7 +184,7 @@ function Group({
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   href={`/staff/cases/${hearing.case_id}`}
-                  className="font-mono text-[12px] font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
+                  className="font-mono text-sm font-medium text-tup-maroon-600 underline-offset-2 hover:underline"
                 >
                   {hearing.violation_cases?.case_number}
                 </Link>
@@ -193,23 +193,23 @@ function Group({
                   tone={HEARING_TONE[hearing.status]}
                 />
                 {hearing.student_acknowledged_at && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700">
+                  <span className="inline-flex items-center gap-1 text-sm text-emerald-700">
                     <CheckCheck className="h-3 w-3" />
                     acknowledged
                   </span>
                 )}
               </div>
 
-              <p className="mt-1 text-[13px] font-medium">
+              <p className="mt-1 text-base font-medium">
                 {hearing.violation_cases?.students
                   ? `${hearing.violation_cases.students.first_name} ${hearing.violation_cases.students.last_name}`
                   : "Unknown student"}
-                <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                <span className="ml-2 font-mono text-sm text-muted-foreground">
                   {hearing.violation_cases?.students?.student_number}
                 </span>
               </p>
 
-              <p className="mt-0.5 text-[12px] text-muted-foreground">
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 <CalendarClock className="mr-1 inline h-3 w-3" />
                 {formatManila(hearing.scheduled_start, {
                   weekday: "short",

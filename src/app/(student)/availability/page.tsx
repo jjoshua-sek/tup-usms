@@ -75,7 +75,7 @@ export default async function AvailabilityPage() {
       />
 
       <div className="mb-5 rounded-xl border border-ai-accent bg-ai-accent-soft p-4">
-        <p className="flex items-start gap-2 text-[13px] leading-relaxed">
+        <p className="flex items-start gap-2 text-base leading-relaxed">
           <FileText className="mt-0.5 h-4 w-4 shrink-0 text-ai-accent" />
           <span>
             <strong className="text-ai-accent">Faster option:</strong> upload your
@@ -103,16 +103,16 @@ export default async function AvailabilityPage() {
         <div className="space-y-4">
           {byDay.map((group) => (
             <section key={group.day}>
-              <h2 className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">
                 {group.day}
               </h2>
               <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
                 {group.entries.map((block) => (
                   <li key={block.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <span className="w-40 shrink-0 font-mono text-[13px] tabular-nums">
+                    <span className="w-40 shrink-0 font-mono text-base tabular-nums">
                       {formatTime(block.start_time)} – {formatTime(block.end_time)}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[13px]">
+                    <span className="min-w-0 flex-1 truncate text-base">
                       {block.label ?? "Busy"}
                     </span>
                     {block.source === "cor_import" ? (
@@ -128,7 +128,7 @@ export default async function AvailabilityPage() {
         </div>
       )}
 
-      <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         Only the OSA scheduling function reads these times, and only to find a meeting slot.
         Blocks imported from a verified COR can&apos;t be deleted here — ask the OSA if one
         is wrong.

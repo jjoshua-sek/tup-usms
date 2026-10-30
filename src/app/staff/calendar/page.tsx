@@ -160,7 +160,7 @@ export default async function StaffCalendarPage() {
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
             <AlertTriangle className="h-4 w-4 text-red-700" />
             Needs attention
-            <span className="text-sm font-normal text-muted-foreground">({overdue.length})</span>
+            <span className="text-base font-normal text-muted-foreground">({overdue.length})</span>
           </h2>
           <ul className="divide-y divide-border overflow-hidden rounded-xl border border-red-200 bg-card">
             {overdue.map((entry) => (
@@ -182,7 +182,7 @@ export default async function StaffCalendarPage() {
           <div className="space-y-5">
             {days.map(({ day, entries }) => (
               <div key={day}>
-                <h3 className="mb-2 flex items-baseline gap-2 text-sm font-semibold">
+                <h3 className="mb-2 flex items-baseline gap-2 text-base font-semibold">
                   {dayLabel(day)}
                   {day === today && <ToneBadge label="Today" tone="info" />}
                   {day === tomorrow && <ToneBadge label="Tomorrow" tone="neutral" />}
@@ -211,10 +211,10 @@ function EntryRow({ entry, when }: { entry: AgendaEntry; when: string }) {
   return (
     <li>
       <Link href={entry.href} className="flex items-start gap-4 px-4 py-3 transition-colors hover:bg-muted/50">
-        <span className="w-24 shrink-0 pt-0.5 font-mono text-[12px] text-muted-foreground">{when}</span>
+        <span className="w-24 shrink-0 pt-0.5 font-mono text-sm text-muted-foreground">{when}</span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium">{entry.title}</span>
-          <span className="block text-[13px] text-muted-foreground">{entry.detail}</span>
+          <span className="block text-base font-medium">{entry.title}</span>
+          <span className="block text-base text-muted-foreground">{entry.detail}</span>
         </span>
         {entry.badge && <ToneBadge label={entry.badge.label} tone={entry.badge.tone} />}
       </Link>

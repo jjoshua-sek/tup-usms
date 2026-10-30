@@ -59,7 +59,7 @@ export function EscalateForm({ caseId }: { caseId: string }) {
       <input type="hidden" name="case_id" value={caseId} />
 
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold">Refer this case</p>
+        <p className="text-sm font-semibold">Refer this case</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -71,7 +71,7 @@ export function EscalateForm({ caseId }: { caseId: string }) {
       </div>
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Committee</span>
+        <span className="text-sm font-medium">Committee</span>
         <select
           name="escalated_to"
           value={body}
@@ -88,7 +88,7 @@ export function EscalateForm({ caseId }: { caseId: string }) {
 
       {selected && (
         <p
-          className={`rounded-md p-2 text-[11px] leading-relaxed ${
+          className={`rounded-md p-2 text-sm leading-relaxed ${
             selected.value === "CODI"
               ? "border border-red-200 bg-red-50 text-red-900"
               : "bg-muted text-muted-foreground"
@@ -99,7 +99,7 @@ export function EscalateForm({ caseId }: { caseId: string }) {
       )}
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Why</span>
+        <span className="text-sm font-medium">Why</span>
         <textarea
           name="reason"
           required
@@ -150,7 +150,7 @@ export function EscalationOutcomeForm({ escalationId }: { escalationId: string }
 
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Decision</span>
+          <span className="text-sm font-medium">Decision</span>
           <select
             name="outcome"
             value={outcome}
@@ -166,7 +166,7 @@ export function EscalationOutcomeForm({ escalationId }: { escalationId: string }
         </label>
 
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Committee reference</span>
+          <span className="text-sm font-medium">Committee reference</span>
           <input
             name="external_reference"
             maxLength={80}
@@ -178,7 +178,7 @@ export function EscalationOutcomeForm({ escalationId }: { escalationId: string }
 
       {outcome === "sanction_recommended" && (
         <label className="block space-y-1">
-          <span className="text-[11px] font-medium">Sanction</span>
+          <span className="text-sm font-medium">Sanction</span>
           <input
             name="sanction_recommended"
             required
@@ -186,7 +186,7 @@ export function EscalationOutcomeForm({ escalationId }: { escalationId: string }
             placeholder="e.g. Suspension for 15 school days, effective 3 March"
             className={inputClass}
           />
-          <span className="block text-[10px] text-muted-foreground">
+          <span className="block text-sm text-muted-foreground">
             This is written onto the case record and shown to the student.
           </span>
         </label>
@@ -209,4 +209,4 @@ export function EscalationOutcomeForm({ escalationId }: { escalationId: string }
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2 py-1 text-[11px] focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";

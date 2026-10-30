@@ -58,7 +58,7 @@ export function InterventionForm({ studentId, suggestions }: InterventionFormPro
       <input type="hidden" name="student_id" value={studentId} />
 
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold">New intervention</p>
+        <p className="text-sm font-semibold">New intervention</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -70,7 +70,7 @@ export function InterventionForm({ studentId, suggestions }: InterventionFormPro
       </div>
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Type</span>
+        <span className="text-sm font-medium">Type</span>
         <input
           name="intervention_type"
           defaultValue={first?.type ?? "guidance_referral"}
@@ -91,7 +91,7 @@ export function InterventionForm({ studentId, suggestions }: InterventionFormPro
       </label>
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-medium">Priority</span>
+        <span className="text-sm font-medium">Priority</span>
         <select name="priority" defaultValue={first?.priority ?? "normal"} className={inputClass}>
           <option value="low">Low</option>
           <option value="normal">Normal</option>
@@ -186,4 +186,4 @@ export function InterventionStatusForm({
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs focus:border-tup-maroon-600 focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none";

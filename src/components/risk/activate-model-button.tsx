@@ -17,7 +17,7 @@ export function ActivateModelButton({ versionId, label }: { versionId: string; l
 
   if (!confirming) {
     return (
-      <Button type="button" size="sm" variant="outline" onClick={() => setConfirming(true)}>
+      <Button type="button" variant="outline" onClick={() => setConfirming(true)}>
         Use this model
       </Button>
     );
@@ -36,17 +36,16 @@ export function ActivateModelButton({ versionId, label }: { versionId: string; l
       className="flex flex-wrap items-center justify-end gap-1.5"
     >
       <input type="hidden" name="version_id" value={versionId} />
-      <span className="text-sm text-muted-foreground">Rescore everyone with {label}?</span>
+      <span className="text-base text-muted-foreground">Rescore everyone with {label}?</span>
       <Button
         type="submit"
-        size="sm"
         disabled={isPending}
         className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
       >
-        {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+        {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
         Switch
       </Button>
-      <Button type="button" size="sm" variant="ghost" disabled={isPending} onClick={() => setConfirming(false)}>
+      <Button type="button" variant="ghost" disabled={isPending} onClick={() => setConfirming(false)}>
         Cancel
       </Button>
     </form>

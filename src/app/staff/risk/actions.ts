@@ -112,7 +112,7 @@ export async function createInterventionFromRisk(formData: FormData): Promise<Re
     created_by: staff.staffId,
   });
 
-  if (error) return { error: "Could not create the intervention." };
+  if (error) return { error: "Could not start the follow-up." };
 
   await logAuditEvent(staff.userId, "intervention_created", "risk_interventions", {
     student_id: parsed.data.student_id,
@@ -121,7 +121,7 @@ export async function createInterventionFromRisk(formData: FormData): Promise<Re
 
   revalidatePath("/staff/risk");
   revalidatePath("/staff/interventions");
-  return { ok: true, message: "Intervention opened." };
+  return { ok: true, message: "Follow-up started. It is on the Follow-ups page." };
 }
 
 /**
@@ -215,5 +215,5 @@ export async function updateIntervention(formData: FormData): Promise<Result> {
   if (error) return { error: "Could not update the intervention." };
 
   revalidatePath("/staff/interventions");
-  return { ok: true, message: "Updated." };
+  return { ok: true, message: "Follow-up updated." };
 }

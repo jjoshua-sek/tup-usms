@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PulseIcon as Activity, WarningIcon as AlertTriangle, QuestionIcon as CircleHelp, TrendUpIcon as TrendingUp } from "@phosphor-icons/react/ssr";
+import { PulseIcon as Activity, WarningIcon as AlertTriangle, CaretDownIcon as ChevronDown } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { InterventionForm } from "@/components/risk/intervention-form";
 import { PageHeader } from "@/components/shared/page-header";
-import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { ActivateModelButton } from "@/components/risk/activate-model-button";
 import {
@@ -16,6 +15,7 @@ import {
   loadRiskFeatures,
   loadRiskModelVersions,
 } from "@/lib/risk/load";
+import { followUpTypeLabel } from "@/lib/risk/follow-up-labels";
 import { RISK_TIER_META, scoreStudent, suggestInterventions } from "@/lib/risk/score";
 import type { RiskTier } from "@/lib/risk/types";
 import { canChooseRiskModel, summarizeModelVersion } from "@/lib/risk/versions";
@@ -24,7 +24,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "At-Risk Students",
+  title: "At-risk students",
 };
 
 const TIER_TONE: Record<RiskTier, Tone> = {
@@ -37,8 +37,8 @@ const TIER_TONE: Record<RiskTier, Tone> = {
 const TIERS: Array<RiskTier | "all"> = ["critical", "high", "moderate", "low", "all"];
 
 const COUNT = new Intl.NumberFormat("en-PH");
-const formatFigure = (value: number | null) => (value == null ? "—" : value.toFixed(3));
-const formatPercent = (value: number | null) => (value == null ? "—" : `${Math.round(value * 100)}%`);
+const formatFigure = (value: number | null) => (value == null ? "Not recorded" : value.toFixed(3));
+const formatPercent = (value: number | null) => (value == null ? "Not recorded" : `${Math.round(value * 100)}%`);
 
 /**
  * The early warning list (the ML half of the thesis).
@@ -63,7 +63,7 @@ export default async function StaffRiskPage({
   if (!staff || (!staff.isOsa && !staff.isCounselor)) {
     return (
       <RestrictedNotice
-        title="At-Risk Students"
+        title="At-risk students"
         audience="Early warning scores are limited to OSA officers and guidance counselors. They are never shown to students."
       />
     );
@@ -86,18 +86,89 @@ export default async function StaffRiskPage({
   const activeVersion = versions.find((version) => version.active);
   const canChoose = canChooseRiskModel(staff.role);
 
+  const versionsPanel =
+    versions.length > 0 ? (
+      <details className="group mt-6 rounded-xl border border-border bg-card" open={!model}>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-5 text-base font-medium [&::-webkit-details-marker]:hidden">
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+          Model versions
+          <span className="font-normal text-muted-foreground">(which model scores the list, and how well each one tested)</span>
+        </summary>
+        <section className="border-t border-border p-5">
+        <p className="text-base text-muted-foreground">
+          Figures are from students held out of training: AUC is how well the model ranks
+          at-risk students above the rest (0.5 is chance, 1 is perfect); precision and recall
+          are at the moderate cut point.
+          {canChoose ? " Switching rescores every student at once." : ""}
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-base">
+            <thead className="text-sm text-muted-foreground font-medium">
+              <tr className="border-b border-border">
+                <th className="py-2 pr-3 font-semibold">Version</th>
+                <th className="py-2 pr-3 font-semibold">Weights from</th>
+                <th className="py-2 pr-3 text-right font-semibold">AUC</th>
+                <th className="py-2 pr-3 text-right font-semibold">Precision</th>
+                <th className="py-2 pr-3 text-right font-semibold">Recall</th>
+                <th className="py-2 text-right font-semibold" />
+              </tr>
+            </thead>
+            <tbody>
+              {versions.map((version) => (
+                <tr key={version.id} className="border-b border-border last:border-0 align-top">
+                  <td className="py-2.5 pr-3">
+                    <span className="font-mono font-medium">{version.label}</span>
+                    {version.trainedAt && (
+                      <span className="block text-sm text-muted-foreground">
+                        {version.trainedOn
+                          ? `${COUNT.format(version.trainedOn)} students · `
+                          : ""}
+                        {version.trainedAt}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    {version.source}
+                    {version.caveat && (
+                      <span className="block text-sm text-muted-foreground">{version.caveat}</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatFigure(version.auc)}</td>
+                  <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatPercent(version.precision)}</td>
+                  <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatPercent(version.recall)}</td>
+                  <td className="py-2.5 text-right">
+                    {version.active ? (
+                      <ToneBadge label="In use" tone="success" />
+                    ) : canChoose ? (
+                      <ActivateModelButton versionId={version.id} label={version.label} />
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        </section>
+      </details>
+    ) : null;
+
   if (!model) {
     return (
       <div>
         <PageHeader
-          breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "At-Risk" }]}
-          title="At-Risk Students"
+          breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "At-risk students" }]}
+          title="At-risk students"
         />
         <EmptyState
           icon={AlertTriangle}
-          title="No active model"
-          description="No row in risk_model_versions is marked active, so nothing can be scored. Promote a version (the v1.0-baseline seed ships inactive-safe) and reload."
+          title="No risk model is switched on"
+          description={
+            canChoose
+              ? "So no student can be scored. Switch one on under Model versions below."
+              : "So no student can be scored. Ask the OSA head or the administrator to switch one on."
+          }
         />
+        {versionsPanel}
       </div>
     );
   }
@@ -125,52 +196,52 @@ export default async function StaffRiskPage({
   return (
     <div>
       <PageHeader
-        breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "At-Risk" }]}
-        title="At-Risk Students"
-        description={`Scored against ${model.version_label}. Every factor below is the model's own contribution, not a guess.`}
+        breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "At-risk students" }]}
+        title="At-risk students"
+        description="Students the early warning model suggests checking on first, highest score first. Each card says why, and what to offer."
       />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          label="Critical"
-          value={counts.critical}
-          icon={AlertTriangle}
-          iconTone={counts.critical > 0 ? "danger" : "neutral"}
-          trend={RISK_TIER_META.critical.action}
-        />
-        <StatsCard
-          label="High"
-          value={counts.high}
-          icon={TrendingUp}
-          iconTone={counts.high > 0 ? "warn" : "neutral"}
-          trend={RISK_TIER_META.high.action}
-        />
-        <StatsCard label="Moderate" value={counts.moderate} icon={Activity} />
-        <StatsCard
-          label="Low confidence"
-          value={lowConfidence}
-          icon={CircleHelp}
-          trend="Too little data to trust the score"
-          trendTone="warn"
-        />
-      </div>
+      {lowConfidence > 0 && (
+        <p className="mb-4 max-w-prose text-base text-muted-foreground">
+          {lowConfidence} {lowConfidence === 1 ? "score is" : "scores are"} marked <strong>Low confidence</strong>: too
+          few verified documents to trust {lowConfidence === 1 ? "it" : "them"} yet.
+        </p>
+      )}
 
-      <div className="mb-4 flex flex-wrap items-center gap-1 border-b border-border">
-        {TIERS.map((option) => (
-          <Link
-            key={option}
-            href={option === "all" ? "/staff/risk" : `/staff/risk?tier=${option}`}
-            className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-base font-medium capitalize transition-colors",
-              activeTier === option
-                ? "border-tup-maroon-600 text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {option}
-          </Link>
-        ))}
-      </div>
+      {/* The tabs carry the counts, so no separate number tiles. */}
+      <nav aria-label="Which students" className="mb-4 flex flex-wrap items-center gap-1 border-b border-border">
+        {TIERS.map((option) => {
+          const active = activeTier === option;
+          const count = option === "all" ? scored.length : counts[option];
+          return (
+            <Link
+              key={option}
+              href={option === "all" ? "/staff/risk" : `/staff/risk?tier=${option}`}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "-mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 text-base font-medium transition-colors",
+                active
+                  ? "border-tup-maroon-600 text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {option === "all" ? "All" : RISK_TIER_META[option].label}
+              <span
+                className={cn(
+                  "rounded-full px-2 text-sm tabular-nums",
+                  active
+                    ? "bg-tup-maroon-600 text-white"
+                    : option === "critical" && count > 0
+                      ? "bg-red-100 text-red-800"
+                      : "bg-muted text-muted-foreground",
+                )}
+              >
+                {count}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
 
       {visible.length === 0 ? (
         <EmptyState
@@ -188,7 +259,7 @@ export default async function StaffRiskPage({
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-display text-base font-semibold">
+                      <p className="font-display text-lg font-semibold">
                         {row.first_name} {row.last_name}
                       </p>
                       <ToneBadge
@@ -199,18 +270,21 @@ export default async function StaffRiskPage({
                         <ToneBadge label="Low confidence" tone="neutral" />
                       )}
                     </div>
-                    <p className="font-mono text-sm text-muted-foreground">
-                      {row.student_number} · {row.program ?? "—"} · {row.year_level ?? "—"}
+                    <p className="text-base text-muted-foreground">
+                      <span className="whitespace-nowrap font-mono text-sm">{row.student_number}</span>
+                      {row.program ? ` · ${row.program}` : ""}
+                      {row.year_level ? `, ${row.year_level}` : ""}
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-mono text-2xl font-semibold tabular-nums">
+                    <p className="text-sm text-muted-foreground">Risk score</p>
+                    <p className="text-2xl font-semibold tabular-nums">
                       {Math.round(assessment.risk_score * 100)}
                       <span className="text-base text-muted-foreground">%</span>
                     </p>
-                    <p className="text-sm text-muted-foreground font-medium">
-                      {Math.round(assessment.dataCompleteness * 100)}% data
+                    <p className="text-sm text-muted-foreground">
+                      {Math.round(assessment.dataCompleteness * 100)}% of the data on file
                     </p>
                   </div>
                 </div>
@@ -218,21 +292,21 @@ export default async function StaffRiskPage({
                 {/* Why — the explainable part */}
                 <div className="mt-3 grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
+                    <p className="mb-1.5 text-base font-semibold">
                       What raises the score
                     </p>
                     {assessment.topRiskFactors.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-base text-muted-foreground">
                         Nothing above the neutral baseline.
                       </p>
                     ) : (
                       <ul className="space-y-1">
                         {assessment.topRiskFactors.slice(0, 3).map((factor) => (
-                          <li key={factor.feature} className="text-sm">
+                          <li key={factor.feature} className="text-base">
                             <span className="font-medium">{factor.label}</span>
                             {factor.imputed && (
                               <span className="ml-1 text-sm text-muted-foreground">
-                                (assumed — no data)
+                                (assumed: no data yet)
                               </span>
                             )}
                             <span className="block text-sm text-muted-foreground">
@@ -245,19 +319,19 @@ export default async function StaffRiskPage({
                   </div>
 
                   <div>
-                    <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
+                    <p className="mb-1.5 text-base font-semibold">
                       Suggested next step
                     </p>
                     {suggestions.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-base text-muted-foreground">
                         {tierMeta.action}
                       </p>
                     ) : (
                       <ul className="space-y-1">
                         {suggestions.slice(0, 2).map((suggestion) => (
-                          <li key={suggestion.type} className="text-sm">
-                            <span className="font-medium capitalize">
-                              {suggestion.type.replace(/_/g, " ")}
+                          <li key={suggestion.type} className="text-base">
+                            <span className="font-medium">
+                              {followUpTypeLabel(suggestion.type)}
                             </span>
                             <span className="block text-sm text-muted-foreground">
                               {suggestion.reason}
@@ -273,7 +347,7 @@ export default async function StaffRiskPage({
                   <InterventionForm studentId={row.student_id} suggestions={suggestions} />
                   <Link
                     href={`/staff/students/${row.student_id}`}
-                    className="inline-flex items-center px-2 py-1.5 text-sm text-tup-maroon-600 underline-offset-2 hover:underline"
+                    className="inline-flex min-h-10 items-center px-2 text-base font-medium text-tup-maroon-700 underline-offset-2 hover:underline"
                   >
                     Open student record
                   </Link>
@@ -284,70 +358,12 @@ export default async function StaffRiskPage({
         </ul>
       )}
 
-      {versions.length > 0 && (
-        <section className="mt-6 rounded-xl border border-border bg-card p-5">
-          <h2 className="font-display text-base font-semibold">Model versions</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Figures are from students held out of training: AUC is how well the model ranks
-            at-risk students above the rest (0.5 is chance, 1 is perfect); precision and recall
-            are at the moderate cut point.
-            {canChoose ? " Switching rescores every student at once." : ""}
-          </p>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="text-sm text-muted-foreground font-medium">
-                <tr className="border-b border-border">
-                  <th className="py-2 pr-3 font-semibold">Version</th>
-                  <th className="py-2 pr-3 font-semibold">Weights from</th>
-                  <th className="py-2 pr-3 text-right font-semibold">AUC</th>
-                  <th className="py-2 pr-3 text-right font-semibold">Precision</th>
-                  <th className="py-2 pr-3 text-right font-semibold">Recall</th>
-                  <th className="py-2 text-right font-semibold" />
-                </tr>
-              </thead>
-              <tbody>
-                {versions.map((version) => (
-                  <tr key={version.id} className="border-b border-border last:border-0 align-top">
-                    <td className="py-2.5 pr-3">
-                      <span className="font-mono font-medium">{version.label}</span>
-                      {version.trainedAt && (
-                        <span className="block text-sm text-muted-foreground">
-                          {version.trainedOn
-                            ? `${COUNT.format(version.trainedOn)} students · `
-                            : ""}
-                          {version.trainedAt}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 pr-3">
-                      {version.source}
-                      {version.caveat && (
-                        <span className="block text-sm text-muted-foreground">{version.caveat}</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatFigure(version.auc)}</td>
-                    <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatPercent(version.precision)}</td>
-                    <td className="py-2.5 pr-3 text-right font-mono tabular-nums">{formatPercent(version.recall)}</td>
-                    <td className="py-2.5 text-right">
-                      {version.active ? (
-                        <ToneBadge label="In use" tone="success" />
-                      ) : canChoose ? (
-                        <ActivateModelButton versionId={version.id} label={version.label} />
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {versionsPanel}
 
-      <p className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
-        <strong className="text-foreground">On using these scores:</strong>{" "}
-the model in use takes its weights from{" "}
-        {activeVersion?.sourceInSentence ?? "a source not recorded"} — it ranks who to check on first, it does not predict failure. Never quote a score to a
-        student, and never let one stand in for a conversation.
+      <p className="mt-5 max-w-prose rounded-xl border border-border bg-muted/40 p-4 text-base leading-relaxed text-muted-foreground">
+        <strong className="text-foreground">On using these scores:</strong> the model in use takes its weights from{" "}
+        {activeVersion?.sourceInSentence ?? "a source not recorded"}. It ranks who to check on first; it does not
+        predict failure. Never quote a score to a student, and never let one stand in for a conversation.
       </p>
     </div>
   );

@@ -217,7 +217,7 @@ function explainFeature(
       else if (gwa <= 2.5) verdict = "satisfactory standing";
       else if (gwa <= 3.0) verdict = "marginal standing";
       else verdict = "at risk of academic failure";
-      return { explanation: `GWA of ${gwa.toFixed(2)} — ${verdict}.`, rawValue: gwa };
+      return { explanation: `GWA of ${gwa.toFixed(2)}: ${verdict}.`, rawValue: gwa };
     }
 
     case "gwa_delta": {
@@ -254,13 +254,13 @@ function explainFeature(
       const rate = raw.current_attendance_rate!;
       const pct = Math.round(rate * 100);
       if (rate >= 0.9) {
-        return { explanation: `Attendance at ${pct}% — consistent.`, rawValue: rate };
+        return { explanation: `Attendance at ${pct}%: consistent.`, rawValue: rate };
       }
       if (rate >= 0.75) {
-        return { explanation: `Attendance at ${pct}% — some absences.`, rawValue: rate };
+        return { explanation: `Attendance at ${pct}%: some absences.`, rawValue: rate };
       }
       return {
-        explanation: `Attendance at ${pct}% — frequent absences.`,
+        explanation: `Attendance at ${pct}%: frequent absences.`,
         rawValue: rate,
       };
     }
@@ -312,7 +312,7 @@ function explainFeature(
       const s = raw.scholastic_status ?? "Regular";
       return normalized === 1
         ? { explanation: `Scholastic status: ${s}.`, rawValue: s }
-        : { explanation: `Scholastic status: ${s} — in good standing.`, rawValue: s };
+        : { explanation: `Scholastic status: ${s}, in good standing.`, rawValue: s };
     }
   }
 }

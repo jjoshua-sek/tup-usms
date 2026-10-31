@@ -160,6 +160,19 @@ export function startOfManilaDay(now: Date = new Date()): Date {
   return manilaInstant(year, month, day);
 }
 
+/**
+ * The Manila day a time falls on, as a heading: "Today", "Tomorrow", or
+ * "Wednesday, November 4". Lists that group by day use it as the key too.
+ */
+export function manilaDayLabel(value: string | Date, now: Date = new Date()): string {
+  const days = Math.floor(
+    (startOfManilaDay(new Date(value)).getTime() - startOfManilaDay(now).getTime()) / 86_400_000,
+  );
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  return formatManila(value, { weekday: "long", month: "long", day: "numeric" });
+}
+
 const WALL_CLOCK_INPUT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
 /**

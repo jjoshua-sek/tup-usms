@@ -187,7 +187,6 @@ export function HearingActions({
     return (
       <Button
         type="button"
-        size="sm"
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
@@ -199,9 +198,9 @@ export function HearingActions({
         className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
       >
         {isPending ? (
-          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
         ) : (
-          <Check className="mr-1.5 h-3.5 w-3.5" />
+          <Check className="mr-1.5 h-4 w-4" />
         )}
         Approve this date
       </Button>
@@ -212,7 +211,6 @@ export function HearingActions({
     return (
       <Button
         type="button"
-        size="sm"
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
@@ -224,9 +222,9 @@ export function HearingActions({
         className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
       >
         {isPending ? (
-          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
         ) : (
-          <Send className="mr-1.5 h-3.5 w-3.5" />
+          <Send className="mr-1.5 h-4 w-4" />
         )}
         Notify the student
       </Button>

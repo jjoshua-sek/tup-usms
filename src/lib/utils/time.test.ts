@@ -6,6 +6,7 @@ import {
   formatManilaDateTime,
   formatManilaLongDate,
   formatManilaTime,
+  manilaDayLabel,
   manilaInstant,
   manilaWallClock,
   parseManilaDateTime,
@@ -144,5 +145,19 @@ describe("timeAgo", () => {
 
   it("gives the date once it is a month old", () => {
     expect(timeAgo("2026-09-19T04:00:00Z", now)).toBe("Sep 19, 2026");
+  });
+});
+
+describe("manilaDayLabel", () => {
+  // 11 PM on Oct 31 in Manila is still Oct 31 there, though Nov 1 is near.
+  const now = new Date("2026-10-31T15:00:00Z");
+
+  it("names today and tomorrow on the Manila calendar", () => {
+    expect(manilaDayLabel("2026-10-31T15:30:00Z", now)).toBe("Today");
+    expect(manilaDayLabel("2026-10-31T16:30:00Z", now)).toBe("Tomorrow");
+  });
+
+  it("gives the weekday and date after that", () => {
+    expect(manilaDayLabel("2026-11-04T01:00:00Z", now)).toBe("Wednesday, November 4");
   });
 });

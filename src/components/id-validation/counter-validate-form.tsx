@@ -35,18 +35,18 @@ export function CounterValidateForm({ studentId, termLabel }: { studentId: strin
         id={`sticker-${studentId}`}
         name="sticker_number"
         maxLength={40}
-        placeholder="Sticker no. (optional)"
+        placeholder="Sticker number"
+        aria-label="Sticker number (optional)"
         disabled={isPending}
-        className="h-8 w-40 rounded-md border border-border bg-background px-2.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
+        className="h-10 w-44 rounded-md border border-border bg-background px-3 text-base focus:border-tup-maroon-600 focus:outline-none"
       />
       <Button
         type="submit"
-        size="sm"
         disabled={isPending}
         className="h-8 bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
         title={`Validate for ${termLabel}`}
       >
-        {isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <BadgeCheck className="mr-1.5 h-3.5 w-3.5" />}
+        {isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <BadgeCheck className="mr-1.5 h-4 w-4" />}
         Validate
       </Button>
     </form>

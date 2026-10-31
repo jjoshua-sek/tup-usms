@@ -21,8 +21,8 @@ export function OfflineReviewButton({ uploadId }: { uploadId: string }) {
       }
     >
       <input type="hidden" name="upload_id" value={uploadId} />
-      <Button type="submit" size="sm" variant="outline" disabled={isPending} className="h-8">
-        {isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Check className="mr-1.5 h-3.5 w-3.5" />}
+      <Button type="submit" variant="outline" disabled={isPending}>
+        {isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Check className="mr-1.5 h-4 w-4" />}
         Mark reviewed
       </Button>
     </form>

@@ -52,14 +52,14 @@ export function ReviewControls({ validationId, decisions }: ReviewControlsProps)
         <input type="hidden" name="decision" value={pendingDecision} />
 
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">{copy.label}</p>
+          <p className="text-base font-semibold">{copy.label}</p>
           <button
             type="button"
             onClick={() => setPendingDecision(null)}
             aria-label="Cancel"
             className="rounded-md p-1 text-muted-foreground hover:bg-muted"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -70,24 +70,25 @@ export function ReviewControls({ validationId, decisions }: ReviewControlsProps)
             rows={2}
             maxLength={500}
             placeholder={copy.prompt}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
+            aria-label={copy.prompt}
+            className="w-full min-h-10 rounded-md border border-border bg-background px-3 py-2 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20"
           />
         ) : (
           <input
             name="sticker_number"
             maxLength={40}
-            placeholder="Sticker number (optional)"
-            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-tup-maroon-600 focus:outline-none"
+            placeholder="Sticker number"
+            aria-label="Sticker number (optional)"
+            className="w-full min-h-10 rounded-md border border-border bg-background px-3 py-2 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20"
           />
         )}
 
         <Button
           type="submit"
-          size="sm"
           disabled={isPending}
           className="w-full bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
         >
-          {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+          {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
           Confirm {copy.label.toLowerCase()}
         </Button>
       </form>
@@ -101,7 +102,7 @@ export function ReviewControls({ validationId, decisions }: ReviewControlsProps)
           key={decision}
           type="button"
           onClick={() => setPendingDecision(decision)}
-          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm font-medium transition-colors ${
+          className={`inline-flex min-h-10 items-center gap-1.5 rounded-md border px-3 text-base font-medium transition-colors ${
             decision === "validate" || decision === "reinstate"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
               : "border-border hover:bg-muted"
@@ -116,7 +117,7 @@ export function ReviewControls({ validationId, decisions }: ReviewControlsProps)
 }
 
 function DecisionIcon({ decision }: { decision: Decision }) {
-  const className = "h-3 w-3";
+  const className = "h-4 w-4";
   switch (decision) {
     case "validate":
       return <BadgeCheck className={className} />;

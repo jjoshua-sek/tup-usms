@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SealCheckIcon as BadgeCheck, ClockIcon as Clock, IdentificationCardIcon as IdCard, MagnifyingGlassIcon as Search, ShieldSlashIcon as ShieldX } from "@phosphor-icons/react/ssr";
+import { SealCheckIcon as BadgeCheck, CaretDownIcon as ChevronDown, IdentificationCardIcon as IdCard, MagnifyingGlassIcon as Search } from "@phosphor-icons/react/ssr";
 
 import { StampedScanPanel } from "@/components/documents/stamped-scan-panel";
 import { CounterValidateForm } from "@/components/id-validation/counter-validate-form";
@@ -9,7 +9,6 @@ import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge } from "@/components/osa/tone-badge";
 import { PageHeader } from "@/components/shared/page-header";
-import { StatsCard } from "@/components/shared/stats-card";
 import { getCurrentTerm } from "@/lib/access/term";
 import { isOfflineMode } from "@/lib/offline/mode";
 import { OFFLINE_UPLOAD_COLUMNS, offlineMoment } from "@/lib/offline/upload-rules";
@@ -21,7 +20,7 @@ import { formatManilaMonthDayTime } from "@/lib/utils/time";
 import { ID_STATUS_META, type AcademicDocument, type IdValidationStatus } from "@/types/osa";
 
 export const metadata: Metadata = {
-  title: "ID Validation",
+  title: "ID validation",
 };
 
 export const dynamic = "force-dynamic";
@@ -105,7 +104,7 @@ export default async function StaffIdValidationPage({
   if (!staff?.isOsa) {
     return (
       <RestrictedNotice
-        title="ID Validation"
+        title="ID validation"
         audience="ID validation is handled by OSA officers and the OSA head. Ask an administrator if you need this queue."
       />
     );
@@ -214,26 +213,10 @@ export default async function StaffIdValidationPage({
   return (
     <div>
       <PageHeader
-        breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "ID Validation" }]}
-        title="ID Validation"
-        description={`Validated IDs open the campus turnstiles. ${term.label}.`}
+        breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "ID validation" }]}
+        title="ID validation"
+        description={`Validate a student's ID for ${term.label}, so it opens the campus turnstiles. Find a student at the counter, or answer the requests below.`}
       />
-
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <StatsCard
-          label="Requests waiting"
-          value={queueCount}
-          icon={Clock}
-          iconTone={queueCount > 0 ? "warn" : "neutral"}
-        />
-        <StatsCard label="Validated this term" value={validatedCount} icon={BadgeCheck} iconTone="success" />
-        <StatsCard
-          label="Suspended / revoked"
-          value={flaggedCount}
-          icon={ShieldX}
-          iconTone={flaggedCount > 0 ? "danger" : "neutral"}
-        />
-      </div>
 
       <Section
         title="Validate at the counter"
@@ -248,14 +231,14 @@ export default async function StaffIdValidationPage({
             name="q"
             defaultValue={q ?? ""}
             placeholder="Student number or name, e.g. TUPM-22-0148"
-            className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-base focus:border-tup-maroon-600 focus:outline-none"
+            className="h-11 flex-1 rounded-md border border-border bg-background px-3 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20"
           />
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-base font-medium hover:bg-muted"
+            className="inline-flex h-11 items-center gap-1.5 rounded-md bg-tup-maroon-600 px-4 text-base font-medium text-white transition-colors hover:bg-tup-maroon-700"
           >
             <Search className="h-4 w-4" />
-            Find
+            Find student
           </button>
         </form>
 
@@ -282,7 +265,7 @@ export default async function StaffIdValidationPage({
                   </div>
                   <div className="w-full sm:w-auto">
                     {!student.photo_url ? (
-                      <p className="max-w-[260px] text-sm text-muted-foreground">
+                      <p className="max-w-[260px] text-base text-muted-foreground">
                         No profile photo on file. The student must add one before the ID can be validated.
                       </p>
                     ) : record && offline && OFFLINE_COUNTER_STATUSES.has(record.status) ? (
@@ -347,22 +330,32 @@ export default async function StaffIdValidationPage({
       </Section>
 
       {flagged.length > 0 && (
-        <Section title="Suspended & revoked" count={flaggedCount}>
+        <Section title="Suspended or revoked" count={flaggedCount}>
           <ValidationList rows={flagged} total={flaggedCount} />
         </Section>
       )}
 
-      <Section title="Validated this term" count={validatedCount}>
-        {validated.length === 0 ? (
+      {/* Done work, folded away: open it to suspend or revoke a validated ID. */}
+      {validated.length === 0 ? (
+        <Section title="Validated this term" count={0}>
           <EmptyState
             icon={BadgeCheck}
             title="No IDs validated yet this term"
             description="Until an ID is validated here, that student's card is denied at every enforcing gate."
           />
-        ) : (
-          <ValidationList rows={validated} total={validatedCount} newestFirst />
-        )}
-      </Section>
+        </Section>
+      ) : (
+        <details className="group mb-8 rounded-xl border border-border bg-card">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-5 text-base font-medium [&::-webkit-details-marker]:hidden">
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+            Validated this term
+            <span className="rounded-full bg-muted px-2 font-normal tabular-nums text-muted-foreground">{validatedCount}</span>
+          </summary>
+          <div className="border-t border-border p-4">
+            <ValidationList rows={validated} total={validatedCount} newestFirst />
+          </div>
+        </details>
+      )}
     </div>
   );
 }
@@ -399,7 +392,7 @@ function CounterDocuments({ documents }: { documents: AcademicDocument[] }) {
             />
           ) : (
             <p className="rounded-md bg-muted p-2 text-sm text-muted-foreground">
-              Not read yet, so there is nothing to compare. Open it on Document Review and use Re-read with AI.
+              Not read yet, so there is nothing to compare. Open it on Check documents and press Re-read with AI.
             </p>
           )}
         </div>
@@ -423,7 +416,9 @@ function Section({
     <section className="mb-8">
       <h2 className="font-display text-lg font-semibold tracking-tight">
         {title}
-        {count !== undefined && <span className="ml-2 text-base font-normal text-muted-foreground">{count}</span>}
+        {count !== undefined && (
+          <span className="ml-2 rounded-full bg-muted px-2 text-base font-normal tabular-nums text-muted-foreground">{count}</span>
+        )}
       </h2>
       {note && <p className="mt-0.5 text-base text-muted-foreground">{note}</p>}
       <div className="mt-3">{children}</div>
@@ -462,10 +457,10 @@ function StudentPhoto({ student }: { student: StudentSummary | null }) {
 
 function StudentLine({ student }: { student: StudentSummary | null }) {
   return (
-    <p className="font-mono text-sm text-muted-foreground">
-      {student?.student_number ?? "—"}
+    <p className="text-base text-muted-foreground">
+      <span className="whitespace-nowrap font-mono text-sm">{student?.student_number ?? "No student number"}</span>
       {student?.program ? ` · ${student.program}` : ""}
-      {student?.year_level ? ` · ${student.year_level}` : ""}
+      {student?.year_level ? `, ${student.year_level}` : ""}
     </p>
   );
 }
@@ -486,14 +481,14 @@ function ValidationCard({ row }: { row: ValidationRow }) {
           <ToneBadge label={meta.label} tone={meta.tone} />
         </div>
         <StudentLine student={student} />
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-base text-muted-foreground">
           Requested {formatManilaMonthDayTime(row.submitted_at)}
-          {row.validated_at ? ` · validated ${formatManilaMonthDayTime(row.validated_at)}` : ""}
-          {row.validation_sticker_number ? ` · sticker ${row.validation_sticker_number}` : ""}
+          {row.validated_at ? ` · Validated ${formatManilaMonthDayTime(row.validated_at)}` : ""}
+          {row.validation_sticker_number ? ` · Sticker ${row.validation_sticker_number}` : ""}
         </p>
         {row.rejection_reason && (
-          <p className="mt-1.5 rounded-md bg-muted p-2 text-sm">
-            <strong>Noted:</strong> {row.rejection_reason}
+          <p className="mt-1.5 rounded-md bg-muted p-2 text-base">
+            <strong>Reason given:</strong> {row.rejection_reason}
           </p>
         )}
       </div>

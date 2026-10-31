@@ -18,6 +18,7 @@ import { CASE_NOT_VISIBLE, staffCanSeeCase } from "@/lib/osa/case-access";
 import { CLASSIFIABLE, CLASSIFY_FIRST, canClassify, isClassificationPending } from "@/lib/osa/classification";
 import { announceSummons, createHearingWithSummons } from "@/lib/osa/summons";
 import { addCaseTimelineEntry } from "@/lib/osa/timeline";
+import { WAITING } from "@/lib/osa/today";
 import {
   findAvailableSlots,
   formatSlot,
@@ -29,7 +30,7 @@ import { logAuditEvent } from "@/lib/utils/audit";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import { parseManilaDateTime } from "@/lib/utils/time";
-import { CASE_STATUSES, type CaseStatus } from "@/types/osa";
+import { CASE_STATUSES, CASE_STATUS_META, type CaseStatus } from "@/types/osa";
 
 interface Result {
   ok?: boolean;
@@ -1803,14 +1804,35 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
 
   if (error) return { error: "Could not update the case." };
 
+  // "Hearing held" also marks the case's meetings that have already started
+  // as held. Nothing else does, so they kept saying "Confirmed" after the
+  // date, on the Hearings page and in the student's appointments. A meeting
+  // still in the future is left alone.
+  let meetingsHeld = 0;
+  if (parsed.data.status === "hearing_completed") {
+    const now = new Date().toISOString();
+    const { data: held } = await db
+      .from("case_hearings")
+      .update({ status: "completed", completed_at: now })
+      .eq("case_id", parsed.data.case_id)
+      .in("status", [...WAITING.hearingsGoingAhead])
+      .lte("scheduled_start", now)
+      .select("id");
+    meetingsHeld = (held as unknown[] | null)?.length ?? 0;
+  }
+
+  const statusLabel = CASE_STATUS_META[parsed.data.status].label;
   await addTimelineEntry(db, {
     caseId: parsed.data.case_id,
     actorId: staff.userId,
     actorLabel: staff.fullName,
     eventType: "status_changed",
-    summary: parsed.data.note || `Status changed to ${parsed.data.status}.`,
+    summary:
+      (parsed.data.note || `Status changed to ${statusLabel}.`) +
+      (meetingsHeld > 0 ? ` ${meetingsHeld === 1 ? "The meeting was" : `${meetingsHeld} meetings were`} marked as held.` : ""),
     fromStatus,
     toStatus: parsed.data.status,
+    details: meetingsHeld > 0 ? { meetings_marked_held: meetingsHeld } : undefined,
   });
 
   // Only the transitions that ask something of the student, or end the
@@ -1867,5 +1889,9 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
 
   revalidatePath(`/staff/cases/${parsed.data.case_id}`);
   revalidatePath("/staff/cases");
-  return { ok: true, message: "Case updated." };
+  revalidatePath("/staff/hearings");
+  return {
+    ok: true,
+    message: meetingsHeld > 0 ? `Case updated. ${meetingsHeld === 1 ? "The meeting is" : `${meetingsHeld} meetings are`} now marked as held.` : "Case updated.",
+  };
 }

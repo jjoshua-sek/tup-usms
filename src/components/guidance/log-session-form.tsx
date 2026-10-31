@@ -6,16 +6,12 @@ import { toast } from "sonner";
 
 import { logGuidanceSession } from "@/app/staff/guidance/actions";
 import { Button } from "@/components/ui/button";
-
-const TYPES = [
-  "walk_in",
-  "scheduled",
-  "referral",
-  "risk_intervention",
-  "disciplinary",
-  "follow_up",
-  "crisis",
-] as const;
+import {
+  SESSION_CATEGORIES,
+  SESSION_CATEGORY_LABELS,
+  SESSION_TYPES,
+  SESSION_TYPE_LABELS,
+} from "@/lib/osa/guidance-labels";
 
 export function LogSessionForm() {
   const [open, setOpen] = useState(false);
@@ -55,7 +51,7 @@ export function LogSessionForm() {
           type="button"
           onClick={() => setOpen(false)}
           aria-label="Cancel"
-          className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+          className="rounded-md p-2 text-muted-foreground hover:bg-muted"
         >
           <X className="h-4 w-4" />
         </button>
@@ -63,7 +59,7 @@ export function LogSessionForm() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Student number</span>
+          <span className="text-base font-medium">Student number</span>
           <input
             name="student_number"
             required
@@ -73,29 +69,31 @@ export function LogSessionForm() {
         </label>
 
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Session type</span>
+          <span className="text-base font-medium">Session type</span>
           <select name="session_type" defaultValue="walk_in" className={inputClass}>
-            {TYPES.map((type) => (
+            {SESSION_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type.replace(/_/g, " ")}
+                {SESSION_TYPE_LABELS[type]}
               </option>
             ))}
           </select>
         </label>
 
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Category</span>
-          <input
-            name="concern_category"
-            maxLength={60}
-            placeholder="academic / family / financial"
-            className={inputClass}
-          />
+          <span className="text-base font-medium">Category</span>
+          <select name="concern_category" defaultValue="" className={inputClass}>
+            <option value="">Not set</option>
+            {SESSION_CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {SESSION_CATEGORY_LABELS[category]}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Presenting concern</span>
+        <span className="text-base font-medium">Presenting concern</span>
         <input
           name="presenting_concern"
           maxLength={300}
@@ -105,27 +103,27 @@ export function LogSessionForm() {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">
-          Summary <span className="text-muted-foreground">(other OSA staff can read this)</span>
+        <span className="text-base font-medium">
+          Summary <span className="font-normal text-muted-foreground">(other OSA staff can read this)</span>
         </span>
         <textarea name="summary" rows={2} maxLength={2000} className={inputClass} />
       </label>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">
+        <span className="text-base font-medium">
           Confidential notes{" "}
-          <span className="text-muted-foreground">(counselor-only — nobody else, ever)</span>
+          <span className="font-normal text-muted-foreground">(only you can ever read these)</span>
         </span>
         <textarea name="confidential_notes" rows={3} maxLength={5000} className={inputClass} />
       </label>
 
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="follow_up_required" className="h-3.5 w-3.5" />
+        <label className="flex min-h-10 items-center gap-2 text-base">
+          <input type="checkbox" name="follow_up_required" className="h-5 w-5" />
           Follow-up needed
         </label>
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Follow-up date</span>
+          <span className="text-base font-medium">Follow-up date</span>
           <input type="date" name="follow_up_date" className={inputClass} />
         </label>
       </div>
@@ -133,14 +131,14 @@ export function LogSessionForm() {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
+        className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
       >
         {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-        Save session
+        Save the session
       </Button>
     </form>
   );
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-base focus:border-tup-maroon-600 focus:outline-none";
+  "w-full min-h-10 rounded-md border border-border bg-background px-3 py-2 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20";

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { SESSION_CATEGORIES, SESSION_TYPES } from "@/lib/osa/guidance-labels";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loose } from "@/lib/supabase/loose";
@@ -16,17 +17,9 @@ interface Result {
 
 const sessionSchema = z.object({
   student_number: z.string().trim().min(4).max(20),
-  session_type: z.enum([
-    "walk_in",
-    "scheduled",
-    "referral",
-    "risk_intervention",
-    "disciplinary",
-    "follow_up",
-    "crisis",
-  ]),
+  session_type: z.enum(SESSION_TYPES),
   presenting_concern: z.string().trim().max(300).optional().or(z.literal("")),
-  concern_category: z.string().trim().max(60).optional().or(z.literal("")),
+  concern_category: z.enum(SESSION_CATEGORIES).optional().or(z.literal("")),
   summary: z.string().trim().max(2000).optional().or(z.literal("")),
   confidential_notes: z.string().trim().max(5000).optional().or(z.literal("")),
   follow_up_required: z.string().optional(),

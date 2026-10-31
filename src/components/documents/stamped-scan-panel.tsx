@@ -58,15 +58,15 @@ export function StampedScanPanel({
     <div className="space-y-2 rounded-lg border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-sm font-semibold">
-          <ScanLine className="h-3.5 w-3.5" /> Stamped copy of the {documentLabel}
+          <ScanLine className="h-4 w-4" /> Stamped copy of the {documentLabel}
         </p>
         {mode === "idle" && !reading && (
           <div className="flex flex-wrap gap-1.5">
             <button type="button" onClick={() => setMode("camera")} className={smallButton}>
-              <Camera className="h-3 w-3" /> {comparison ? "Scan again" : "Scan with camera"}
+              <Camera className="h-4 w-4" /> {comparison ? "Scan again" : "Scan with camera"}
             </button>
             <button type="button" onClick={() => fileRef.current?.click()} className={smallButton}>
-              <ImageUp className="h-3 w-3" /> Use a photo
+              <ImageUp className="h-4 w-4" /> Use a photo
             </button>
             <input
               ref={fileRef}
@@ -96,7 +96,7 @@ export function StampedScanPanel({
 
       {reading && (
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading the stamped copy and comparing it with the upload…
+          <Loader2 className="h-4 w-4 animate-spin" /> Reading the stamped copy and comparing it with the upload…
         </p>
       )}
 
@@ -149,7 +149,7 @@ function ComparisonResult({
             : "bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
         }`}
       >
-        {good ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" /> : <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
+        {good ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />}
         <span>{comparison.summary}</span>
       </p>
 
@@ -175,12 +175,11 @@ function ComparisonResult({
         {good && (
           <Button
             type="button"
-            size="sm"
             disabled={verifying}
             onClick={onVerify}
             className="h-8 bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
           >
-            {verifying ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />}
+            {verifying ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-1.5 h-4 w-4" />}
             Verify with stamped copy
           </Button>
         )}
@@ -211,7 +210,7 @@ function ScanLink({ documentId }: { documentId: string }) {
   if (url) {
     return (
       <a href={url} target="_blank" rel="noopener noreferrer" className={`${smallButton} text-tup-maroon-600`}>
-        <ExternalLink className="h-3 w-3" /> Open scan (5 min link)
+        <ExternalLink className="h-4 w-4" /> Open scan (5 min link)
       </a>
     );
   }
@@ -228,7 +227,7 @@ function ScanLink({ documentId }: { documentId: string }) {
         })
       }
     >
-      {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ExternalLink className="h-3 w-3" />} View scan
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />} View scan
     </button>
   );
 }
@@ -313,11 +312,11 @@ function DocumentCamera({ onCapture, onCancel }: { onCapture: (file: File) => vo
         <div className="pointer-events-none absolute inset-3 rounded border-2 border-dashed border-white/40" />
       </div>
       <div className="flex gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel} className="flex-1">
-          <X className="mr-1 h-3.5 w-3.5" /> Cancel
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+          <X className="mr-1 h-4 w-4" /> Cancel
         </Button>
-        <Button type="button" size="sm" disabled={!ready} onClick={capture} className="flex-1 bg-tup-maroon-600 text-white hover:bg-tup-maroon-700">
-          <Camera className="mr-1 h-3.5 w-3.5" /> Capture page
+        <Button type="button" disabled={!ready} onClick={capture} className="flex-1 bg-tup-maroon-600 text-white hover:bg-tup-maroon-700">
+          <Camera className="mr-1 h-4 w-4" /> Capture page
         </Button>
       </div>
     </div>
@@ -325,4 +324,4 @@ function DocumentCamera({ onCapture, onCancel }: { onCapture: (file: File) => vo
 }
 
 const smallButton =
-  "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50";
+  "inline-flex items-center gap-1 min-h-10 rounded-md border border-border px-3 text-base font-medium transition-colors hover:bg-muted disabled:opacity-50";

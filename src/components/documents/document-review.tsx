@@ -31,9 +31,9 @@ export function ViewFileButton({ documentId }: { documentId: string }) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium text-tup-maroon-600 transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1 min-h-10 rounded-md border border-border px-3 text-base font-medium text-tup-maroon-600 transition-colors hover:bg-muted"
       >
-        <ExternalLink className="h-3 w-3" />
+        <ExternalLink className="h-4 w-4" />
         Open file (5 min link)
       </a>
     );
@@ -53,9 +53,9 @@ export function ViewFileButton({ documentId }: { documentId: string }) {
           setUrl(result.url);
         })
       }
-      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
+      className="inline-flex items-center gap-1 min-h-10 rounded-md border border-border px-3 text-base font-medium transition-colors hover:bg-muted"
     >
-      {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
+      {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
       View document
     </button>
   );
@@ -76,12 +76,12 @@ export function RerunExtractionButton({ documentId }: { documentId: string }) {
           else toast.success(result.message ?? "Read.");
         })
       }
-      className="inline-flex items-center gap-1 rounded-md border border-ai-accent px-2 py-1 text-sm font-medium text-ai-accent transition-colors hover:bg-ai-accent-soft"
+      className="inline-flex items-center gap-1 min-h-10 rounded-md border border-ai-accent px-3 text-base font-medium text-ai-accent transition-colors hover:bg-ai-accent-soft"
     >
       {isPending ? (
-        <Loader2 className="h-3 w-3 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <Sparkles className="h-3 w-3" />
+        <Sparkles className="h-4 w-4" />
       )}
       {isPending ? "Reading…" : "Re-read with AI"}
     </button>
@@ -109,17 +109,17 @@ export function DocumentReviewForms({
         <button
           type="button"
           onClick={() => setMode("verify")}
-          className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+          className="inline-flex items-center gap-1 min-h-10 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-base font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
         >
-          <ThumbsUp className="h-3 w-3" />
+          <ThumbsUp className="h-4 w-4" />
           Verify on screen
         </button>
         <button
           type="button"
           onClick={() => setMode("reject")}
-          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1 min-h-10 rounded-md border border-border px-3 text-base font-medium transition-colors hover:bg-muted"
         >
-          <ThumbsDown className="h-3 w-3" />
+          <ThumbsDown className="h-4 w-4" />
           Reject
         </button>
       </div>
@@ -151,8 +151,8 @@ export function DocumentReviewForms({
           placeholder="What's wrong with it? The student sees this."
           className={inputClass}
         />
-        <Button type="submit" size="sm" variant="outline" disabled={isPending} className="w-full">
-          {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+        <Button type="submit" variant="outline" disabled={isPending} className="w-full">
+          {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
           Reject and notify
         </Button>
       </form>
@@ -194,9 +194,9 @@ export function DocumentReviewForms({
 
       {extracted && (
         <p className="rounded-md bg-ai-accent-soft p-2 text-sm leading-relaxed text-ai-accent">
-          <Sparkles className="mr-1 inline h-3 w-3" />
+          <Sparkles className="mr-1 inline h-4 w-4" />
           Pre-filled from the document. Check each figure against the page before
-          confirming — you are the one signing for these numbers.
+          confirming. You are the one signing for these numbers.
         </p>
       )}
 
@@ -204,7 +204,7 @@ export function DocumentReviewForms({
         {/* A COR has no grades yet — only what the student enrolled in. */}
         {!isCor && (
           <label className="block space-y-1">
-            <span className="text-sm font-medium">GWA</span>
+            <span className="text-base font-medium">GWA</span>
             <input
               name="gwa"
               type="number"
@@ -218,7 +218,7 @@ export function DocumentReviewForms({
           </label>
         )}
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Units enrolled</span>
+          <span className="text-base font-medium">Units enrolled</span>
           <input
             name="units_enrolled"
             type="number"
@@ -231,7 +231,7 @@ export function DocumentReviewForms({
         {!isCor && (
           <>
             <label className="block space-y-1">
-              <span className="text-sm font-medium">Units passed</span>
+              <span className="text-base font-medium">Units passed</span>
               <input
                 name="units_passed"
                 type="number"
@@ -242,7 +242,7 @@ export function DocumentReviewForms({
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-sm font-medium">Units failed</span>
+              <span className="text-base font-medium">Units failed</span>
               <input
                 name="units_failed"
                 type="number"
@@ -255,7 +255,7 @@ export function DocumentReviewForms({
           </>
         )}
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Standing</span>
+          <span className="text-base font-medium">Standing</span>
           <input
             name="scholastic_status"
             maxLength={60}
@@ -300,7 +300,7 @@ export function DocumentReviewForms({
       {/* Subject-level read, so an officer can spot a misread row */}
       {(extracted?.subjects?.length ?? 0) > 0 && (
         <details className="rounded-md border border-border p-2">
-          <summary className="cursor-pointer text-sm font-medium">
+          <summary className="min-h-10 cursor-pointer text-base font-medium">
             {extracted!.subjects!.length} subjects read
             {isCor
               ? ` · ${extracted!.subjects!.reduce(
@@ -311,10 +311,10 @@ export function DocumentReviewForms({
           </summary>
           <ul className="mt-2 space-y-1">
             {extracted!.subjects!.map((subject, index) => (
-              <li key={`${subject.subject_code ?? index}`} className="text-sm">
-                <span className="font-mono">{subject.subject_code ?? "—"}</span>
+              <li key={`${subject.subject_code ?? index}`} className="text-base">
+                <span className="font-mono">{subject.subject_code ?? "No code"}</span>
                 {subject.units != null && (
-                  <span className="text-muted-foreground"> · {subject.units}u</span>
+                  <span className="text-muted-foreground"> · {subject.units} units</span>
                 )}
                 {subject.grade != null && (
                   <span className="text-muted-foreground"> · {String(subject.grade)}</span>
@@ -351,11 +351,10 @@ export function DocumentReviewForms({
 
       <Button
         type="submit"
-        size="sm"
         disabled={isPending}
         className="w-full bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
       >
-        {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+        {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
         Verify and save term snapshot
       </Button>
     </form>
@@ -372,11 +371,11 @@ function Header({ title, onCancel }: { title: string; onCancel: () => void }) {
         aria-label="Cancel"
         className="rounded-md p-1 text-muted-foreground hover:bg-muted"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="h-4 w-4" />
       </button>
     </div>
   );
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "w-full min-h-10 rounded-md border border-border bg-background px-3 py-2 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20";

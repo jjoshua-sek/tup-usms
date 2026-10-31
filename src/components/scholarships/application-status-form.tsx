@@ -6,18 +6,7 @@ import { toast } from "sonner";
 
 import { updateScholarshipApplication } from "@/app/staff/scholarships/actions";
 import { Button } from "@/components/ui/button";
-
-const STATUSES = [
-  "interest_declared",
-  "documents_pending",
-  "documents_complete",
-  "under_review",
-  "endorsed",
-  "forwarded",
-  "awarded",
-  "rejected",
-  "withdrawn",
-] as const;
+import { APPLICATION_STATUS_LABELS } from "@/types/osa";
 
 export function ApplicationStatusForm({
   applicationId,
@@ -37,32 +26,35 @@ export function ApplicationStatusForm({
           else toast.success(result.message ?? "Updated.");
         })
       }
-      className="flex flex-wrap items-end gap-2"
+      className="flex flex-wrap items-end gap-3"
     >
       <input type="hidden" name="application_id" value={applicationId} />
 
-      <select name="status" defaultValue={currentStatus} className={inputClass}>
-        {STATUSES.map((status) => (
-          <option key={status} value={status}>
-            {status.replace(/_/g, " ")}
-          </option>
-        ))}
-      </select>
+      <label className="block space-y-1">
+        <span className="text-base font-medium">Status</span>
+        <select name="status" defaultValue={currentStatus} className={`${inputClass} block`}>
+          {Object.entries(APPLICATION_STATUS_LABELS).map(([status, label]) => (
+            <option key={status} value={status}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
 
-      <input
-        name="note"
-        maxLength={500}
-        placeholder="Note to the student (optional)"
-        className={`${inputClass} min-w-[180px] flex-1`}
-      />
+      <label className="block min-w-48 flex-1 space-y-1">
+        <span className="text-base font-medium">
+          Note to the student <span className="font-normal text-muted-foreground">(optional)</span>
+        </span>
+        <input name="note" maxLength={500} className={`${inputClass} block w-full`} />
+      </label>
 
-      <Button type="submit" size="sm" variant="outline" disabled={isPending}>
-        {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-        Save
+      <Button type="submit" disabled={isPending} className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700">
+        {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+        Save the change
       </Button>
     </form>
   );
 }
 
 const inputClass =
-  "rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "min-h-10 rounded-md border border-border bg-background px-3 py-2 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20";

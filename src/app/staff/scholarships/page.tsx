@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MedalIcon as Award, HandHeartIcon as HandHeart, TrophyIcon as Trophy, UsersIcon as Users } from "@phosphor-icons/react/ssr";
+import { MedalIcon as Award, CaretDownIcon as ChevronDown, HandHeartIcon as HandHeart } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/osa/empty-state";
 import { RestrictedNotice } from "@/components/osa/restricted-notice";
 import { ToneBadge, type Tone } from "@/components/osa/tone-badge";
 import { ApplicationStatusForm } from "@/components/scholarships/application-status-form";
 import { PageHeader } from "@/components/shared/page-header";
-import { StatsCard } from "@/components/shared/stats-card";
 import { getStaffContext } from "@/lib/osa/staff-context";
 import { buildStudentEligibilityProfile } from "@/lib/scholarships/build-profile";
 import type { ScholarshipCriterion } from "@/lib/scholarships/evaluate-eligibility";
@@ -15,7 +14,7 @@ import { RETENTION_META, checkRetention } from "@/lib/scholarships/retention";
 import { loose } from "@/lib/supabase/loose";
 import { createClient } from "@/lib/supabase/server";
 import { formatManilaMonthDay } from "@/lib/utils/time";
-import type { Scholarship } from "@/types/osa";
+import { APPLICATION_OPEN, APPLICATION_STATUS_LABELS, FUNDING_TYPE_LABELS, type Scholarship } from "@/types/osa";
 
 export const metadata: Metadata = {
   title: "Scholarships",
@@ -99,11 +98,8 @@ export default async function StaffScholarshipsPage() {
   const applications = (applicationRows as ApplicationRow[] | null) ?? [];
 
   const active = scholarships.filter((scholarship) => scholarship.is_active);
-  const pending = applications.filter((application) =>
-    ["interest_declared", "documents_pending", "documents_complete", "under_review"].includes(
-      application.status,
-    ),
-  );
+  const pending = applications.filter((application) => APPLICATION_OPEN.includes(application.status));
+  const decided = applications.filter((application) => !APPLICATION_OPEN.includes(application.status));
   const awarded = applications.filter((application) => application.status === "awarded");
 
   // Scholars after the award (checklist F3): do they still meet the grade
@@ -138,128 +134,76 @@ export default async function StaffScholarshipsPage() {
   const atRisk = scholars.filter((s) => s.retention.status === "at_risk").length;
 
   return (
-    <div>
+    <div className="space-y-8">
       <PageHeader
         breadcrumbs={[{ label: "Staff", href: "/staff/dashboard" }, { label: "Scholarships" }]}
         title="Scholarships"
-        description="The catalogue students are matched against, and the queue of students who intend to apply."
+        description="Students who intend to apply, the scholars who must keep their grades up, and the programs students are matched against."
       />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard label="Active programs" value={active.length} icon={Award} />
-        <StatsCard
-          label="In the queue"
-          value={pending.length}
-          icon={HandHeart}
-          iconTone={pending.length > 0 ? "warn" : "neutral"}
-        />
-        <StatsCard
-          label="Awarded"
-          value={awarded.length}
-          icon={Trophy}
-          iconTone={atRisk > 0 ? "warn" : "success"}
-          trend={atRisk > 0 ? `${atRisk} at risk of losing it` : "All keep their requirements"}
-        />
-        <StatsCard
-          label="Total slots"
-          value={active.reduce((sum, s) => sum + (s.slots_available ?? 0), 0)}
-          icon={Users}
-        />
-      </div>
-
-      {/* Catalogue */}
-      <section className="mb-8">
-        <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">Programs</h2>
-        {scholarships.length === 0 ? (
+      {/* Applications waiting on the OSA */}
+      <section>
+        <h2 className="font-display text-lg font-semibold tracking-tight">
+          Waiting for the OSA
+          <span className="ml-2 rounded-full bg-muted px-2 text-base font-normal tabular-nums text-muted-foreground">
+            {pending.length}
+          </span>
+        </h2>
+        <p className="mb-3 mt-0.5 text-base text-muted-foreground">
+          Check each student&apos;s documents, then endorse, send to the sponsor, or decline.
+        </p>
+        {pending.length === 0 ? (
           <EmptyState
-            icon={Award}
-            title="No scholarships in the catalogue"
-            description="Seed them through the database for now — with no criteria rows, the student-side eligibility check has nothing to evaluate."
+            icon={HandHeart}
+            title="Nobody waiting"
+            description="Students land here when they press “I intend to apply” on their scholarships page."
           />
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {scholarships.map((scholarship) => {
-              const slotsLeft =
-                scholarship.slots_available != null
-                  ? Math.max(scholarship.slots_available - scholarship.slots_filled, 0)
-                  : null;
-
-              return (
-                <div
-                  key={scholarship.id}
-                  className="rounded-xl border border-border bg-card p-4"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-display text-base font-semibold">
-                        {scholarship.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {scholarship.sponsor_name} · {scholarship.funding_type}
-                      </p>
-                    </div>
-                    <ToneBadge
-                      label={scholarship.is_active ? "Active" : "Inactive"}
-                      tone={scholarship.is_active ? "success" : "neutral"}
-                    />
-                  </div>
-
-                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                    <Meta label="Slots">
-                      {slotsLeft == null
-                        ? "Unlimited"
-                        : `${slotsLeft} left of ${scholarship.slots_available}`}
-                    </Meta>
-                    <Meta label="Criteria">
-                      {(scholarship.scholarship_criteria ?? []).length}
-                    </Meta>
-                    <Meta label="Requirements">
-                      {(scholarship.scholarship_requirements ?? []).length}
-                    </Meta>
-                    <Meta label="Closes">
-                      {formatManilaMonthDay(scholarship.application_closes)}
-                    </Meta>
-                  </dl>
-
-                  {(scholarship.scholarship_criteria ?? []).length === 0 && (
-                    <p className="mt-2 rounded-md bg-amber-50 p-2 text-sm text-amber-900">
-                      No criteria defined — every student will see &ldquo;more info
-                      needed&rdquo; for this program.
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <ul className="space-y-3">
+            {pending.map((application) => (
+              <ApplicationItem key={application.id} application={application} />
+            ))}
+          </ul>
         )}
       </section>
 
       {/* Scholars after the award (checklist F3) */}
       {scholars.length > 0 && (
-        <section className="mb-8">
-          <h2 className="font-display text-lg font-semibold tracking-tight">Scholars</h2>
-          <p className="mb-3 text-base text-muted-foreground">
-            Awarded students checked against the grade and conduct requirements they must keep, on their latest verified grades.
+        <section>
+          <h2 className="font-display text-lg font-semibold tracking-tight">
+            Scholars
+            <span className="ml-2 rounded-full bg-muted px-2 text-base font-normal tabular-nums text-muted-foreground">
+              {scholars.length}
+            </span>
+          </h2>
+          <p className="mb-3 mt-0.5 text-base text-muted-foreground">
+            Awarded students checked against the grade and conduct requirements they must keep, on their latest verified
+            grades.{atRisk > 0 ? ` ${atRisk} may lose the scholarship; they are listed first.` : ""}
           </p>
           <ul className="space-y-2">
             {scholars.map(({ application, retention }) => (
               <li key={application.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link href={`/staff/students/${application.students!.id}`} className="text-base font-semibold text-tup-maroon-600 underline-offset-2 hover:underline">
+                  <Link
+                    href={`/staff/students/${application.students!.id}`}
+                    className="text-lg font-semibold text-tup-maroon-700 underline-offset-2 hover:underline"
+                  >
                     {application.students!.first_name} {application.students!.last_name}
                   </Link>
-                  <span className="font-mono text-sm text-muted-foreground">{application.students!.student_number}</span>
-                  <span className="text-sm text-muted-foreground">· {application.scholarships?.name ?? "Scholarship"}</span>
+                  <span className="whitespace-nowrap font-mono text-sm text-muted-foreground">
+                    {application.students!.student_number}
+                  </span>
                   <ToneBadge label={RETENTION_META[retention.status].label} tone={RETENTION_META[retention.status].tone} />
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-base font-medium">{application.scholarships?.name ?? "Scholarship"}</p>
+                <p className="mt-1 text-base text-muted-foreground">
                   {retention.summary}
                   {gradesTerm.get(application.students!.id)
                     ? ` GWA from ${gradesTerm.get(application.students!.id)}.`
                     : " No verified rating slip on file yet."}
                 </p>
                 {retention.failing.length > 0 && (
-                  <ul className="ml-4 mt-1 list-disc text-sm">
+                  <ul className="ml-5 mt-1 list-disc text-base">
                     {retention.failing.map((f) => (
                       <li key={f.description}>
                         {f.description}: now <strong>{f.actual}</strong>
@@ -268,7 +212,7 @@ export default async function StaffScholarshipsPage() {
                   </ul>
                 )}
                 {retention.status === "at_risk" && retention.unchecked.length > 0 && (
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-1 text-base text-muted-foreground">
                     Not checked yet, for want of verified grades: {retention.unchecked.join("; ")}.
                   </p>
                 )}
@@ -278,73 +222,128 @@ export default async function StaffScholarshipsPage() {
         </section>
       )}
 
-      {/* Applications */}
-      <section>
-        <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
-          Student queue
-        </h2>
-        {applications.length === 0 ? (
-          <EmptyState
-            icon={HandHeart}
-            title="Nobody in the queue"
-            description="Students land here when they press “I intend to apply” on their scholarships page."
-          />
-        ) : (
-          <ul className="space-y-3">
-            {applications.map((application) => (
-              <li
-                key={application.id}
-                className="rounded-xl border border-border bg-card p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-semibold">
-                        {application.scholarships?.name ?? "Scholarship"}
-                      </p>
+      {/* The catalogue: reference, so folded. */}
+      <details className="group rounded-xl border border-border bg-card" open={scholarships.length === 0}>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-5 text-base font-medium [&::-webkit-details-marker]:hidden">
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+          Programs
+          <span className="font-normal text-muted-foreground">
+            ({active.length} active of {scholarships.length})
+          </span>
+        </summary>
+        <div className="border-t border-border p-4">
+          {scholarships.length === 0 ? (
+            <EmptyState
+              icon={Award}
+              title="No scholarships in the catalogue"
+              description="Programs and their criteria are added by the administrator. Without criteria, the student-side eligibility check has nothing to compare against."
+            />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {scholarships.map((scholarship) => {
+                const slotsLeft =
+                  scholarship.slots_available != null
+                    ? Math.max(scholarship.slots_available - scholarship.slots_filled, 0)
+                    : null;
+
+                return (
+                  <div key={scholarship.id} className="rounded-xl border border-border bg-card p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-display text-base font-semibold">{scholarship.name}</p>
+                        <p className="text-base text-muted-foreground">
+                          {scholarship.sponsor_name} · {FUNDING_TYPE_LABELS[scholarship.funding_type] ?? scholarship.funding_type}
+                        </p>
+                      </div>
                       <ToneBadge
-                        label={application.status.replace(/_/g, " ")}
-                        tone={STATUS_TONE[application.status] ?? "neutral"}
+                        label={scholarship.is_active ? "Active" : "Inactive"}
+                        tone={scholarship.is_active ? "success" : "neutral"}
                       />
                     </div>
-                    <p className="mt-1 text-base">
-                      {application.students ? (
-                        <Link
-                          href={`/staff/students/${application.students.id}`}
-                          className="text-tup-maroon-600 underline-offset-2 hover:underline"
-                        >
-                          {application.students.first_name} {application.students.last_name}
-                        </Link>
-                      ) : (
-                        "Unknown student"
-                      )}
-                      <span className="ml-2 font-mono text-sm text-muted-foreground">
-                        {application.students?.student_number}
-                      </span>
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        {application.school_year}
-                      </span>
-                    </p>
-                    {(application.endorsement_notes || application.rejection_reason) && (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {application.rejection_reason ?? application.endorsement_notes}
+
+                    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-base">
+                      <Meta label="Slots">
+                        {slotsLeft == null ? "Unlimited" : `${slotsLeft} left of ${scholarship.slots_available}`}
+                      </Meta>
+                      <Meta label="Criteria">{(scholarship.scholarship_criteria ?? []).length}</Meta>
+                      <Meta label="Requirements">{(scholarship.scholarship_requirements ?? []).length}</Meta>
+                      <Meta label="Closes">
+                        {scholarship.application_closes ? formatManilaMonthDay(scholarship.application_closes) : "No deadline"}
+                      </Meta>
+                    </dl>
+
+                    {(scholarship.scholarship_criteria ?? []).length === 0 && (
+                      <p className="mt-2 rounded-md bg-amber-50 p-2 text-base text-amber-900">
+                        No criteria set, so every student sees &ldquo;more info needed&rdquo; for this program.
                       </p>
                     )}
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </details>
 
-                <div className="mt-3 border-t border-border pt-3">
-                  <ApplicationStatusForm
-                    applicationId={application.id}
-                    currentStatus={application.status}
-                  />
-                </div>
-              </li>
+      {/* Decided applications: done work, folded. */}
+      {decided.length > 0 && (
+        <details className="group rounded-xl border border-border bg-card">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-5 text-base font-medium [&::-webkit-details-marker]:hidden">
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+            Decided applications
+            <span className="font-normal text-muted-foreground">
+              ({decided.length}, endorsed, sent, awarded, declined or withdrawn)
+            </span>
+          </summary>
+          <ul className="space-y-3 border-t border-border p-4">
+            {decided.map((application) => (
+              <ApplicationItem key={application.id} application={application} />
             ))}
           </ul>
-        )}
-      </section>
+        </details>
+      )}
     </div>
+  );
+}
+
+function ApplicationItem({ application }: { application: ApplicationRow }) {
+  return (
+    <li className="rounded-xl border border-border bg-card p-4">
+      <div className="min-w-0 space-y-1">
+        <p className="text-base">
+          {application.students ? (
+            <Link
+              href={`/staff/students/${application.students.id}`}
+              className="text-lg font-semibold text-tup-maroon-700 underline-offset-2 hover:underline"
+            >
+              {application.students.first_name} {application.students.last_name}
+            </Link>
+          ) : (
+            <span className="text-lg font-semibold">Unknown student</span>
+          )}
+          {application.students?.student_number && (
+            <span className="ml-2 whitespace-nowrap font-mono text-sm text-muted-foreground">
+              {application.students.student_number}
+            </span>
+          )}
+        </p>
+        <p className="flex flex-wrap items-center gap-2">
+          <span className="text-base font-medium">{application.scholarships?.name ?? "Scholarship"}</span>
+          <ToneBadge
+            label={APPLICATION_STATUS_LABELS[application.status] ?? application.status}
+            tone={STATUS_TONE[application.status] ?? "neutral"}
+          />
+          <span className="text-sm text-muted-foreground">School year {application.school_year}</span>
+        </p>
+        {(application.endorsement_notes || application.rejection_reason) && (
+          <p className="text-base text-muted-foreground">{application.rejection_reason ?? application.endorsement_notes}</p>
+        )}
+      </div>
+
+      <div className="mt-3 border-t border-border pt-3">
+        <ApplicationStatusForm applicationId={application.id} currentStatus={application.status} />
+      </div>
+    </li>
   );
 }
 

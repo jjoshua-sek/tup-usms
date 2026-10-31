@@ -143,6 +143,28 @@ export const HEARING_TYPE_LABELS: Record<string, string> = {
   follow_up: "Follow-up meeting",
 };
 
+/** What a scholarship application's status is called on screen. */
+export const APPLICATION_STATUS_LABELS: Record<string, string> = {
+  interest_declared: "Intends to apply",
+  documents_pending: "Documents missing",
+  documents_complete: "Documents complete",
+  under_review: "Under review",
+  endorsed: "Endorsed",
+  forwarded: "Sent to the sponsor",
+  awarded: "Awarded",
+  rejected: "Not endorsed",
+  withdrawn: "Withdrawn",
+};
+
+/** Applications still waiting on the OSA. */
+export const APPLICATION_OPEN = ["interest_declared", "documents_pending", "documents_complete", "under_review"];
+
+export const FUNDING_TYPE_LABELS: Record<string, string> = {
+  government: "Government",
+  private: "Private sponsor",
+  institutional: "TUP-funded",
+};
+
 export type RiskTier = "low" | "moderate" | "high" | "critical";
 
 export type EligibilityStatus =

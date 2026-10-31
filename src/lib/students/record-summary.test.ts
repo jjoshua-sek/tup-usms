@@ -200,7 +200,7 @@ describe("summarizeRecord", () => {
       "clearance",
     );
 
-    expect(result?.value).toBe("On Hold");
+    expect(result?.value).toBe("On hold");
     expect(result?.tone).toBe("danger");
   });
 

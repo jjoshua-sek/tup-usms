@@ -168,9 +168,9 @@ export const CLEARANCE_STATUS_META: Record<
 > = {
   submitted:   { label: "Submitted",    tone: "info" },
   verifying:   { label: "Verifying",    tone: "info" },
-  on_hold:     { label: "On Hold",      tone: "danger" },
+  on_hold:     { label: "On hold",      tone: "danger" },
   cleared:     { label: "Cleared",      tone: "success" },
-  fee_pending: { label: "Fee Pending",  tone: "warning" },
+  fee_pending: { label: "Fee pending",  tone: "warning" },
   ready:       { label: "Ready",        tone: "success" },
   issued:      { label: "Issued",       tone: "success" },
   rejected:    { label: "Rejected",     tone: "danger" },

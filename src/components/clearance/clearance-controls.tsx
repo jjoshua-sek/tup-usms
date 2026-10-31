@@ -12,14 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { clearanceHasFee } from "@/lib/osa/clearance-fee";
 
-export function RunCheckButton({ requestId }: { requestId: string }) {
+/** The first check is the step to take, so it is the filled button; a re-run is outlined. */
+export function RunCheckButton({ requestId, again = false }: { requestId: string; again?: boolean }) {
   const [isPending, startTransition] = useTransition();
 
   return (
     <Button
       type="button"
-      size="sm"
-      variant="outline"
+      variant={again ? "outline" : "default"}
+      className={again ? undefined : "bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"}
       disabled={isPending}
       onClick={() =>
         startTransition(async () => {
@@ -30,11 +31,11 @@ export function RunCheckButton({ requestId }: { requestId: string }) {
       }
     >
       {isPending ? (
-        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
       ) : (
-        <ScanSearch className="mr-1.5 h-3.5 w-3.5" />
+        <ScanSearch className="mr-1.5 h-4 w-4" />
       )}
-      Run record check
+      {again ? "Run the check again" : "Run the record check"}
     </Button>
   );
 }
@@ -49,10 +50,10 @@ export function ResolveHoldButton({ holdId }: { holdId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-sm font-medium transition-colors hover:bg-muted"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-base font-medium transition-colors hover:bg-muted"
       >
-        <CheckCircle2 className="h-3 w-3" />
-        Clear hold
+        <CheckCircle2 className="h-4 w-4" />
+        Clear this hold
       </button>
     );
   }
@@ -63,12 +64,12 @@ export function ResolveHoldButton({ holdId }: { holdId: string }) {
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
         maxLength={500}
-        placeholder="How was it resolved?"
-        className="min-w-[160px] flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none"
+        placeholder="How was it settled?"
+        aria-label="How was it settled?"
+        className={`${inputClass} min-w-40 flex-1`}
       />
       <Button
         type="button"
-        size="sm"
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
@@ -82,8 +83,11 @@ export function ResolveHoldButton({ holdId }: { holdId: string }) {
         }
         className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700"
       >
-        {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-        Confirm
+        {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+        Clear the hold
+      </Button>
+      <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+        Cancel
       </Button>
     </div>
   );
@@ -111,39 +115,45 @@ export function AdvanceClearanceForm({ requestId, requestType }: { requestId: st
           else toast.success(result.message ?? "Updated.");
         })
       }
-      className="flex flex-wrap items-end gap-2"
+      className="flex flex-wrap items-end gap-3"
     >
       <input type="hidden" name="request_id" value={requestId} />
 
-      <select name="status" defaultValue="verifying" className={inputClass}>
-        {NEXT_STATUSES.filter((status) => hasFee || status.value !== "fee_pending").map((status) => (
-          <option key={status.value} value={status.value}>
-            {status.label}
-          </option>
-        ))}
-      </select>
+      <label className="block space-y-1">
+        <span className="text-base font-medium">New status</span>
+        <select name="status" defaultValue="verifying" className={`${inputClass} block`}>
+          {NEXT_STATUSES.filter((status) => hasFee || status.value !== "fee_pending").map((status) => (
+            <option key={status.value} value={status.value}>
+              {status.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
-      {hasFee && <input name="or_number" maxLength={60} placeholder="OR no." className={inputClass} />}
-      <input
-        name="certificate_number"
-        maxLength={60}
-        placeholder="Certificate no."
-        className={inputClass}
-      />
-      <input
-        name="note"
-        maxLength={500}
-        placeholder="Note / rejection reason"
-        className={`${inputClass} min-w-[160px] flex-1`}
-      />
+      {hasFee && (
+        <label className="block space-y-1">
+          <span className="text-base font-medium">OR number</span>
+          <input name="or_number" maxLength={60} className={`${inputClass} block w-36`} />
+        </label>
+      )}
+      <label className="block space-y-1">
+        <span className="text-base font-medium">Certificate number</span>
+        <input name="certificate_number" maxLength={60} className={`${inputClass} block w-40`} />
+      </label>
+      <label className="block min-w-48 flex-1 space-y-1">
+        <span className="text-base font-medium">
+          Note <span className="font-normal text-muted-foreground">(the reason, if rejecting)</span>
+        </span>
+        <input name="note" maxLength={500} className={`${inputClass} block w-full`} />
+      </label>
 
-      <Button type="submit" size="sm" variant="outline" disabled={isPending}>
-        {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-        Save
+      <Button type="submit" disabled={isPending} className="bg-tup-maroon-600 text-white hover:bg-tup-maroon-700">
+        {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+        Save the change
       </Button>
     </form>
   );
 }
 
 const inputClass =
-  "rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-tup-maroon-600 focus:outline-none";
+  "min-h-10 rounded-md border border-border bg-background px-3 py-2 text-base focus:border-tup-maroon-600 focus:outline-none focus:ring-3 focus:ring-tup-maroon-600/20";

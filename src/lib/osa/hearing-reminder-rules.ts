@@ -38,11 +38,19 @@ export interface HearingForReminder {
   scheduled_start: string;
   student_notified_at: string | null;
   reminder_sent_at: string | null;
+  /** The case's own status: a dismissed or closed case has no meeting left to attend. */
+  case_status?: string | null;
 }
+
+/** Case statuses after which no meeting goes ahead. */
+const CASE_ENDED = ["dismissed", "closed"];
 
 export function isReminderDue(hearing: HearingForReminder, now: Date, leadHours: number): boolean {
   if (hearing.reminder_sent_at) return false;
   if (!(REMINDABLE_STATUSES as readonly string[]).includes(hearing.status)) return false;
+  // A case dismissed after the summons once still sent the student a
+  // reminder for its meeting (OSA-2026-0002, October 2026).
+  if (hearing.case_status && CASE_ENDED.includes(hearing.case_status)) return false;
 
   const start = new Date(hearing.scheduled_start).getTime();
   const nowMs = now.getTime();

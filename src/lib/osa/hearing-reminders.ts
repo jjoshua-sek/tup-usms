@@ -37,6 +37,7 @@ interface HearingRow {
   reminder_sent_at: string | null;
   violation_cases: {
     case_number: string;
+    status: string;
     complainant_staff_id: string | null;
     students: { user_id: string } | null;
   } | null;
@@ -51,7 +52,7 @@ export async function sendHearingReminders(
 
   const { data, error } = await db
     .from("case_hearings")
-    .select(`${REMINDER_HEARING_COLUMNS}, violation_cases(case_number, complainant_staff_id, students(user_id))`)
+    .select(`${REMINDER_HEARING_COLUMNS}, violation_cases(case_number, status, complainant_staff_id, students(user_id))`)
     .is("reminder_sent_at", null)
     .in("status", [...REMINDABLE_STATUSES])
     .gt("scheduled_start", now.toISOString())
@@ -66,7 +67,9 @@ export async function sendHearingReminders(
     return { sent: 0, held: "lookup failed" };
   }
 
-  const due = ((data as HearingRow[] | null) ?? []).filter((hearing) => isReminderDue(hearing, now, leadHours));
+  const due = ((data as HearingRow[] | null) ?? []).filter((hearing) =>
+    isReminderDue({ ...hearing, case_status: hearing.violation_cases?.status }, now, leadHours),
+  );
   if (due.length === 0) return { sent: 0 };
 
   // Faculty complainants are staff; their sign-in accounts come from one lookup.

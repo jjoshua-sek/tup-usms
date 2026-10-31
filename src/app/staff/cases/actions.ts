@@ -1821,18 +1821,42 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
     meetingsHeld = (held as unknown[] | null)?.length ?? 0;
   }
 
+  // Dismissing or closing a case calls off its meetings that have not
+  // happened yet. Left alone, the summons stood and the reminder job still
+  // reminded the student (OSA-2026-0002, October 2026).
+  let meetingsCancelled = 0;
+  if (["dismissed", "closed"].includes(parsed.data.status)) {
+    const { data: cancelled } = await db
+      .from("case_hearings")
+      .update({ status: "cancelled" })
+      .eq("case_id", parsed.data.case_id)
+      .in("status", ["awaiting_complainant", "complainant_approved", ...WAITING.hearingsGoingAhead])
+      .gt("scheduled_start", new Date().toISOString())
+      .select("id");
+    meetingsCancelled = (cancelled as unknown[] | null)?.length ?? 0;
+  }
+  const meetingNote =
+    meetingsHeld > 0
+      ? ` ${meetingsHeld === 1 ? "The meeting was" : `${meetingsHeld} meetings were`} marked as held.`
+      : meetingsCancelled > 0
+        ? ` ${meetingsCancelled === 1 ? "Its upcoming meeting was" : `${meetingsCancelled} upcoming meetings were`} cancelled.`
+        : "";
+
   const statusLabel = CASE_STATUS_META[parsed.data.status].label;
   await addTimelineEntry(db, {
     caseId: parsed.data.case_id,
     actorId: staff.userId,
     actorLabel: staff.fullName,
     eventType: "status_changed",
-    summary:
-      (parsed.data.note || `Status changed to ${statusLabel}.`) +
-      (meetingsHeld > 0 ? ` ${meetingsHeld === 1 ? "The meeting was" : `${meetingsHeld} meetings were`} marked as held.` : ""),
+    summary: (parsed.data.note || `Status changed to ${statusLabel}.`) + meetingNote,
     fromStatus,
     toStatus: parsed.data.status,
-    details: meetingsHeld > 0 ? { meetings_marked_held: meetingsHeld } : undefined,
+    details:
+      meetingsHeld > 0
+        ? { meetings_marked_held: meetingsHeld }
+        : meetingsCancelled > 0
+          ? { meetings_cancelled: meetingsCancelled }
+          : undefined,
   });
 
   // Only the transitions that ask something of the student, or end the
@@ -1857,12 +1881,12 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
     closed: {
       type: "case_resolved",
       title: "Your case is closed",
-      body: `Case ${current?.case_number ?? ""} has been closed. Nothing further is required from you.`,
+      body: `Case ${current?.case_number ?? ""} has been closed. Nothing further is required from you.${meetingsCancelled > 0 ? " The meeting set for it is cancelled." : ""}`,
     },
     dismissed: {
       type: "case_resolved",
       title: "Your case was dismissed",
-      body: `Case ${current?.case_number ?? ""} was dismissed. No sanction was applied.`,
+      body: `Case ${current?.case_number ?? ""} was dismissed. No sanction was applied.${meetingsCancelled > 0 ? " The meeting set for it is cancelled." : ""}`,
     },
   };
 
@@ -1892,6 +1916,6 @@ export async function updateCaseStatus(formData: FormData): Promise<Result> {
   revalidatePath("/staff/hearings");
   return {
     ok: true,
-    message: meetingsHeld > 0 ? `Case updated. ${meetingsHeld === 1 ? "The meeting is" : `${meetingsHeld} meetings are`} now marked as held.` : "Case updated.",
+    message: `Case updated.${meetingNote}`,
   };
 }

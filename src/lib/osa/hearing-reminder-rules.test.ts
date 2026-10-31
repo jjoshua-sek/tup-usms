@@ -45,6 +45,12 @@ describe("isReminderDue", () => {
     }
   });
 
+  it("never reminds about a meeting on a dismissed or closed case", () => {
+    expect(isReminderDue(hearing({ case_status: "dismissed" }), now, 24)).toBe(false);
+    expect(isReminderDue(hearing({ case_status: "closed" }), now, 24)).toBe(false);
+    expect(isReminderDue(hearing({ case_status: "summons_sent" }), now, 24)).toBe(true);
+  });
+
   it("does not stack a reminder on a summons sent moments ago", () => {
     const fresh = hearing({ student_notified_at: new Date(now.getTime() - FRESH_SUMMONS_MS + 60_000).toISOString() });
     expect(isReminderDue(fresh, now, 24)).toBe(false);
